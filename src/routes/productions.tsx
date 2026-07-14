@@ -25,7 +25,7 @@ function ProductionsPage() {
 
   const [q, setQ] = useState("");
   const rows = useMemo(() => {
-    const list = data?.productions ?? [];
+    const list = data?.items ?? [];
     if (!q.trim()) return list;
     const term = q.toLowerCase();
     return list.filter(
