@@ -19,6 +19,7 @@ import { Route as ProductionsIndexRouteImport } from './routes/productions.index
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as ProductionsNameRouteImport } from './routes/productions.$name'
 import { Route as MessagesIdRouteImport } from './routes/messages.$id'
+import { Route as ProductionsNameComponentsComponentNameRouteImport } from './routes/productions.$name.components.$componentName'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -70,6 +71,12 @@ const MessagesIdRoute = MessagesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => MessagesRoute,
 } as any)
+const ProductionsNameComponentsComponentNameRoute =
+  ProductionsNameComponentsComponentNameRouteImport.update({
+    id: '/components/$componentName',
+    path: '/components/$componentName',
+    getParentRoute: () => ProductionsNameRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,9 +86,10 @@ export interface FileRoutesByFullPath {
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
-  '/productions/$name': typeof ProductionsNameRoute
+  '/productions/$name': typeof ProductionsNameRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/productions/': typeof ProductionsIndexRoute
+  '/productions/$name/components/$componentName': typeof ProductionsNameComponentsComponentNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,9 +97,10 @@ export interface FileRoutesByTo {
   '/health': typeof HealthRoute
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
-  '/productions/$name': typeof ProductionsNameRoute
+  '/productions/$name': typeof ProductionsNameRouteWithChildren
   '/messages': typeof MessagesIndexRoute
   '/productions': typeof ProductionsIndexRoute
+  '/productions/$name/components/$componentName': typeof ProductionsNameComponentsComponentNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,9 +111,10 @@ export interface FileRoutesById {
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
-  '/productions/$name': typeof ProductionsNameRoute
+  '/productions/$name': typeof ProductionsNameRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/productions/': typeof ProductionsIndexRoute
+  '/productions/$name/components/$componentName': typeof ProductionsNameComponentsComponentNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/productions/$name'
     | '/messages/'
     | '/productions/'
+    | '/productions/$name/components/$componentName'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/productions/$name'
     | '/messages'
     | '/productions'
+    | '/productions/$name/components/$componentName'
   id:
     | '__root__'
     | '/'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/productions/$name'
     | '/messages/'
     | '/productions/'
+    | '/productions/$name/components/$componentName'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesIdRouteImport
       parentRoute: typeof MessagesRoute
     }
+    '/productions/$name/components/$componentName': {
+      id: '/productions/$name/components/$componentName'
+      path: '/components/$componentName'
+      fullPath: '/productions/$name/components/$componentName'
+      preLoaderRoute: typeof ProductionsNameComponentsComponentNameRouteImport
+      parentRoute: typeof ProductionsNameRoute
+    }
   }
 }
 
@@ -241,13 +261,26 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
   MessagesRouteChildren,
 )
 
+interface ProductionsNameRouteChildren {
+  ProductionsNameComponentsComponentNameRoute: typeof ProductionsNameComponentsComponentNameRoute
+}
+
+const ProductionsNameRouteChildren: ProductionsNameRouteChildren = {
+  ProductionsNameComponentsComponentNameRoute:
+    ProductionsNameComponentsComponentNameRoute,
+}
+
+const ProductionsNameRouteWithChildren = ProductionsNameRoute._addFileChildren(
+  ProductionsNameRouteChildren,
+)
+
 interface ProductionsRouteChildren {
-  ProductionsNameRoute: typeof ProductionsNameRoute
+  ProductionsNameRoute: typeof ProductionsNameRouteWithChildren
   ProductionsIndexRoute: typeof ProductionsIndexRoute
 }
 
 const ProductionsRouteChildren: ProductionsRouteChildren = {
-  ProductionsNameRoute: ProductionsNameRoute,
+  ProductionsNameRoute: ProductionsNameRouteWithChildren,
   ProductionsIndexRoute: ProductionsIndexRoute,
 }
 
