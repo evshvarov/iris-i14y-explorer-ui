@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 
-export const Route = createFileRoute("/productions")({
+export const Route = createFileRoute("/productions/")({
   head: () => ({
     meta: [{ title: "Productions — IRIS Explainer" }],
   }),
