@@ -1,0 +1,373 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { Search, AlertCircle, ArrowRight, X } from "lucide-react";
+import { z } from "zod";
+
+import { apiFetch } from "@/lib/api-config";
+import type {
+  MessageHeaderListResponse,
+  MessageFacetResponse,
+} from "@/lib/api-types";
+import { PageHeader } from "@/components/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { ConfidenceBadge } from "@/components/confidence-badge";
+
+const toStr = z.union([z.string(), z.number()]).transform((v) => String(v)).optional();
+const searchSchema = z.object({
+  productionName: toStr,
+  sourceConfigName: toStr,
+  targetConfigName: toStr,
+  messageBodyClassName: toStr,
+  sessionId: toStr,
+  errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
+  limit: z.coerce.number().optional(),
+  offset: z.coerce.number().optional(),
+});
+
+export const Route = createFileRoute("/messages/")({
+  head: () => ({ meta: [{ title: "Message Explainer — IRIS Explainer" }] }),
+  validateSearch: searchSchema,
+  component: MessagesPage,
+});
+
+function toQuery(params: Record<string, string | boolean | number | undefined>) {
+  const s = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === "" || v === null) continue;
+    s.set(k, String(v));
+  }
+  const q = s.toString();
+  return q ? `?${q}` : "";
+}
+
+function MessagesPage() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [text, setText] = useState("");
+  const limit = search.limit ?? 50;
+  const offset = search.offset ?? 0;
+
+  const listQuery = useQuery<MessageHeaderListResponse>({
+    queryKey: ["messages", search, limit, offset],
+    queryFn: () =>
+      apiFetch<MessageHeaderListResponse>(
+        `/messages${toQuery({
+          productionName: search.productionName,
+          sourceConfigName: search.sourceConfigName,
+          targetConfigName: search.targetConfigName,
+          messageBodyClassName: search.messageBodyClassName,
+          sessionId: search.sessionId,
+          errorsOnly: search.errorsOnly,
+          limit,
+          offset,
+        })}`,
+      ),
+    retry: 0,
+  });
+
+  const facetsQuery = useQuery<MessageFacetResponse>({
+    queryKey: ["messages-facets", search.productionName],
+    queryFn: () =>
+      apiFetch<MessageFacetResponse>(
+        `/messages/facets${toQuery({ productionName: search.productionName, limit: 500 })}`,
+      ),
+    retry: 0,
+  });
+
+  const items = listQuery.data?.items ?? [];
+  const filtered = useMemo(() => {
+    if (!text.trim()) return items;
+    const t = text.toLowerCase();
+    return items.filter(
+      (m) =>
+        String(m.messageId ?? "").includes(t) ||
+        String(m.sessionId ?? "").includes(t) ||
+        (m.sourceConfigName ?? "").toLowerCase().includes(t) ||
+        (m.targetConfigName ?? "").toLowerCase().includes(t) ||
+        (m.messageBodyClassName ?? "").toLowerCase().includes(t),
+    );
+  }, [items, text]);
+
+  const setSearchParam = (patch: Partial<typeof search>) =>
+    navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
+
+  const clearFilters = () =>
+    navigate({
+      search: () =>
+        ({
+          productionName: search.productionName, // keep production scope
+        }) as never,
+    });
+
+  const activeFilters = [
+    ["Source", search.sourceConfigName],
+    ["Target", search.targetConfigName],
+    ["Body", search.messageBodyClassName],
+    ["Session", search.sessionId],
+    search.errorsOnly ? ["Errors", "only"] : undefined,
+  ].filter(Boolean) as [string, string][];
+
+  return (
+    <>
+      <PageHeader
+        crumbs={[{ label: search.productionName ? "Production" : "Namespace" }]}
+        title={search.productionName ? `Messages · ${search.productionName}` : "Message Explainer"}
+        status={
+          listQuery.data
+            ? {
+                label: `${listQuery.data.count ?? items.length} shown`,
+                tone: listQuery.data.errorsOnly ? "inferred" : "observed",
+              }
+            : undefined
+        }
+      />
+
+      <div className="p-8 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
+        {/* Facet sidebar */}
+        <aside className="space-y-6">
+          <FacetGroup
+            label="Errors"
+            items={[
+              { key: "all", value: undefined, count: facetsQuery.data?.totalCount },
+              { key: "errors only", value: true, count: facetsQuery.data?.errorCount },
+            ]}
+            selected={search.errorsOnly}
+            onSelect={(v) => setSearchParam({ errorsOnly: v as boolean | undefined })}
+          />
+          <FacetList
+            label="Source component"
+            values={facetsQuery.data?.sourceConfigNames}
+            selected={search.sourceConfigName}
+            onSelect={(v) => setSearchParam({ sourceConfigName: v })}
+          />
+          <FacetList
+            label="Target component"
+            values={facetsQuery.data?.targetConfigNames}
+            selected={search.targetConfigName}
+            onSelect={(v) => setSearchParam({ targetConfigName: v })}
+          />
+          <FacetList
+            label="Message body class"
+            values={facetsQuery.data?.messageBodyClassNames}
+            selected={search.messageBodyClassName}
+            onSelect={(v) => setSearchParam({ messageBodyClassName: v })}
+          />
+          <FacetList
+            label="Sessions"
+            values={facetsQuery.data?.sessionIds}
+            selected={search.sessionId}
+            onSelect={(v) => setSearchParam({ sessionId: v })}
+          />
+          {facetsQuery.data?.runtimeMessageAnalysisEnabled === false ? (
+            <div className="text-[10px] font-mono text-status-inferred border border-status-inferred/30 bg-status-inferred/5 rounded p-2">
+              Runtime message analysis disabled in module settings.
+            </div>
+          ) : null}
+        </aside>
+
+        {/* List */}
+        <div className="space-y-4 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Filter loaded results…"
+                className="pl-9 h-9 font-mono text-sm bg-card"
+              />
+            </div>
+            {activeFilters.length > 0 ? (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 text-[10px] font-mono uppercase text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-3" /> Clear filters
+              </button>
+            ) : null}
+          </div>
+
+          {activeFilters.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {activeFilters.map(([k, v]) => (
+                <span
+                  key={k}
+                  className="text-[10px] font-mono uppercase bg-iris-brand/10 text-iris-brand border border-iris-brand/20 rounded px-1.5 py-0.5"
+                >
+                  {k}: {v}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {listQuery.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-lg" />
+              ))}
+            </div>
+          ) : listQuery.error ? (
+            <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+              <div className="text-sm font-semibold text-destructive mb-1">
+                Failed to list messages
+              </div>
+              <p className="text-xs font-mono text-destructive/80 break-all">
+                {(listQuery.error as Error).message}
+              </p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground bg-card ring-1 ring-black/5 rounded-lg">
+              No messages match these filters.
+            </div>
+          ) : (
+            <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+              <div className="grid grid-cols-[80px_1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2 border-b bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                <span>ID</span>
+                <span>Source</span>
+                <span></span>
+                <span>Target</span>
+                <span>Status</span>
+                <span></span>
+              </div>
+              <ul className="divide-y">
+                {filtered.map((m) => (
+                  <li key={m.messageId}>
+                    <Link
+                      to="/messages/$id"
+                      params={{ id: String(m.messageId) }}
+                      className="grid grid-cols-[80px_1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-muted/50 group"
+                    >
+                      <span className="text-[11px] font-mono text-foreground/80">#{m.messageId}</span>
+                      <span className="text-xs font-mono truncate">{m.sourceConfigName || "—"}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="text-xs font-mono truncate">{m.targetConfigName || "—"}</span>
+                      <span
+                        className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                          m.isError
+                            ? "text-destructive bg-destructive/10 ring-1 ring-destructive/30"
+                            : "text-muted-foreground bg-muted"
+                        }`}
+                      >
+                        {m.isError ? <AlertCircle className="size-3" /> : null}
+                        {m.status || "?"}
+                      </span>
+                      <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {listQuery.data?.hasMore ? (
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-mono text-muted-foreground">
+                offset {offset} · limit {limit}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={offset === 0}
+                  onClick={() => navigate({ search: ((s: typeof search) => ({ ...s, offset: Math.max(0, offset - limit) })) as never })}
+                  className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => navigate({ search: ((s: typeof search) => ({ ...s, offset: offset + limit })) as never })}
+                  className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {items.length > 0 && items[0]?.confidence ? (
+            <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground uppercase">
+              First row provenance: <ConfidenceBadge confidence={items[0].confidence} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function FacetGroup({
+  label, items, selected, onSelect,
+}: {
+  label: string;
+  items: { key: string; value: unknown; count?: number }[];
+  selected: unknown;
+  onSelect: (v: unknown) => void;
+}) {
+  return (
+    <div>
+      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+        {label}
+      </h4>
+      <ul className="space-y-1">
+        {items.map((it) => {
+          const active = selected === it.value || (!selected && it.value === undefined);
+          return (
+            <li key={it.key}>
+              <button
+                onClick={() => onSelect(it.value)}
+                className={`w-full flex items-center justify-between text-left text-xs font-mono px-2 py-1 rounded ${
+                  active ? "bg-iris-brand/10 text-iris-brand" : "hover:bg-muted"
+                }`}
+              >
+                <span>{it.key}</span>
+                {it.count !== undefined ? (
+                  <span className="text-[10px] text-muted-foreground">{it.count}</span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function FacetList({
+  label, values, selected, onSelect,
+}: {
+  label: string; values?: string[]; selected?: string; onSelect: (v: string | undefined) => void;
+}) {
+  if (!values || values.length === 0) return null;
+  return (
+    <div>
+      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+        {label}
+      </h4>
+      <ul className="space-y-0.5 max-h-56 overflow-auto pr-1">
+        {selected ? (
+          <li>
+            <button
+              onClick={() => onSelect(undefined)}
+              className="w-full text-left text-[10px] font-mono uppercase text-muted-foreground px-2 py-1 hover:text-foreground"
+            >
+              × clear
+            </button>
+          </li>
+        ) : null}
+        {values.map((v) => (
+          <li key={v}>
+            <button
+              onClick={() => onSelect(v)}
+              className={`w-full text-left text-[11px] font-mono px-2 py-1 rounded truncate ${
+                selected === v ? "bg-iris-brand/10 text-iris-brand" : "hover:bg-muted"
+              }`}
+              title={v}
+            >
+              {v}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
