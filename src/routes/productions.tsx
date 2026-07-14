@@ -25,7 +25,7 @@ function ProductionsPage() {
 
   const [q, setQ] = useState("");
   const rows = useMemo(() => {
-    const list = data?.productions ?? [];
+    const list = data?.items ?? [];
     if (!q.trim()) return list;
     const term = q.toLowerCase();
     return list.filter(
@@ -94,7 +94,7 @@ function ProductionsPage() {
                   <Link
                     to="/productions/$name"
                     params={{ name: p.name }}
-                    className="grid grid-cols-[1fr_auto] items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors group"
+                    className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors group"
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold truncate">
@@ -104,13 +104,22 @@ function ProductionsPage() {
                         <div className="text-[11px] text-muted-foreground truncate">
                           {p.description}
                         </div>
-                      ) : p.className ? (
-                        <div className="text-[11px] font-mono text-muted-foreground truncate">
-                          {p.className}
-                        </div>
                       ) : null}
                     </div>
+                    <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      <span>{p.componentCount ?? 0} cmp</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded ring-1 ${
+                          p.isRunning
+                            ? "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10"
+                            : "ring-black/10 bg-muted"
+                        }`}
+                      >
+                        {p.runtimeState ?? "unknown"}
+                      </span>
+                    </div>
                     <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+
                   </Link>
                 </li>
               ))}
