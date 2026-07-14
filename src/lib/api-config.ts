@@ -2,7 +2,7 @@ const BASE_URL_KEY = "i14y.baseUrl";
 const AUTH_USER_KEY = "i14y.authUser";
 const AUTH_PASS_KEY = "i14y.authPass";
 
-export const DEFAULT_BASE_URL = "http://localhost:57337/i14y-aid/api";
+export const DEFAULT_BASE_URL = "https://i14y-aid.sandbox.developer.intersystems.com/i14y-aid/api";
 
 export type ApiConfig = {
   baseUrl: string;
