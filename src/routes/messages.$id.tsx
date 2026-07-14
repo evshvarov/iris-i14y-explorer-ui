@@ -83,6 +83,15 @@ function MessageDetailPage() {
           </section>
         ) : null}
 
+        {/* Payload metadata */}
+        {payload.isLoading ? (
+          <Skeleton className="h-24 rounded-lg" />
+        ) : payload.data ? (
+          <PayloadPanel data={payload.data} />
+        ) : null}
+
+
+
         {/* Summary + explanation */}
         {trace.isLoading ? (
           <Skeleton className="h-32 rounded-lg" />
