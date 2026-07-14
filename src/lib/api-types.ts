@@ -8,22 +8,49 @@ export type HealthResponse = {
   [k: string]: unknown;
 };
 
+export type Evidence = {
+  type?: string;
+  source?: string;
+  component?: string;
+  field?: string;
+  value?: string;
+  confidence?: Confidence;
+  [k: string]: unknown;
+};
+
+export type ProductionRuntime = {
+  requestedProduction?: string;
+  currentProduction?: string;
+  state?: number;
+  stateLabel?: string;
+  isCurrent?: number;
+  isRunning?: number;
+};
+
 export type ProductionSummary = {
   name: string;
+  namespace?: string;
   description?: string;
   className?: string;
+  componentCount?: number;
+  runtime?: ProductionRuntime;
+  isRunning?: number;
+  runtimeState?: string;
+  evidence?: Evidence[];
   [k: string]: unknown;
 };
 
 export type ProductionListResponse = {
-  productions: ProductionSummary[];
   namespace?: string;
+  items: ProductionSummary[];
+  count?: number;
+  warnings?: string[];
 };
 
 export type ProductionDetailResponse = ProductionSummary & {
-  namespace?: string;
   itemCount?: number;
 };
+
 
 export type Confidence = "confirmed" | "observed" | "inferred" | "unknown";
 
