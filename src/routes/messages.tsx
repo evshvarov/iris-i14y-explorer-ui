@@ -268,13 +268,13 @@ function MessagesPage() {
               <div className="flex gap-2">
                 <button
                   disabled={offset === 0}
-                  onClick={() => navigate({ search: (s) => ({ ...s, offset: Math.max(0, offset - limit) }) as never })}
+                  onClick={() => navigate({ search: ((s: typeof search) => ({ ...s, offset: Math.max(0, offset - limit) })) as never })}
                   className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted disabled:opacity-40"
                 >
                   Previous
                 </button>
                 <button
-                  onClick={() => navigate({ search: (s) => ({ ...s, offset: offset + limit }) as never })}
+                  onClick={() => navigate({ search: ((s: typeof search) => ({ ...s, offset: offset + limit })) as never })}
                   className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
                 >
                   Next
