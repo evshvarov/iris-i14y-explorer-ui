@@ -12,6 +12,7 @@ import type {
   ProductionSummaryResponse,
   ProductionRuntimeResponse,
   ProductionActionResponse,
+  ProductionGraphResponse,
   Connection,
   ExternalSystem,
   AnalysisArtifact,
