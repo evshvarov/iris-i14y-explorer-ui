@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Lock } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
-import type { MessageDetailResponse, MessageTraceResponse } from "@/lib/api-types";
+import type {
+  MessageDetailResponse,
+  MessageTraceResponse,
+  MessagePayloadMetadataResponse,
+} from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
@@ -25,6 +29,13 @@ function MessageDetailPage() {
   const trace = useQuery<MessageTraceResponse>({
     queryKey: ["message", id, "trace"],
     queryFn: () => apiFetch<MessageTraceResponse>(`/messages/${encodeURIComponent(id)}/trace`),
+    retry: 0,
+  });
+
+  const payload = useQuery<MessagePayloadMetadataResponse>({
+    queryKey: ["message", id, "payload"],
+    queryFn: () =>
+      apiFetch<MessagePayloadMetadataResponse>(`/messages/${encodeURIComponent(id)}/payload`),
     retry: 0,
   });
 
