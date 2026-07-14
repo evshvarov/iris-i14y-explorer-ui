@@ -388,3 +388,124 @@ export type MessageTraceResponse = {
   evidence?: Evidence[];
   confidence?: Confidence;
 };
+
+export type CapabilitiesResponse = {
+  namespace?: string;
+  interoperabilityAvailable?: boolean;
+  currentNamespaceOnly?: boolean;
+  productionDiscovery?: boolean;
+  productionXDataAnalysis?: boolean;
+  productionControl?: boolean;
+  runtimeTraceAnalysis?: boolean;
+  payloadInspection?: boolean;
+  openapiVersion?: string;
+};
+
+export type SettingsUpdateResponse = {
+  namespace?: string;
+  changed?: boolean;
+  settings?: AnalysisSettings;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type GraphNode = {
+  id?: string;
+  label?: string;
+  type?: string;
+  className?: string;
+  enabled?: boolean;
+  protocol?: string;
+  adapterClass?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type GraphEdge = {
+  id?: string;
+  source?: string;
+  target?: string;
+  relationship?: string;
+  kind?: string;
+  messageTypes?: string[];
+  ruleName?: string;
+  processClass?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type ProductionGraphResponse = {
+  namespace?: string;
+  productionName?: string;
+  nodes?: GraphNode[];
+  edges?: GraphEdge[];
+  warnings?: Warning[];
+  evidence?: Evidence[];
+  confidence?: Confidence;
+};
+
+export type PayloadMetadata = {
+  messageId?: number;
+  messageBodyClassName?: string;
+  messageBodyId?: string;
+  payloadReturned?: boolean;
+  payloadInspectionEnabled?: boolean;
+  payloadInspectionSupported?: boolean;
+  bodyReferenceAvailable?: boolean;
+  bodyClassExists?: boolean;
+  restricted?: boolean;
+  restrictionReason?: string;
+  fields?: Record<string, unknown>[];
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type MessagePayloadMetadataResponse = {
+  namespace?: string;
+  messageId?: number;
+  message?: MessageHeader;
+  metadata?: PayloadMetadata;
+  messageBodyClassName?: string;
+  messageBodyId?: string;
+  bodyReferenceAvailable?: boolean;
+  restricted?: boolean;
+  restrictionReason?: string;
+  payloadReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  payloadInspectionEnabled?: boolean;
+  payloadInspectionSupported?: boolean;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type MessageExplanationResponse = {
+  namespace?: string;
+  messageId?: number;
+  sessionId?: number;
+  explanation?: TraceExplanation;
+  summary?: string;
+  stepCount?: number;
+  payloadReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+  confidence?: Confidence;
+};
+
+export type ComponentDetailResponse = {
+  namespace?: string;
+  productionName?: string;
+  componentName?: string;
+  component?: Component;
+  explanation?: ComponentExplanation;
+  connections?: Connection[];
+  externalSystems?: ExternalSystem[];
+  artifacts?: AnalysisArtifact[];
+  rules?: RuleDetail[];
+  messageTypes?: MessageType[];
+  transformations?: TransformationDetail[];
+  businessProcesses?: BusinessProcessDetail[];
+  warnings?: Warning[];
+  evidence?: Evidence[];
+  confidence?: Confidence;
+};
