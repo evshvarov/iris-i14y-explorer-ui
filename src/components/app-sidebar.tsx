@@ -31,7 +31,6 @@ const exploration = [
     title: "Message Explainer",
     url: "/messages",
     icon: MessageSquareText,
-    soon: true,
   },
 ];
 
@@ -86,11 +85,6 @@ export function AppSidebar() {
                     <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="size-4 shrink-0" />
                       <span>{item.title}</span>
-                      {item.soon ? (
-                        <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded font-mono uppercase">
-                          Soon
-                        </span>
-                      ) : null}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

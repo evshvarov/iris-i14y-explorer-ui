@@ -1,12 +1,6 @@
 // Types mirroring the i14y-aid Swagger 2.0 spec.
 
-export type HealthResponse = {
-  status?: string;
-  version?: string;
-  namespace?: string;
-  capabilities?: Record<string, boolean | string | number>;
-  [k: string]: unknown;
-};
+export type Confidence = "confirmed" | "observed" | "inferred" | "unknown";
 
 export type Evidence = {
   type?: string;
@@ -15,7 +9,37 @@ export type Evidence = {
   field?: string;
   value?: string;
   confidence?: Confidence;
+};
+
+export type Warning = { code?: string; message?: string };
+
+export type HealthResponse = {
+  status?: string;
+  module?: string;
+  version?: string;
+  namespace?: string;
+  capabilities?: Record<string, boolean | string | number>;
   [k: string]: unknown;
+};
+
+export type AnalysisSettings = {
+  runtimeMessageAnalysisEnabled?: boolean;
+  payloadInspectionEnabled?: boolean;
+  maxMessagesReturned?: number;
+  maxTraceDepth?: number;
+  defaultMessageLookbackDays?: number;
+  fieldRedactionPatterns?: string;
+  classExclusions?: string;
+  productionExclusions?: string;
+  sourceCodeInferenceEnabled?: boolean;
+  explanationVerbosity?: string;
+  aiProviderEnabled?: boolean;
+};
+
+export type SettingsResponse = {
+  namespace?: string;
+  settings?: AnalysisSettings;
+  evidence?: Evidence[];
 };
 
 export type ProductionRuntime = {
@@ -23,8 +47,9 @@ export type ProductionRuntime = {
   currentProduction?: string;
   state?: number;
   stateLabel?: string;
-  isCurrent?: number;
-  isRunning?: number;
+  isCurrent?: boolean | number;
+  isRunning?: boolean | number;
+  statusText?: string;
 };
 
 export type ProductionSummary = {
@@ -34,39 +59,332 @@ export type ProductionSummary = {
   className?: string;
   componentCount?: number;
   runtime?: ProductionRuntime;
-  isRunning?: number;
+  isRunning?: boolean | number;
   runtimeState?: string;
   evidence?: Evidence[];
-  [k: string]: unknown;
 };
 
 export type ProductionListResponse = {
   namespace?: string;
   items: ProductionSummary[];
   count?: number;
-  warnings?: string[];
+  warnings?: Warning[];
 };
-
-export type ProductionDetailResponse = ProductionSummary & {
-  itemCount?: number;
-};
-
-
-export type Confidence = "confirmed" | "observed" | "inferred" | "unknown";
 
 export type Component = {
   name: string;
   className?: string;
-  category?: "service" | "process" | "operation" | "unknown" | string;
+  type?: string;
   enabled?: boolean;
-  adapter?: string;
+  category?: string;
+  poolSize?: number;
+  comment?: string;
+  adapterClass?: string;
+  adapter?: string; // legacy alias
   protocol?: string;
+  settings?: Record<string, unknown>;
   targets?: string[];
   confidence?: Confidence;
-  [k: string]: unknown;
+  evidence?: Evidence[];
+};
+
+export type ProductionDetailResponse = {
+  namespace?: string;
+  name: string;
+  description?: string;
+  componentCount?: number;
+  runtime?: ProductionRuntime;
+  isRunning?: boolean | number;
+  runtimeState?: string;
+  components?: Component[];
+  evidence?: Evidence[];
 };
 
 export type ComponentListResponse = {
-  production: string;
-  components: Component[];
+  namespace?: string;
+  productionName: string;
+  items?: Component[];
+  components?: Component[]; // legacy
+  count?: number;
+  warnings?: Warning[];
+};
+
+export type Connection = {
+  from?: string;
+  to?: string;
+  kind?: string;
+  ruleName?: string;
+  processClass?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type ExternalSystem = {
+  component?: string;
+  componentType?: string;
+  kind?: string;
+  value?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type AnalysisArtifact = {
+  kind?: string;
+  name?: string;
+  component?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type RuleSend = {
+  target?: string;
+  transform?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type RuleCondition = {
+  condition?: string;
+  comment?: string;
+  sends?: RuleSend[];
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type RuleDetail = {
+  name?: string;
+  component?: string;
+  conditions?: RuleCondition[];
+  sends?: RuleSend[];
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type MessageType = {
+  component?: string;
+  componentType?: string;
+  className?: string;
+  method?: string;
+  parameter?: string;
+  direction?: string;
+  messageClass?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type TransformationAssignment = {
+  property?: string;
+  value?: string;
+  action?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type TransformationDetail = {
+  name?: string;
+  component?: string;
+  sourceKind?: string;
+  sourceClass?: string;
+  targetClass?: string;
+  create?: string;
+  language?: string;
+  actions?: Record<string, unknown>;
+  assignments?: TransformationAssignment[];
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type BusinessProcessCall = {
+  name?: string;
+  target?: string;
+  async?: boolean;
+  timeout?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type BusinessProcessDetail = {
+  name?: string;
+  component?: string;
+  requestClass?: string;
+  responseClass?: string;
+  contextClass?: string;
+  actions?: Record<string, unknown>;
+  calls?: BusinessProcessCall[];
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type ComponentExplanation = {
+  component?: string;
+  componentType?: string;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type ProductionAnalysisResponse = {
+  namespace?: string;
+  productionName?: string;
+  production?: ProductionDetailResponse;
+  summary?: string;
+  components?: Component[];
+  connections?: Connection[];
+  externalSystems?: ExternalSystem[];
+  artifacts?: AnalysisArtifact[];
+  rules?: RuleDetail[];
+  messageTypes?: MessageType[];
+  transformations?: TransformationDetail[];
+  businessProcesses?: BusinessProcessDetail[];
+  componentExplanations?: ComponentExplanation[];
+  warnings?: Warning[];
+  evidence?: Evidence[];
+  confidence?: Confidence;
+};
+
+export type ProductionSummaryResponse = {
+  namespace?: string;
+  productionName?: string;
+  summary?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+  warnings?: Warning[];
+};
+
+export type ProductionRuntimeResponse = {
+  namespace?: string;
+  name?: string;
+  runtime?: ProductionRuntime;
+  isRunning?: boolean;
+  runtimeState?: string;
+};
+
+export type ProductionActionResponse = {
+  namespace?: string;
+  productionName?: string;
+  action?: string;
+  changed?: boolean;
+  runtime?: ProductionRuntime;
+};
+
+export type MessageHeader = {
+  messageId?: number;
+  sessionId?: number;
+  timeCreated?: string;
+  timeProcessed?: string;
+  sourceConfigName?: string;
+  targetConfigName?: string;
+  messageBodyClassName?: string;
+  messageBodyId?: string;
+  status?: string;
+  isError?: boolean;
+  errorStatus?: string;
+  type?: string;
+  invocation?: string;
+  correspondingMessageId?: number;
+  payloadReturned?: boolean;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type MessageHeaderListResponse = {
+  namespace?: string;
+  productionName?: string;
+  items: MessageHeader[];
+  count?: number;
+  limit?: number;
+  offset?: number;
+  sourceConfigName?: string;
+  targetConfigName?: string;
+  messageBodyClassName?: string;
+  sessionId?: string;
+  errorsOnly?: boolean;
+  hasMore?: boolean;
+  payloadReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  maxMessagesReturned?: number;
+  warnings?: Warning[];
+};
+
+export type MessageFacetResponse = {
+  namespace?: string;
+  productionName?: string;
+  limit?: number;
+  totalCount?: number;
+  errorCount?: number;
+  hasMore?: boolean;
+  sourceConfigNames?: string[];
+  targetConfigNames?: string[];
+  messageBodyClassNames?: string[];
+  sessionIds?: string[];
+  componentNames?: string[];
+  runtimeMessageAnalysisEnabled?: boolean;
+  warnings?: Warning[];
+};
+
+export type MessageDetailResponse = {
+  namespace?: string;
+  messageId?: number;
+  message?: MessageHeader;
+  payloadReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  warnings?: Warning[];
+};
+
+export type TraceStep = {
+  sequence?: number;
+  messageId?: number;
+  sessionId?: number;
+  timeCreated?: string;
+  timeProcessed?: string;
+  source?: string;
+  target?: string;
+  messageBodyClassName?: string;
+  status?: string;
+  isError?: boolean;
+  invocation?: string;
+  correspondingMessageId?: number;
+  payloadReturned?: boolean;
+  explanation?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type TraceOverview = {
+  messageId?: number;
+  sessionId?: number;
+  stepCount?: number;
+  errorCount?: number;
+  firstSeen?: string;
+  lastSeen?: string;
+  origin?: string;
+  finalTarget?: string;
+  path?: string;
+  participants?: string[];
+};
+
+export type TraceExplanation = {
+  messageId?: number;
+  sessionId?: number;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type MessageTraceResponse = {
+  namespace?: string;
+  messageId?: number;
+  sessionId?: number;
+  selectedMessage?: MessageHeader;
+  summary?: string;
+  traceOverview?: TraceOverview;
+  traceExplanation?: TraceExplanation;
+  steps?: TraceStep[];
+  stepCount?: number;
+  maxTraceDepth?: number;
+  payloadReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+  confidence?: Confidence;
 };
