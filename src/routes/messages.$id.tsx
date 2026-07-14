@@ -7,6 +7,7 @@ import type {
   MessageDetailResponse,
   MessageTraceResponse,
   MessagePayloadMetadataResponse,
+  MessageExplanationResponse,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
