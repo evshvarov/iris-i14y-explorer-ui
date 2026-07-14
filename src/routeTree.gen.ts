@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProductionsRouteImport } from './routes/productions'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as IndexRouteImport } from './routes/index'
@@ -27,6 +28,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ProductionsRoute = ProductionsRouteImport.update({
   id: '/productions',
   path: '/productions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthRoute = HealthRouteImport.update({
@@ -50,9 +56,9 @@ const ProductionsIndexRoute = ProductionsIndexRouteImport.update({
   getParentRoute: () => ProductionsRoute,
 } as any)
 const MessagesIndexRoute = MessagesIndexRouteImport.update({
-  id: '/messages/',
-  path: '/messages/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => MessagesRoute,
 } as any)
 const ProductionsNameRoute = ProductionsNameRouteImport.update({
   id: '/$name',
@@ -60,15 +66,16 @@ const ProductionsNameRoute = ProductionsNameRouteImport.update({
   getParentRoute: () => ProductionsRoute,
 } as any)
 const MessagesIdRoute = MessagesIdRouteImport.update({
-  id: '/messages/$id',
-  path: '/messages/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MessagesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
@@ -91,6 +98,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
@@ -104,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api-reference'
     | '/health'
+    | '/messages'
     | '/productions'
     | '/settings'
     | '/messages/$id'
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api-reference'
     | '/health'
+    | '/messages'
     | '/productions'
     | '/settings'
     | '/messages/$id'
@@ -137,10 +147,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiReferenceRoute: typeof ApiReferenceRoute
   HealthRoute: typeof HealthRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   ProductionsRoute: typeof ProductionsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
-  MessagesIdRoute: typeof MessagesIdRoute
-  MessagesIndexRoute: typeof MessagesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -157,6 +166,13 @@ declare module '@tanstack/react-router' {
       path: '/productions'
       fullPath: '/productions'
       preLoaderRoute: typeof ProductionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/health': {
@@ -189,10 +205,10 @@ declare module '@tanstack/react-router' {
     }
     '/messages/': {
       id: '/messages/'
-      path: '/messages'
+      path: '/'
       fullPath: '/messages/'
       preLoaderRoute: typeof MessagesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MessagesRoute
     }
     '/productions/$name': {
       id: '/productions/$name'
@@ -203,13 +219,27 @@ declare module '@tanstack/react-router' {
     }
     '/messages/$id': {
       id: '/messages/$id'
-      path: '/messages/$id'
+      path: '/$id'
       fullPath: '/messages/$id'
       preLoaderRoute: typeof MessagesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MessagesRoute
     }
   }
 }
+
+interface MessagesRouteChildren {
+  MessagesIdRoute: typeof MessagesIdRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesIdRoute: MessagesIdRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
 
 interface ProductionsRouteChildren {
   ProductionsNameRoute: typeof ProductionsNameRoute
@@ -229,10 +259,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiReferenceRoute: ApiReferenceRoute,
   HealthRoute: HealthRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   ProductionsRoute: ProductionsRouteWithChildren,
   SettingsRoute: SettingsRoute,
-  MessagesIdRoute: MessagesIdRoute,
-  MessagesIndexRoute: MessagesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
