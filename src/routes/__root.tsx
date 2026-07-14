@@ -90,10 +90,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Discover and explain InterSystems IRIS interoperability productions in the current namespace.",
+          "Deterministic UI for the InterSystems IRIS Interoperability Production Explainer (i14y-aid) REST API.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "IRIS Interoperability Production Explainer" },
+      { name: "twitter:description", content: "Deterministic UI for the InterSystems IRIS Interoperability Production Explainer (i14y-aid) REST API." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1940fde9-637c-4b2e-9db8-03abbf131c73/id-preview-b9d2138e--75feb62f-6fe4-473f-8d20-7bdcf16e4dd8.lovable.app-1784017705338.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1940fde9-637c-4b2e-9db8-03abbf131c73/id-preview-b9d2138e--75feb62f-6fe4-473f-8d20-7bdcf16e4dd8.lovable.app-1784017705338.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
