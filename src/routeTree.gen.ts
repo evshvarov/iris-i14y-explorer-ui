@@ -16,6 +16,7 @@ import { Route as HealthRouteImport } from './routes/health'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductionsNameRouteImport } from './routes/productions.$name'
+import { Route as MessagesIdRouteImport } from './routes/messages.$id'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -52,23 +53,30 @@ const ProductionsNameRoute = ProductionsNameRouteImport.update({
   path: '/$name',
   getParentRoute: () => ProductionsRoute,
 } as any)
+const MessagesIdRoute = MessagesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MessagesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRoute
 }
 export interface FileRoutesById {
@@ -76,9 +84,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/productions'
     | '/settings'
+    | '/messages/$id'
     | '/productions/$name'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/productions'
     | '/settings'
+    | '/messages/$id'
     | '/productions/$name'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/productions'
     | '/settings'
+    | '/messages/$id'
     | '/productions/$name'
   fileRoutesById: FileRoutesById
 }
@@ -115,7 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiReferenceRoute: typeof ApiReferenceRoute
   HealthRoute: typeof HealthRoute
-  MessagesRoute: typeof MessagesRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   ProductionsRoute: typeof ProductionsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
 }
@@ -171,8 +183,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductionsNameRouteImport
       parentRoute: typeof ProductionsRoute
     }
+    '/messages/$id': {
+      id: '/messages/$id'
+      path: '/$id'
+      fullPath: '/messages/$id'
+      preLoaderRoute: typeof MessagesIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
   }
 }
+
+interface MessagesRouteChildren {
+  MessagesIdRoute: typeof MessagesIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesIdRoute: MessagesIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
 
 interface ProductionsRouteChildren {
   ProductionsNameRoute: typeof ProductionsNameRoute
@@ -190,20 +221,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiReferenceRoute: ApiReferenceRoute,
   HealthRoute: HealthRoute,
-  MessagesRoute: MessagesRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   ProductionsRoute: ProductionsRouteWithChildren,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
