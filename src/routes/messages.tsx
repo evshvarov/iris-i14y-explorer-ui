@@ -14,15 +14,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 
+const toStr = z.union([z.string(), z.number()]).transform((v) => String(v)).optional();
 const searchSchema = z.object({
-  productionName: z.string().optional(),
-  sourceConfigName: z.string().optional(),
-  targetConfigName: z.string().optional(),
-  messageBodyClassName: z.string().optional(),
-  sessionId: z.string().optional(),
-  errorsOnly: z.boolean().optional(),
-  limit: z.number().optional(),
-  offset: z.number().optional(),
+  productionName: toStr,
+  sourceConfigName: toStr,
+  targetConfigName: toStr,
+  messageBodyClassName: toStr,
+  sessionId: toStr,
+  errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
+  limit: z.coerce.number().optional(),
+  offset: z.coerce.number().optional(),
 });
 
 export const Route = createFileRoute("/messages")({
