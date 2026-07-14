@@ -234,6 +234,18 @@ function ProductionDetailPage() {
             </section>
           </TabsContent>
 
+          <TabsContent value="graph" className="pt-6 space-y-6">
+            {graph.isLoading ? (
+              <Skeleton className="h-40 rounded-lg" />
+            ) : graph.error ? (
+              <ErrorPanel error={graph.error as Error} label="graph" />
+            ) : (
+              <GraphView data={graph.data} productionName={name} />
+            )}
+          </TabsContent>
+
+
+
           <TabsContent value="analysis" className="pt-6 space-y-8">
             {analysis.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
