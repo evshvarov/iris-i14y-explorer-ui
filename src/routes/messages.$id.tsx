@@ -40,6 +40,13 @@ function MessageDetailPage() {
     retry: 0,
   });
 
+  const explain = useQuery<MessageExplanationResponse>({
+    queryKey: ["message", id, "explanation"],
+    queryFn: () =>
+      apiFetch<MessageExplanationResponse>(`/messages/${encodeURIComponent(id)}/explanation`),
+    retry: 0,
+  });
+
   const m = detail.data?.message;
   const overview = trace.data?.traceOverview;
   const explanation = trace.data?.traceExplanation;
