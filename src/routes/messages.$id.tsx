@@ -7,6 +7,7 @@ import type {
   MessageDetailResponse,
   MessageTraceResponse,
   MessagePayloadMetadataResponse,
+  MessageExplanationResponse,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +37,13 @@ function MessageDetailPage() {
     queryKey: ["message", id, "payload"],
     queryFn: () =>
       apiFetch<MessagePayloadMetadataResponse>(`/messages/${encodeURIComponent(id)}/payload`),
+    retry: 0,
+  });
+
+  const explain = useQuery<MessageExplanationResponse>({
+    queryKey: ["message", id, "explanation"],
+    queryFn: () =>
+      apiFetch<MessageExplanationResponse>(`/messages/${encodeURIComponent(id)}/explanation`),
     retry: 0,
   });
 
@@ -92,7 +100,36 @@ function MessageDetailPage() {
 
 
 
-        {/* Summary + explanation */}
+        {/* Standalone deterministic explanation */}
+        {explain.data?.explanation?.text || explain.data?.summary ? (
+          <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 border-l-2 border-iris-brand">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                Message explanation
+              </h2>
+              <div className="flex items-center gap-2">
+                {typeof explain.data.stepCount === "number" ? (
+                  <span className="text-[10px] font-mono uppercase text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                    {explain.data.stepCount} steps
+                  </span>
+                ) : null}
+                <ConfidenceBadge confidence={explain.data.confidence ?? explain.data.explanation?.confidence} />
+              </div>
+            </div>
+            {explain.data.summary ? (
+              <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty mb-2">
+                {explain.data.summary}
+              </p>
+            ) : null}
+            {explain.data.explanation?.text ? (
+              <p className="text-sm text-foreground/80 whitespace-pre-wrap text-pretty">
+                {explain.data.explanation.text}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+
+        {/* Summary + trace explanation */}
         {trace.isLoading ? (
           <Skeleton className="h-32 rounded-lg" />
         ) : trace.error ? (
