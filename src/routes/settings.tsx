@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -8,10 +9,17 @@ import {
   getApiConfig,
   setApiConfig,
 } from "@/lib/api-config";
+import type {
+  AnalysisSettings,
+  SettingsResponse,
+  SettingsUpdateResponse,
+} from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — IRIS Explainer" }] }),
