@@ -82,6 +82,12 @@ function ProductionDetailPage() {
     retry: 0,
   });
 
+  const graph = useQuery<ProductionGraphResponse>({
+    queryKey: ["production", name, "graph"],
+    queryFn: () => apiFetch<ProductionGraphResponse>(`/productions/${encoded}/graph`),
+    retry: 0,
+  });
+
   const components = comps.data?.items ?? comps.data?.components ?? [];
   const services = components.filter((c) => categorize(c) === "service");
   const processes = components.filter((c) => categorize(c) === "process");
