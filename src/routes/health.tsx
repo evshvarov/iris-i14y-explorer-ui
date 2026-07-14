@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 import { apiFetch, getApiConfig } from "@/lib/api-config";
-import type { HealthResponse } from "@/lib/api-types";
+import type { HealthResponse, CapabilitiesResponse } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -21,8 +21,18 @@ function HealthPage() {
     retry: 0,
   });
 
+  const caps = useQuery<CapabilitiesResponse>({
+    queryKey: ["capabilities"],
+    queryFn: () => apiFetch<CapabilitiesResponse>("/capabilities"),
+    retry: 0,
+  });
+
   const cfg = getApiConfig();
   const ok = !!data && !error;
+
+  const capEntries: [string, unknown][] = caps.data
+    ? Object.entries(caps.data).filter(([k]) => k !== "namespace")
+    : [];
 
   return (
     <>
@@ -38,11 +48,14 @@ function HealthPage() {
         }
         actions={
           <button
-            onClick={() => refetch()}
-            disabled={isFetching}
+            onClick={() => {
+              refetch();
+              caps.refetch();
+            }}
+            disabled={isFetching || caps.isFetching}
             className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors disabled:opacity-50"
           >
-            {isFetching ? "Refreshing…" : "Refresh"}
+            {isFetching || caps.isFetching ? "Refreshing…" : "Refresh"}
           </button>
         }
       />
@@ -54,31 +67,38 @@ function HealthPage() {
           <MetaCard label="Version" value={String(data?.version ?? "—")} mono />
           <MetaCard
             label="Namespace"
-            value={String(data?.namespace ?? "—")}
+            value={String(data?.namespace ?? caps.data?.namespace ?? "—")}
             mono
             accent
           />
         </section>
 
         <section>
-          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-            Capabilities
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              Analysis capabilities
+            </h2>
+            {caps.data?.openapiVersion ? (
+              <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                OpenAPI · {caps.data.openapiVersion}
+              </span>
+            ) : null}
+          </div>
 
-          {isLoading ? (
+          {caps.isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-14 rounded-lg" />
               ))}
             </div>
-          ) : error ? (
-            <ErrorPanel error={error as Error} />
+          ) : caps.error ? (
+            <ErrorPanel error={caps.error as Error} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Object.entries(data?.capabilities ?? {}).map(([k, v]) => (
+              {capEntries.map(([k, v]) => (
                 <CapabilityRow key={k} name={k} value={v} />
               ))}
-              {!data?.capabilities || Object.keys(data.capabilities).length === 0 ? (
+              {capEntries.length === 0 ? (
                 <div className="col-span-full text-sm text-muted-foreground font-mono">
                   No capabilities reported.
                 </div>
@@ -87,13 +107,26 @@ function HealthPage() {
           )}
         </section>
 
+        {data?.capabilities && Object.keys(data.capabilities).length > 0 ? (
+          <section>
+            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+              Health capability flags
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(data.capabilities).map(([k, v]) => (
+                <CapabilityRow key={k} name={k} value={v} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {data ? (
           <section>
             <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Raw Response
             </h2>
             <pre className="text-[11px] font-mono bg-card ring-1 ring-black/5 rounded-lg p-4 overflow-auto max-h-96">
-              {JSON.stringify(data, null, 2)}
+              {JSON.stringify({ health: data, capabilities: caps.data }, null, 2)}
             </pre>
           </section>
         ) : null}

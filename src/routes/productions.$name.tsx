@@ -12,6 +12,7 @@ import type {
   ProductionSummaryResponse,
   ProductionRuntimeResponse,
   ProductionActionResponse,
+  ProductionGraphResponse,
   Connection,
   ExternalSystem,
   AnalysisArtifact,
@@ -78,6 +79,12 @@ function ProductionDetailPage() {
   const analysis = useQuery<ProductionAnalysisResponse>({
     queryKey: ["production", name, "analysis"],
     queryFn: () => apiFetch<ProductionAnalysisResponse>(`/productions/${encoded}/analysis`),
+    retry: 0,
+  });
+
+  const graph = useQuery<ProductionGraphResponse>({
+    queryKey: ["production", name, "graph"],
+    queryFn: () => apiFetch<ProductionGraphResponse>(`/productions/${encoded}/graph`),
     retry: 0,
   });
 
@@ -196,6 +203,7 @@ function ProductionDetailPage() {
         <Tabs defaultValue="overview">
           <TabsList>
             <TabsTrigger value="overview">Schematic</TabsTrigger>
+            <TabsTrigger value="graph">Graph</TabsTrigger>
             <TabsTrigger value="analysis">Analysis</TabsTrigger>
             <TabsTrigger value="rules">Rules & Transforms</TabsTrigger>
             <TabsTrigger value="bpl">Processes</TabsTrigger>
@@ -225,6 +233,18 @@ function ProductionDetailPage() {
               ) : null}
             </section>
           </TabsContent>
+
+          <TabsContent value="graph" className="pt-6 space-y-6">
+            {graph.isLoading ? (
+              <Skeleton className="h-40 rounded-lg" />
+            ) : graph.error ? (
+              <ErrorPanel error={graph.error as Error} label="graph" />
+            ) : (
+              <GraphView data={graph.data} productionName={name} />
+            )}
+          </TabsContent>
+
+
 
           <TabsContent value="analysis" className="pt-6 space-y-8">
             {analysis.isLoading ? (
@@ -709,5 +729,96 @@ function ErrorPanel({ error, label }: { error: Error; label: string }) {
       <div className="text-sm font-semibold text-destructive mb-1">Failed to load {label}</div>
       <p className="text-xs font-mono text-destructive/80 break-all">{error.message}</p>
     </div>
+  );
+}
+
+function GraphView({
+  data,
+  productionName,
+}: {
+  data?: ProductionGraphResponse;
+  productionName: string;
+}) {
+  const nodes = data?.nodes ?? [];
+  const edges = data?.edges ?? [];
+  const nodeById = new Map(nodes.map((n) => [n.id ?? n.label ?? "", n]));
+
+  return (
+    <>
+      <SectionShell title="Nodes" count={nodes.length}>
+        {nodes.length === 0 ? (
+          <Empty>No graph nodes.</Empty>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {nodes.map((n) => (
+              <Link
+                key={n.id ?? n.label}
+                to="/productions/$name/components/$componentName"
+                params={{
+                  name: productionName,
+                  componentName: n.label ?? n.id ?? "",
+                }}
+                className="bg-card ring-1 ring-black/5 rounded-lg p-3 hover:ring-iris-brand/40 transition-all block"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[9px] font-mono uppercase text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    {n.type ?? "node"}
+                  </span>
+                  <ConfidenceBadge confidence={n.confidence} />
+                </div>
+                <div className="text-sm font-semibold truncate">{n.label ?? n.id}</div>
+                <div className="text-[10px] font-mono text-muted-foreground truncate">
+                  {n.className ?? "—"}
+                </div>
+                {n.protocol || n.adapterClass ? (
+                  <div className="mt-1 text-[10px] font-mono text-muted-foreground truncate">
+                    {n.protocol ? `proto: ${n.protocol}` : ""}
+                    {n.protocol && n.adapterClass ? " · " : ""}
+                    {n.adapterClass ? `adapter: ${n.adapterClass}` : ""}
+                  </div>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        )}
+      </SectionShell>
+
+      <SectionShell title="Edges" count={edges.length}>
+        {edges.length === 0 ? (
+          <Empty>No edges.</Empty>
+        ) : (
+          <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-[1fr_auto_1fr_auto_auto_auto] items-center gap-3 px-4 py-2 border-b bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              <span>Source</span><span></span><span>Target</span>
+              <span>Rel</span><span>Kind</span><span>Conf</span>
+            </div>
+            <ul className="divide-y">
+              {edges.map((e, i) => (
+                <li
+                  key={e.id ?? i}
+                  className="grid grid-cols-[1fr_auto_1fr_auto_auto_auto] items-center gap-3 px-4 py-2 text-xs"
+                >
+                  <span className="font-mono truncate" title={e.source}>
+                    {nodeById.get(e.source ?? "")?.label ?? e.source}
+                  </span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="font-mono truncate" title={e.target}>
+                    {nodeById.get(e.target ?? "")?.label ?? e.target}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                    {e.relationship ?? "—"}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase text-muted-foreground">
+                    {e.kind ?? "—"}
+                    {e.ruleName ? ` · ${e.ruleName}` : ""}
+                  </span>
+                  <ConfidenceBadge confidence={e.confidence} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </SectionShell>
+    </>
   );
 }

@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Lock } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
-import type { MessageDetailResponse, MessageTraceResponse } from "@/lib/api-types";
+import type {
+  MessageDetailResponse,
+  MessageTraceResponse,
+  MessagePayloadMetadataResponse,
+} from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
@@ -25,6 +29,13 @@ function MessageDetailPage() {
   const trace = useQuery<MessageTraceResponse>({
     queryKey: ["message", id, "trace"],
     queryFn: () => apiFetch<MessageTraceResponse>(`/messages/${encodeURIComponent(id)}/trace`),
+    retry: 0,
+  });
+
+  const payload = useQuery<MessagePayloadMetadataResponse>({
+    queryKey: ["message", id, "payload"],
+    queryFn: () =>
+      apiFetch<MessagePayloadMetadataResponse>(`/messages/${encodeURIComponent(id)}/payload`),
     retry: 0,
   });
 
@@ -71,6 +82,15 @@ function MessageDetailPage() {
             <Meta label="Corresponds to" value={m.correspondingMessageId ? `#${m.correspondingMessageId}` : "—"} mono />
           </section>
         ) : null}
+
+        {/* Payload metadata */}
+        {payload.isLoading ? (
+          <Skeleton className="h-24 rounded-lg" />
+        ) : payload.data ? (
+          <PayloadPanel data={payload.data} />
+        ) : null}
+
+
 
         {/* Summary + explanation */}
         {trace.isLoading ? (
@@ -217,5 +237,76 @@ function ErrorPanel({ error, label }: { error: Error; label: string }) {
       <div className="text-sm font-semibold text-destructive mb-1">Failed to load {label}</div>
       <p className="text-xs font-mono text-destructive/80 break-all">{error.message}</p>
     </div>
+  );
+}
+
+function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
+  const meta = data.metadata;
+  const fields = meta?.fields ?? [];
+  const restricted = data.restricted || meta?.restricted;
+  const supported = data.payloadInspectionSupported ?? meta?.payloadInspectionSupported;
+  const enabled = data.payloadInspectionEnabled ?? meta?.payloadInspectionEnabled;
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          Payload metadata
+        </h2>
+        <div className="flex items-center gap-2">
+          {restricted ? (
+            <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-status-inferred">
+              <Lock className="size-3" /> restricted
+            </span>
+          ) : null}
+          <span className="text-[10px] font-mono uppercase text-muted-foreground">
+            {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+        <Meta label="Body class" value={data.messageBodyClassName ?? "—"} mono />
+        <Meta label="Body id" value={data.messageBodyId ?? "—"} mono />
+        <Meta
+          label="Body available"
+          value={data.bodyReferenceAvailable ? "Yes" : "No"}
+        />
+        <Meta label="Fields" value={String(fields.length)} />
+      </div>
+
+      {data.restrictionReason ? (
+        <p className="text-[11px] font-mono text-status-inferred mb-3">
+          {data.restrictionReason}
+        </p>
+      ) : null}
+
+      {fields.length > 0 ? (
+        <div className="ring-1 ring-black/5 rounded overflow-hidden">
+          <ul className="divide-y bg-background/40">
+            {fields.map((f, i) => {
+              const name = String(
+                (f as Record<string, unknown>).name ??
+                  (f as Record<string, unknown>).property ??
+                  `field_${i}`,
+              );
+              const type = (f as Record<string, unknown>).type;
+              return (
+                <li key={i} className="px-3 py-1.5 text-[11px] font-mono flex justify-between gap-3">
+                  <span className="truncate">{name}</span>
+                  <span className="text-muted-foreground truncate">
+                    {type ? String(type) : ""}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-[11px] font-mono text-muted-foreground">
+          No field metadata returned.
+        </p>
+      )}
+    </section>
   );
 }
