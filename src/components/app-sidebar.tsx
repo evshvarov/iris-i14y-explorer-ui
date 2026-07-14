@@ -31,7 +31,6 @@ const exploration = [
     title: "Message Explainer",
     url: "/messages",
     icon: MessageSquareText,
-    soon: true,
   },
 ];
 

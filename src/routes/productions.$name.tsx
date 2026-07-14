@@ -1,16 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText } from "lucide-react";
+import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
   ComponentListResponse,
   Component,
   ProductionDetailResponse,
+  ProductionAnalysisResponse,
+  ProductionSummaryResponse,
+  ProductionRuntimeResponse,
+  ProductionActionResponse,
+  Connection,
+  ExternalSystem,
+  AnalysisArtifact,
+  RuleDetail,
+  TransformationDetail,
+  BusinessProcessDetail,
+  ComponentExplanation,
+  MessageType,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge, ConfidenceDot } from "@/components/confidence-badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/productions/$name")({
   head: ({ params }) => ({
@@ -20,7 +35,7 @@ export const Route = createFileRoute("/productions/$name")({
 });
 
 function categorize(c: Component): "service" | "process" | "operation" | "unknown" {
-  const raw = (c.category ?? "").toLowerCase();
+  const raw = ((c.category ?? c.type) ?? "").toLowerCase();
   if (raw.includes("service")) return "service";
   if (raw.includes("process")) return "process";
   if (raw.includes("operation")) return "operation";
@@ -33,26 +48,40 @@ function categorize(c: Component): "service" | "process" | "operation" | "unknow
 
 function ProductionDetailPage() {
   const { name } = Route.useParams();
+  const encoded = encodeURIComponent(name);
+  const qc = useQueryClient();
 
   const meta = useQuery<ProductionDetailResponse>({
     queryKey: ["production", name],
-    queryFn: () =>
-      apiFetch<ProductionDetailResponse>(
-        `/productions/${encodeURIComponent(name)}`,
-      ),
+    queryFn: () => apiFetch<ProductionDetailResponse>(`/productions/${encoded}`),
     retry: 0,
   });
 
   const comps = useQuery<ComponentListResponse>({
     queryKey: ["production", name, "components"],
-    queryFn: () =>
-      apiFetch<ComponentListResponse>(
-        `/productions/${encodeURIComponent(name)}/components`,
-      ),
+    queryFn: () => apiFetch<ComponentListResponse>(`/productions/${encoded}/components`),
     retry: 0,
   });
 
-  const components = comps.data?.components ?? [];
+  const summary = useQuery<ProductionSummaryResponse>({
+    queryKey: ["production", name, "summary"],
+    queryFn: () => apiFetch<ProductionSummaryResponse>(`/productions/${encoded}/summary`),
+    retry: 0,
+  });
+
+  const status = useQuery<ProductionRuntimeResponse>({
+    queryKey: ["production", name, "status"],
+    queryFn: () => apiFetch<ProductionRuntimeResponse>(`/productions/${encoded}/status`),
+    retry: 0,
+  });
+
+  const analysis = useQuery<ProductionAnalysisResponse>({
+    queryKey: ["production", name, "analysis"],
+    queryFn: () => apiFetch<ProductionAnalysisResponse>(`/productions/${encoded}/analysis`),
+    retry: 0,
+  });
+
+  const components = comps.data?.items ?? comps.data?.components ?? [];
   const services = components.filter((c) => categorize(c) === "service");
   const processes = components.filter((c) => categorize(c) === "process");
   const operations = components.filter((c) => categorize(c) === "operation");
@@ -61,40 +90,82 @@ function ProductionDetailPage() {
   const enabled = components.filter((c) => c.enabled !== false).length;
   const disabled = components.length - enabled;
 
+  const runtime = status.data?.runtime ?? meta.data?.runtime;
+  const isRunning = Boolean(status.data?.isRunning ?? meta.data?.isRunning);
+  const runtimeState =
+    status.data?.runtimeState ?? runtime?.stateLabel ?? meta.data?.runtimeState ?? "unknown";
+
+  const invalidateRuntime = () => {
+    qc.invalidateQueries({ queryKey: ["production", name, "status"] });
+    qc.invalidateQueries({ queryKey: ["production", name] });
+    qc.invalidateQueries({ queryKey: ["productions"] });
+  };
+
+  const startMut = useMutation({
+    mutationFn: () =>
+      apiFetch<ProductionActionResponse>(`/productions/${encoded}/start`, { method: "POST" }),
+    onSuccess: (r) => {
+      toast.success(`Start ${r.changed ? "issued" : "no-op"} — ${r.runtime?.stateLabel ?? ""}`);
+      invalidateRuntime();
+    },
+    onError: (e: Error) => toast.error(`Start failed: ${e.message}`),
+  });
+
+  const stopMut = useMutation({
+    mutationFn: () =>
+      apiFetch<ProductionActionResponse>(`/productions/${encoded}/stop`, { method: "POST" }),
+    onSuccess: (r) => {
+      toast.success(`Stop ${r.changed ? "issued" : "no-op"} — ${r.runtime?.stateLabel ?? ""}`);
+      invalidateRuntime();
+    },
+    onError: (e: Error) => toast.error(`Stop failed: ${e.message}`),
+  });
+
   return (
     <>
       <PageHeader
         crumbs={[{ label: "Productions" }]}
         title={name}
+        status={{ label: runtimeState, tone: isRunning ? "confirmed" : "unknown" }}
         actions={
-          <Link
-            to="/productions"
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="size-3.5" /> All productions
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => startMut.mutate()}
+              disabled={startMut.isPending || isRunning}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-status-confirmed/30 bg-status-confirmed/10 text-status-confirmed hover:bg-status-confirmed/20 transition-colors disabled:opacity-40"
+            >
+              <Play className="size-3.5" /> Start
+            </button>
+            <button
+              onClick={() => stopMut.mutate()}
+              disabled={stopMut.isPending || !isRunning}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
+            >
+              <Square className="size-3.5" /> Stop
+            </button>
+            <button
+              onClick={() => invalidateRuntime()}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
+            >
+              <RefreshCw className="size-3.5" />
+            </button>
+            <Link
+              to="/productions"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
+            >
+              <ArrowLeft className="size-3.5" /> All
+            </Link>
+          </div>
         }
       />
 
-      <div className="p-8 space-y-10">
-        {/* Metadata strip */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="p-8 space-y-8">
+        <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <MetaCard label="Namespace" value={meta.data?.namespace ?? "—"} mono />
-          <MetaCard
-            label="Components"
-            value={
-              comps.isLoading
-                ? "…"
-                : `${components.length} total`
-            }
-          />
-          <MetaCard
-            label="Enabled / Disabled"
-            value={
-              comps.isLoading ? "…" : `${enabled} / ${disabled}`
-            }
-          />
-          <MetaCard accent label="Fact Provenance">
+          <MetaCard label="Components" value={comps.isLoading ? "…" : `${components.length}`} />
+          <MetaCard label="Enabled / Disabled" value={comps.isLoading ? "…" : `${enabled} / ${disabled}`} />
+          <MetaCard label="Current?" value={runtime?.isCurrent ? "Yes" : "No"} />
+          <MetaCard accent label="Provenance">
             <div className="flex gap-1.5 mt-1">
               <ConfidenceDot confidence="confirmed" title="Confirmed" />
               <ConfidenceDot confidence="observed" title="Observed" />
@@ -105,62 +176,130 @@ function ProductionDetailPage() {
         </section>
 
         {meta.data?.description ? (
-          <p className="text-sm text-muted-foreground max-w-3xl">
-            {meta.data.description}
-          </p>
+          <p className="text-sm text-muted-foreground max-w-3xl">{meta.data.description}</p>
         ) : null}
 
-        {/* Error state */}
-        {comps.error ? (
-          <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5">
-            <div className="text-sm font-semibold text-destructive mb-1">
-              Failed to load components
+        {summary.data?.summary ? (
+          <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 max-w-4xl">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                Deterministic summary
+              </h2>
+              <ConfidenceBadge confidence={summary.data.confidence} />
             </div>
-            <p className="text-xs font-mono text-destructive/80 break-all">
-              {(comps.error as Error).message}
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+              {summary.data.summary}
             </p>
-          </div>
+          </section>
         ) : null}
 
-        {/* Schematic */}
-        <section className="relative">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 relative">
-            {/* Connection rails, decorative */}
-            <div className="hidden lg:block absolute top-32 left-[30%] right-[65%] h-px bg-border -z-10" />
-            <div className="hidden lg:block absolute top-32 left-[63%] right-[32%] h-px bg-border -z-10" />
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Schematic</TabsTrigger>
+            <TabsTrigger value="analysis">Analysis</TabsTrigger>
+            <TabsTrigger value="rules">Rules & Transforms</TabsTrigger>
+            <TabsTrigger value="bpl">Processes</TabsTrigger>
+            <TabsTrigger value="explanations">Explanations</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+          </TabsList>
 
-            <Column
-              label="Business Services"
-              loading={comps.isLoading}
-              items={services}
-              accentBorder="border-status-observed"
-            />
-            <Column
-              label="Business Processes"
-              loading={comps.isLoading}
-              items={processes}
-              accentBorder="border-iris-brand"
-              featured
-            />
-            <Column
-              label="Business Operations"
-              loading={comps.isLoading}
-              items={operations}
-              accentBorder="border-status-inferred"
-            />
-          </div>
-        </section>
+          <TabsContent value="overview" className="pt-6">
+            {comps.error ? <ErrorPanel error={comps.error as Error} label="components" /> : null}
+            <section className="relative">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12 relative">
+                <div className="hidden lg:block absolute top-32 left-[30%] right-[65%] h-px bg-border -z-10" />
+                <div className="hidden lg:block absolute top-32 left-[63%] right-[32%] h-px bg-border -z-10" />
+                <Column label="Business Services" loading={comps.isLoading} items={services} accentBorder="border-status-observed" />
+                <Column label="Business Processes" loading={comps.isLoading} items={processes} accentBorder="border-iris-brand" featured />
+                <Column label="Business Operations" loading={comps.isLoading} items={operations} accentBorder="border-status-inferred" />
+              </div>
+              {unknowns.length > 0 ? (
+                <div className="mt-8">
+                  <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+                    Unclassified
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {unknowns.map((c) => <ComponentCard key={c.name} component={c} />)}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          </TabsContent>
 
-        {unknowns.length > 0 ? (
-          <section>
-            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Unclassified components
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unknowns.map((c) => (
-                <ComponentCard key={c.name} component={c} />
-              ))}
+          <TabsContent value="analysis" className="pt-6 space-y-8">
+            {analysis.isLoading ? (
+              <Skeleton className="h-40 rounded-lg" />
+            ) : analysis.error ? (
+              <ErrorPanel error={analysis.error as Error} label="analysis" />
+            ) : (
+              <>
+                <ConnectionsSection connections={analysis.data?.connections ?? []} />
+                <ExternalSystemsSection systems={analysis.data?.externalSystems ?? []} />
+                <ArtifactsSection artifacts={analysis.data?.artifacts ?? []} />
+                <MessageTypesSection types={analysis.data?.messageTypes ?? []} />
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="rules" className="pt-6 space-y-8">
+            {analysis.isLoading ? (
+              <Skeleton className="h-40 rounded-lg" />
+            ) : (
+              <>
+                <RulesSection rules={analysis.data?.rules ?? []} />
+                <TransformsSection transforms={analysis.data?.transformations ?? []} />
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="bpl" className="pt-6">
+            {analysis.isLoading ? (
+              <Skeleton className="h-40 rounded-lg" />
+            ) : (
+              <ProcessesSection processes={analysis.data?.businessProcesses ?? []} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="explanations" className="pt-6">
+            {analysis.isLoading ? (
+              <Skeleton className="h-40 rounded-lg" />
+            ) : (
+              <ExplanationsSection explanations={analysis.data?.componentExplanations ?? []} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="messages" className="pt-6">
+            <div className="bg-card ring-1 ring-black/5 rounded-lg p-6 max-w-2xl">
+              <div className="size-10 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center mb-3">
+                <MessageSquareText className="size-5" />
+              </div>
+              <h3 className="text-sm font-semibold mb-1">Runtime messages for this production</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Open the message explorer prefiltered to <span className="font-mono text-foreground/80">{name}</span>.
+              </p>
+              <Link
+                to="/messages"
+                search={{ productionName: name } as never}
+                className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ring-1 ring-iris-brand/30 bg-iris-brand/10 text-iris-brand hover:bg-iris-brand/20 transition-colors"
+              >
+                Open in Message Explainer →
+              </Link>
             </div>
+          </TabsContent>
+        </Tabs>
+
+        {analysis.data?.warnings && analysis.data.warnings.length > 0 ? (
+          <section>
+            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+              Warnings
+            </h3>
+            <ul className="space-y-1">
+              {analysis.data.warnings.map((w, i) => (
+                <li key={i} className="text-[11px] font-mono text-status-inferred">
+                  [{w.code}] {w.message}
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
       </div>
@@ -168,18 +307,310 @@ function ProductionDetailPage() {
   );
 }
 
+function ConnectionsSection({ connections }: { connections: Connection[] }) {
+  return (
+    <SectionShell title="Connections" count={connections.length}>
+      {connections.length === 0 ? (
+        <Empty>No connections extracted.</Empty>
+      ) : (
+        <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+          <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2 border-b bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+            <span>From</span><span></span><span>To</span><span>Kind</span><span>Conf</span>
+          </div>
+          <ul className="divide-y">
+            {connections.map((c, i) => (
+              <li key={i} className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2 text-xs">
+                <span className="font-mono truncate">{c.from}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="font-mono truncate">{c.to}</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded font-mono uppercase text-muted-foreground">
+                  {c.kind ?? "—"}
+                  {c.ruleName ? ` · ${c.ruleName}` : ""}
+                </span>
+                <ConfidenceBadge confidence={c.confidence} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function ExternalSystemsSection({ systems }: { systems: ExternalSystem[] }) {
+  return (
+    <SectionShell title="External systems" count={systems.length}>
+      {systems.length === 0 ? (
+        <Empty>No external endpoints inferred.</Empty>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {systems.map((s, i) => (
+            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{s.component}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase">
+                    {s.componentType} · {s.kind}
+                  </div>
+                </div>
+                <ConfidenceBadge confidence={s.confidence} />
+              </div>
+              <div className="text-[11px] font-mono text-foreground/80 break-all">{s.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function ArtifactsSection({ artifacts }: { artifacts: AnalysisArtifact[] }) {
+  return (
+    <SectionShell title="Artifacts" count={artifacts.length}>
+      {artifacts.length === 0 ? (
+        <Empty>No artifacts.</Empty>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {artifacts.map((a, i) => (
+            <div key={i} className="bg-card ring-1 ring-black/5 rounded-md px-3 py-2 text-xs flex items-center gap-2">
+              <span className="text-[9px] font-mono uppercase text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                {a.kind}
+              </span>
+              <span className="font-mono">{a.name}</span>
+              {a.component ? <span className="text-muted-foreground">· {a.component}</span> : null}
+              <ConfidenceBadge confidence={a.confidence} />
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function MessageTypesSection({ types }: { types: MessageType[] }) {
+  return (
+    <SectionShell title="Message signatures" count={types.length}>
+      {types.length === 0 ? (
+        <Empty>No handler signatures found.</Empty>
+      ) : (
+        <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+          <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-3 px-4 py-2 border-b bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+            <span>Component</span><span>Method</span><span>Dir</span><span>Message class</span><span>Conf</span>
+          </div>
+          <ul className="divide-y">
+            {types.map((t, i) => (
+              <li key={i} className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-3 px-4 py-2 text-xs items-center">
+                <span className="font-mono truncate">{t.component}</span>
+                <span className="font-mono truncate text-muted-foreground">{t.method ?? "—"}</span>
+                <span className="text-[10px] uppercase font-mono bg-muted rounded px-1.5 py-0.5">{t.direction ?? "—"}</span>
+                <span className="font-mono truncate">{t.messageClass ?? "—"}</span>
+                <ConfidenceBadge confidence={t.confidence} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function RulesSection({ rules }: { rules: RuleDetail[] }) {
+  return (
+    <SectionShell title="Routing rules" count={rules.length}>
+      {rules.length === 0 ? (
+        <Empty>No accessible rule definitions.</Empty>
+      ) : (
+        <div className="space-y-3">
+          {rules.map((r, i) => (
+            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-sm font-semibold">{r.name}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground">{r.component}</div>
+                </div>
+                <ConfidenceBadge confidence={r.confidence} />
+              </div>
+              {(r.conditions ?? []).length > 0 ? (
+                <div className="space-y-2">
+                  {r.conditions!.map((c, j) => (
+                    <div key={j} className="border-l-2 border-iris-brand/40 pl-3 py-1">
+                      <div className="text-[11px] font-mono text-foreground/90">
+                        WHEN <span className="text-status-observed">{c.condition || "(default)"}</span>
+                      </div>
+                      {c.comment ? <div className="text-[10px] text-muted-foreground">{c.comment}</div> : null}
+                      {(c.sends ?? []).map((s, k) => (
+                        <div key={k} className="text-[11px] font-mono text-muted-foreground ml-4 mt-0.5">
+                          → {s.target}{s.transform ? ` via ${s.transform}` : ""}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {(r.sends ?? []).length > 0 ? (
+                <div className="mt-2 text-[11px] font-mono text-muted-foreground">
+                  Default sends: {r.sends!.map((s) => s.target).join(", ")}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function TransformsSection({ transforms }: { transforms: TransformationDetail[] }) {
+  return (
+    <SectionShell title="DTL transformations" count={transforms.length}>
+      {transforms.length === 0 ? (
+        <Empty>No DTL transformations found.</Empty>
+      ) : (
+        <div className="space-y-3">
+          {transforms.map((t, i) => (
+            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{t.name}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground truncate">
+                    {t.sourceClass ?? "?"} → {t.targetClass ?? "?"}{t.language ? ` · ${t.language}` : ""}
+                  </div>
+                </div>
+                <ConfidenceBadge confidence={t.confidence} />
+              </div>
+              {(t.assignments ?? []).length > 0 ? (
+                <details className="mt-2">
+                  <summary className="text-[11px] font-mono text-muted-foreground cursor-pointer hover:text-foreground">
+                    {t.assignments!.length} assignments
+                  </summary>
+                  <ul className="mt-2 space-y-1 border-l border-border pl-3">
+                    {t.assignments!.slice(0, 50).map((a, j) => (
+                      <li key={j} className="text-[10px] font-mono text-foreground/80">
+                        <span className="text-status-observed">{a.action ?? "set"}</span>{" "}
+                        {a.property} = <span className="text-muted-foreground">{a.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function ProcessesSection({ processes }: { processes: BusinessProcessDetail[] }) {
+  return (
+    <SectionShell title="BPL processes" count={processes.length}>
+      {processes.length === 0 ? (
+        <Empty>No BPL definitions accessible.</Empty>
+      ) : (
+        <div className="space-y-3">
+          {processes.map((p, i) => (
+            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{p.name}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground truncate">{p.component}</div>
+                </div>
+                <ConfidenceBadge confidence={p.confidence} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] font-mono">
+                <Kv k="Request" v={p.requestClass} />
+                <Kv k="Response" v={p.responseClass} />
+                <Kv k="Context" v={p.contextClass} />
+              </div>
+              {(p.calls ?? []).length > 0 ? (
+                <div className="mt-3 border-t pt-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+                    Calls
+                  </div>
+                  <ul className="space-y-0.5">
+                    {p.calls!.map((c, j) => (
+                      <li key={j} className="text-[11px] font-mono text-foreground/80">
+                        → {c.target ?? "?"}{" "}
+                        <span className="text-muted-foreground">
+                          {c.async ? "async" : "sync"}{c.timeout ? ` · timeout=${c.timeout}` : ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function ExplanationsSection({ explanations }: { explanations: ComponentExplanation[] }) {
+  return (
+    <SectionShell title="Component explanations" count={explanations.length}>
+      {explanations.length === 0 ? (
+        <Empty>No explanations available.</Empty>
+      ) : (
+        <div className="space-y-3">
+          {explanations.map((e, i) => (
+            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{e.component}</div>
+                  <div className="text-[10px] font-mono uppercase text-muted-foreground">{e.componentType}</div>
+                </div>
+                <ConfidenceBadge confidence={e.confidence} />
+              </div>
+              <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">{e.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+function SectionShell({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="flex items-center gap-3 mb-3">
+        <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          {title}
+        </h3>
+        {count !== undefined ? (
+          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+            {count}
+          </span>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[11px] text-muted-foreground font-mono border border-dashed rounded-lg p-4">
+      {children}
+    </div>
+  );
+}
+
+function Kv({ k, v }: { k: string; v?: string }) {
+  return (
+    <div>
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{k}</div>
+      <div className="truncate">{v || "—"}</div>
+    </div>
+  );
+}
+
 function Column({
-  label,
-  loading,
-  items,
-  accentBorder,
-  featured,
+  label, loading, items, accentBorder, featured,
 }: {
-  label: string;
-  loading: boolean;
-  items: Component[];
-  accentBorder: string;
-  featured?: boolean;
+  label: string; loading: boolean; items: Component[]; accentBorder: string; featured?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -197,33 +628,16 @@ function Column({
         </div>
       ) : (
         items.map((c) => (
-          <ComponentCard
-            key={c.name}
-            component={c}
-            highlightBorder={featured ? accentBorder : undefined}
-          />
+          <ComponentCard key={c.name} component={c} highlightBorder={featured ? accentBorder : undefined} />
         ))
       )}
     </div>
   );
 }
 
-function ComponentCard({
-  component,
-  highlightBorder,
-}: {
-  component: Component;
-  highlightBorder?: string;
-}) {
-  const {
-    name,
-    className,
-    adapter,
-    protocol,
-    targets,
-    enabled = true,
-    confidence,
-  } = component;
+function ComponentCard({ component, highlightBorder }: { component: Component; highlightBorder?: string }) {
+  const { name, className, adapterClass, adapter, protocol, targets, enabled = true, confidence } = component;
+  const adapterLabel = adapterClass ?? adapter;
   return (
     <div
       className={`bg-card ring-1 ring-black/5 rounded-[10px] p-5 ${
@@ -232,107 +646,68 @@ function ComponentCard({
     >
       <div className="flex items-start justify-between mb-3 gap-3">
         <div className="min-w-0">
-          <h5 className="text-[13px] font-semibold leading-tight text-balance break-words">
-            {name}
-          </h5>
+          <h5 className="text-[13px] font-semibold leading-tight text-balance break-words">{name}</h5>
           {className ? (
-            <div className="text-[10px] font-mono text-muted-foreground truncate mt-0.5">
-              {className}
-            </div>
+            <div className="text-[10px] font-mono text-muted-foreground truncate mt-0.5">{className}</div>
           ) : null}
         </div>
         <ConfidenceBadge confidence={confidence} />
       </div>
-
       <div className="space-y-2">
-        {adapter ? (
-          <Row label="Adapter" mono>
-            {adapter}
-          </Row>
-        ) : null}
+        {adapterLabel ? <Row label="Adapter" mono>{adapterLabel}</Row> : null}
         {protocol ? (
           <Row label="Protocol">
-            <span className="px-1 bg-muted rounded text-muted-foreground">
-              {protocol}
-            </span>
+            <span className="px-1 bg-muted rounded text-muted-foreground">{protocol}</span>
           </Row>
         ) : null}
         {targets && targets.length > 0 ? (
-          <Row label="Targets">
-            <span className="font-mono text-foreground/80">
-              {targets.join(", ")}
-            </span>
-          </Row>
+          <Row label="Targets"><span className="font-mono text-foreground/80">{targets.join(", ")}</span></Row>
         ) : null}
       </div>
-
       <div className="mt-4 pt-4 border-t flex justify-between items-center">
         <div className="flex items-center gap-1.5">
-          <div
-            className={`size-1.5 rounded-full ${
-              enabled === false ? "bg-muted-foreground/40" : "bg-status-confirmed"
-            }`}
-          />
+          <div className={`size-1.5 rounded-full ${enabled === false ? "bg-muted-foreground/40" : "bg-status-confirmed"}`} />
           <span className="text-[9px] text-muted-foreground uppercase">
             {enabled === false ? "Disabled" : "Enabled"}
           </span>
         </div>
-        {targets && targets.length > 0 ? (
-          <div className="text-muted-foreground/60 text-lg leading-none">→</div>
-        ) : null}
+        {targets && targets.length > 0 ? <div className="text-muted-foreground/60 text-lg leading-none">→</div> : null}
       </div>
     </div>
   );
 }
 
-function Row({
-  label,
-  children,
-  mono,
-}: {
-  label: string;
-  children: React.ReactNode;
-  mono?: boolean;
-}) {
+function Row({ label, children, mono }: { label: string; children: React.ReactNode; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between text-[11px] gap-3">
       <span className="text-muted-foreground shrink-0">{label}</span>
-      <span
-        className={`truncate min-w-0 text-right ${mono ? "font-mono text-foreground/80" : ""}`}
-      >
-        {children}
-      </span>
+      <span className={`truncate min-w-0 text-right ${mono ? "font-mono text-foreground/80" : ""}`}>{children}</span>
     </div>
   );
 }
 
 function MetaCard({
-  label,
-  value,
-  children,
-  mono,
-  accent,
+  label, value, children, mono, accent,
 }: {
-  label: string;
-  value?: string;
-  children?: React.ReactNode;
-  mono?: boolean;
-  accent?: boolean;
+  label: string; value?: string; children?: React.ReactNode; mono?: boolean; accent?: boolean;
 }) {
   return (
-    <div
-      className={`p-4 bg-card ring-1 ring-black/5 rounded-lg ${accent ? "border-l-2 border-iris-accent" : ""}`}
-    >
+    <div className={`p-4 bg-card ring-1 ring-black/5 rounded-lg ${accent ? "border-l-2 border-iris-accent" : ""}`}>
       <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
         {label}
       </span>
       {value !== undefined ? (
-        <p className={`text-sm truncate ${mono ? "font-mono" : ""}`} title={value}>
-          {value}
-        </p>
-      ) : (
-        children
-      )}
+        <p className={`text-sm truncate ${mono ? "font-mono" : ""}`} title={value}>{value}</p>
+      ) : (children)}
+    </div>
+  );
+}
+
+function ErrorPanel({ error, label }: { error: Error; label: string }) {
+  return (
+    <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+      <div className="text-sm font-semibold text-destructive mb-1">Failed to load {label}</div>
+      <p className="text-xs font-mono text-destructive/80 break-all">{error.message}</p>
     </div>
   );
 }
