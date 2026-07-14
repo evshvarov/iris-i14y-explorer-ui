@@ -90,7 +90,7 @@ function MessagesPage() {
   }, [items, text]);
 
   const setSearchParam = (patch: Partial<typeof search>) =>
-    navigate({ search: (s) => ({ ...s, ...patch, offset: 0 }) as never });
+    navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
 
   const clearFilters = () =>
     navigate({
