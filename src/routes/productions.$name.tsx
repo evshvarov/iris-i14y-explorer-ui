@@ -203,6 +203,7 @@ function ProductionDetailPage() {
         <Tabs defaultValue="overview">
           <TabsList>
             <TabsTrigger value="overview">Schematic</TabsTrigger>
+            <TabsTrigger value="graph">Graph</TabsTrigger>
             <TabsTrigger value="analysis">Analysis</TabsTrigger>
             <TabsTrigger value="rules">Rules & Transforms</TabsTrigger>
             <TabsTrigger value="bpl">Processes</TabsTrigger>
