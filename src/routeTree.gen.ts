@@ -11,11 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProductionsRouteImport } from './routes/productions'
-import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductionsIndexRouteImport } from './routes/productions.index'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as ProductionsNameRouteImport } from './routes/productions.$name'
 import { Route as MessagesIdRouteImport } from './routes/messages.$id'
 
@@ -27,11 +27,6 @@ const SettingsRoute = SettingsRouteImport.update({
 const ProductionsRoute = ProductionsRouteImport.update({
   id: '/productions',
   path: '/productions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MessagesRoute = MessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthRoute = HealthRouteImport.update({
@@ -54,36 +49,41 @@ const ProductionsIndexRoute = ProductionsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProductionsRoute,
 } as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductionsNameRoute = ProductionsNameRouteImport.update({
   id: '/$name',
   path: '/$name',
   getParentRoute: () => ProductionsRoute,
 } as any)
 const MessagesIdRoute = MessagesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MessagesRoute,
+  id: '/messages/$id',
+  path: '/messages/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
-  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRoute
+  '/messages/': typeof MessagesIndexRoute
   '/productions/': typeof ProductionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
-  '/messages': typeof MessagesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRoute
+  '/messages': typeof MessagesIndexRoute
   '/productions': typeof ProductionsIndexRoute
 }
 export interface FileRoutesById {
@@ -91,11 +91,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
-  '/messages': typeof MessagesRouteWithChildren
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRoute
+  '/messages/': typeof MessagesIndexRoute
   '/productions/': typeof ProductionsIndexRoute
 }
 export interface FileRouteTypes {
@@ -104,32 +104,32 @@ export interface FileRouteTypes {
     | '/'
     | '/api-reference'
     | '/health'
-    | '/messages'
     | '/productions'
     | '/settings'
     | '/messages/$id'
     | '/productions/$name'
+    | '/messages/'
     | '/productions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api-reference'
     | '/health'
-    | '/messages'
     | '/settings'
     | '/messages/$id'
     | '/productions/$name'
+    | '/messages'
     | '/productions'
   id:
     | '__root__'
     | '/'
     | '/api-reference'
     | '/health'
-    | '/messages'
     | '/productions'
     | '/settings'
     | '/messages/$id'
     | '/productions/$name'
+    | '/messages/'
     | '/productions/'
   fileRoutesById: FileRoutesById
 }
@@ -137,9 +137,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiReferenceRoute: typeof ApiReferenceRoute
   HealthRoute: typeof HealthRoute
-  MessagesRoute: typeof MessagesRouteWithChildren
   ProductionsRoute: typeof ProductionsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
+  MessagesIdRoute: typeof MessagesIdRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,13 +157,6 @@ declare module '@tanstack/react-router' {
       path: '/productions'
       fullPath: '/productions'
       preLoaderRoute: typeof ProductionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/messages': {
-      id: '/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/health': {
@@ -193,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductionsIndexRouteImport
       parentRoute: typeof ProductionsRoute
     }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/productions/$name': {
       id: '/productions/$name'
       path: '/$name'
@@ -202,25 +203,13 @@ declare module '@tanstack/react-router' {
     }
     '/messages/$id': {
       id: '/messages/$id'
-      path: '/$id'
+      path: '/messages/$id'
       fullPath: '/messages/$id'
       preLoaderRoute: typeof MessagesIdRouteImport
-      parentRoute: typeof MessagesRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface MessagesRouteChildren {
-  MessagesIdRoute: typeof MessagesIdRoute
-}
-
-const MessagesRouteChildren: MessagesRouteChildren = {
-  MessagesIdRoute: MessagesIdRoute,
-}
-
-const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
-  MessagesRouteChildren,
-)
 
 interface ProductionsRouteChildren {
   ProductionsNameRoute: typeof ProductionsNameRoute
@@ -240,9 +229,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiReferenceRoute: ApiReferenceRoute,
   HealthRoute: HealthRoute,
-  MessagesRoute: MessagesRouteWithChildren,
   ProductionsRoute: ProductionsRouteWithChildren,
   SettingsRoute: SettingsRoute,
+  MessagesIdRoute: MessagesIdRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

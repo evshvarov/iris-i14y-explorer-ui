@@ -26,7 +26,7 @@ const searchSchema = z.object({
   offset: z.coerce.number().optional(),
 });
 
-export const Route = createFileRoute("/messages")({
+export const Route = createFileRoute("/messages/")({
   head: () => ({ meta: [{ title: "Message Explainer — IRIS Explainer" }] }),
   validateSearch: searchSchema,
   component: MessagesPage,
