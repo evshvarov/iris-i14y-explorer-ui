@@ -289,8 +289,10 @@ function MessageDetailPage() {
                         <span className="text-[10px] font-mono bg-muted rounded px-1.5 py-0.5 text-muted-foreground uppercase">
                           #{s.sequence ?? i + 1}
                         </span>
-                        <span className="text-[11px] font-mono truncate flex-1">
-                          {s.source ?? "?"} → {s.target ?? "?"}
+                        <span className="text-[11px] font-mono truncate flex-1 flex items-center gap-1.5">
+                          <ComponentLink name={s.source} productionName={productionName} />
+                          <span className="text-muted-foreground">→</span>
+                          <ComponentLink name={s.target} productionName={productionName} />
                         </span>
                         {s.isError ? (
                           <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-destructive">
@@ -302,12 +304,33 @@ function MessageDetailPage() {
                             {s.status ?? "ok"}
                           </span>
                         )}
-                        <ConfidenceBadge confidence={s.confidence} />
+                        <EvidencePopover
+                          confidence={s.confidence}
+                          evidence={s.evidence}
+                          label={`step #${s.sequence ?? i + 1}`}
+                        />
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px] font-mono text-muted-foreground">
-                        <div>msg #{s.messageId}</div>
+                        <div>
+                          {s.messageId ? (
+                            <Link
+                              to="/messages/$id"
+                              params={{ id: String(s.messageId) }}
+                              className="hover:text-foreground underline-offset-2 hover:underline"
+                            >
+                              msg #{s.messageId}
+                            </Link>
+                          ) : (
+                            <>msg —</>
+                          )}
+                        </div>
                         <div>{s.invocation ?? "—"}</div>
-                        <div className="truncate col-span-2">{s.messageBodyClassName ?? "—"}</div>
+                        <div className="truncate col-span-2">
+                          <BodyClassLink
+                            className={s.messageBodyClassName}
+                            productionName={productionName}
+                          />
+                        </div>
                       </div>
                       {s.explanation ? (
                         <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
@@ -319,6 +342,8 @@ function MessageDetailPage() {
                 </ol>
               )}
             </section>
+
+
 
             {trace.data?.warnings && trace.data.warnings.length > 0 ? (
               <section>
