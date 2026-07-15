@@ -69,6 +69,25 @@ function ProductionsPage() {
           </MetricChips>
         ) : null}
 
+        {data?.warnings && data.warnings.length > 0 ? (
+          <section className="rounded-lg border border-status-inferred/30 bg-status-inferred/5 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldAlert className="size-4 text-status-inferred" />
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-status-inferred">
+                {data.warnings.length} warning{data.warnings.length === 1 ? "" : "s"}
+              </h3>
+            </div>
+            <ul className="space-y-1">
+              {data.warnings.map((w, i) => (
+                <li key={i} className="text-[11px] font-mono text-status-inferred/90">
+                  [{w.code}] {w.message}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+
         <div className="flex items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
