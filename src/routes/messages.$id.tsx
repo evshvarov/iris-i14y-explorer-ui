@@ -212,7 +212,12 @@ function MessageDetailPage() {
                   <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Trace summary
                   </h2>
-                  <ConfidenceBadge confidence={trace.data.confidence} />
+                  <EvidencePopover
+                    confidence={trace.data.confidence}
+                    evidence={trace.data.evidence}
+                    label="trace summary"
+                  />
+
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
                   {trace.data.summary}
