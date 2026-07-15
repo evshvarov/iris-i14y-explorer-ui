@@ -26,6 +26,7 @@ import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge, ConfidenceDot } from "@/components/confidence-badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SummaryBullets, MetricChip, MetricChips, EvidenceChips } from "@/components/summary-bits";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/productions/$name")({
@@ -198,6 +199,30 @@ function ProductionDetailPage() {
               {summary.data.summary}
             </p>
           </section>
+        ) : null}
+
+        <SummaryBullets bullets={analysis.data?.summaryBullets} />
+
+        {analysis.data?.metrics ? (
+          <MetricChips>
+            <MetricChip label="Services" value={analysis.data.metrics.serviceCount ?? 0} tone="observed" />
+            <MetricChip label="Processes" value={analysis.data.metrics.processCount ?? 0} tone="brand" />
+            <MetricChip label="Operations" value={analysis.data.metrics.operationCount ?? 0} tone="inferred" />
+            <MetricChip label="Connections" value={analysis.data.metrics.connectionCount ?? 0} />
+            {(analysis.data.metrics.routingRuleConnectionCount ?? 0) > 0 ? (
+              <MetricChip label="Rule conns" value={analysis.data.metrics.routingRuleConnectionCount!} />
+            ) : null}
+            {(analysis.data.metrics.bplCallConnectionCount ?? 0) > 0 ? (
+              <MetricChip label="BPL conns" value={analysis.data.metrics.bplCallConnectionCount!} />
+            ) : null}
+            <MetricChip label="Ext systems" value={analysis.data.metrics.externalSystemCount ?? 0} />
+            <MetricChip label="Rules" value={analysis.data.metrics.ruleCount ?? 0} />
+            <MetricChip label="Transforms" value={analysis.data.metrics.transformationCount ?? 0} />
+            <MetricChip label="BPL" value={analysis.data.metrics.businessProcessCount ?? 0} />
+            {(analysis.data.metrics.warningCount ?? 0) > 0 ? (
+              <MetricChip label="Warnings" value={analysis.data.metrics.warningCount!} tone="error" />
+            ) : null}
+          </MetricChips>
         ) : null}
 
         <Tabs defaultValue="overview">
