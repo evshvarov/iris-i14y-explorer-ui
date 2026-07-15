@@ -278,10 +278,23 @@ function ProductionDetailPage() {
               <ErrorPanel error={analysis.error as Error} label="analysis" />
             ) : (
               <>
-                <ConnectionsSection connections={analysis.data?.connections ?? []} />
-                <ExternalSystemsSection systems={analysis.data?.externalSystems ?? []} />
-                <ArtifactsSection artifacts={analysis.data?.artifacts ?? []} />
-                <MessageTypesSection types={analysis.data?.messageTypes ?? []} />
+                <CoveragePanel coverage={analysis.data?.analysisCoverage} />
+                <ConnectionsSection
+                  connections={analysis.data?.connections ?? []}
+                  explanations={analysis.data?.connectionExplanations ?? []}
+                />
+                <ExternalSystemsSection
+                  systems={analysis.data?.externalSystems ?? []}
+                  explanations={analysis.data?.externalSystemExplanations ?? []}
+                />
+                <ArtifactsSection
+                  artifacts={analysis.data?.artifacts ?? []}
+                  explanations={analysis.data?.artifactExplanations ?? []}
+                />
+                <MessageTypesSection
+                  types={analysis.data?.messageTypes ?? []}
+                  explanations={analysis.data?.messageTypeExplanations ?? []}
+                />
               </>
             )}
           </TabsContent>
@@ -291,8 +304,14 @@ function ProductionDetailPage() {
               <Skeleton className="h-40 rounded-lg" />
             ) : (
               <>
-                <RulesSection rules={analysis.data?.rules ?? []} />
-                <TransformsSection transforms={analysis.data?.transformations ?? []} />
+                <RulesSection
+                  rules={analysis.data?.rules ?? []}
+                  explanations={analysis.data?.ruleExplanations ?? []}
+                />
+                <TransformsSection
+                  transforms={analysis.data?.transformations ?? []}
+                  explanations={analysis.data?.transformationExplanations ?? []}
+                />
               </>
             )}
           </TabsContent>
@@ -301,7 +320,10 @@ function ProductionDetailPage() {
             {analysis.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : (
-              <ProcessesSection processes={analysis.data?.businessProcesses ?? []} />
+              <ProcessesSection
+                processes={analysis.data?.businessProcesses ?? []}
+                explanations={analysis.data?.businessProcessExplanations ?? []}
+              />
             )}
           </TabsContent>
 
