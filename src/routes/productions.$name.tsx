@@ -374,240 +374,419 @@ function ProductionDetailPage() {
   );
 }
 
-function ConnectionsSection({ connections }: { connections: Connection[] }) {
+function ExplanationLine({
+  text,
+  confidence,
+}: {
+  text?: string;
+  confidence?: import("@/lib/api-types").Confidence;
+}) {
+  if (!text) return null;
+  return (
+    <div className="mt-2 pt-2 border-t border-border/50 flex items-start gap-2">
+      <ConfidenceDot confidence={confidence ?? "unknown"} />
+      <p className="text-[11px] text-foreground/80 whitespace-pre-wrap text-pretty leading-relaxed">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function CoveragePanel({
+  coverage,
+}: {
+  coverage?: import("@/lib/api-types").AnalysisCoverage;
+}) {
+  if (!coverage) return null;
+  const flags: [string, boolean | undefined][] = [
+    ["Components", coverage.componentAnalysisAvailable],
+    ["Targets", coverage.targetAnalysisAvailable],
+    ["Msg signatures", coverage.messageSignatureAnalysisAvailable],
+    ["Rules", coverage.ruleAnalysisAvailable],
+    ["Transforms", coverage.transformationAnalysisAvailable],
+    ["BPL", coverage.businessProcessAnalysisAvailable],
+  ];
+  return (
+    <section>
+      <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+        Analysis coverage
+      </h3>
+      <div className="bg-card ring-1 ring-black/5 rounded-lg p-4 space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {flags.map(([label, ok]) => (
+            <span
+              key={label}
+              className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded ring-1 ${
+                ok
+                  ? "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10"
+                  : "text-muted-foreground ring-black/10 bg-muted"
+              }`}
+            >
+              <span
+                className={`size-1.5 rounded-full ${
+                  ok ? "bg-status-confirmed" : "bg-muted-foreground/40"
+                }`}
+              />
+              {label}
+            </span>
+          ))}
+        </div>
+        <EvidenceChips m={coverage} />
+      </div>
+    </section>
+  );
+}
+
+function ConnectionsSection({
+  connections,
+  explanations = [],
+}: {
+  connections: Connection[];
+  explanations?: import("@/lib/api-types").ConnectionExplanation[];
+}) {
+  const findExpl = (c: Connection) =>
+    explanations.find((e) => e.from === c.from && e.to === c.to && (!e.kind || e.kind === c.kind));
   return (
     <SectionShell title="Connections" count={connections.length}>
       {connections.length === 0 ? (
         <Empty>No connections extracted.</Empty>
       ) : (
-        <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2 border-b bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-            <span>From</span><span></span><span>To</span><span>Kind</span><span>Conf</span>
-          </div>
-          <ul className="divide-y">
-            {connections.map((c, i) => (
-              <li key={i} className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2 text-xs">
-                <span className="font-mono truncate">{c.from}</span>
-                <span className="text-muted-foreground">→</span>
-                <span className="font-mono truncate">{c.to}</span>
-                <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded font-mono uppercase text-muted-foreground">
-                  {c.kind ?? "—"}
-                  {c.ruleName ? ` · ${c.ruleName}` : ""}
-                </span>
-                <ConfidenceBadge confidence={c.confidence} />
+        <ul className="space-y-2">
+          {connections.map((c, i) => {
+            const ex = findExpl(c);
+            return (
+              <li key={i} className="bg-card ring-1 ring-black/5 rounded-lg px-4 py-3">
+                <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 text-xs">
+                  <span className="font-mono truncate">{c.from}</span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="font-mono truncate">{c.to}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded font-mono uppercase text-muted-foreground">
+                    {c.kind ?? "—"}
+                    {c.ruleName ? ` · ${c.ruleName}` : ""}
+                  </span>
+                  <ConfidenceBadge confidence={c.confidence} />
+                </div>
+                <ExplanationLine text={ex?.text} confidence={ex?.confidence} />
               </li>
-            ))}
-          </ul>
-        </div>
+            );
+          })}
+        </ul>
       )}
     </SectionShell>
   );
 }
 
-function ExternalSystemsSection({ systems }: { systems: ExternalSystem[] }) {
+function ExternalSystemsSection({
+  systems,
+  explanations = [],
+}: {
+  systems: ExternalSystem[];
+  explanations?: import("@/lib/api-types").ExternalSystemExplanation[];
+}) {
+  const findExpl = (s: ExternalSystem) =>
+    explanations.find((e) => e.component === s.component && e.value === s.value);
   return (
     <SectionShell title="External systems" count={systems.length}>
       {systems.length === 0 ? (
         <Empty>No external endpoints inferred.</Empty>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {systems.map((s, i) => (
-            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold truncate">{s.component}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground uppercase">
-                    {s.componentType} · {s.kind}
+          {systems.map((s, i) => {
+            const ex = findExpl(s);
+            return (
+              <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{s.component}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground uppercase">
+                      {s.componentType} · {s.kind}
+                    </div>
                   </div>
+                  <ConfidenceBadge confidence={s.confidence} />
                 </div>
-                <ConfidenceBadge confidence={s.confidence} />
+                <div className="text-[11px] font-mono text-foreground/80 break-all">{s.value}</div>
+                <ExplanationLine text={ex?.text} confidence={ex?.confidence} />
               </div>
-              <div className="text-[11px] font-mono text-foreground/80 break-all">{s.value}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </SectionShell>
   );
 }
 
-function ArtifactsSection({ artifacts }: { artifacts: AnalysisArtifact[] }) {
+function ArtifactsSection({
+  artifacts,
+  explanations = [],
+}: {
+  artifacts: AnalysisArtifact[];
+  explanations?: import("@/lib/api-types").ArtifactExplanation[];
+}) {
+  const findExpl = (a: AnalysisArtifact) =>
+    explanations.find(
+      (e) => e.kind === a.kind && e.name === a.name && e.component === a.component,
+    );
+  const withExpl = artifacts.filter((a) => findExpl(a)?.text);
   return (
     <SectionShell title="Artifacts" count={artifacts.length}>
       {artifacts.length === 0 ? (
         <Empty>No artifacts.</Empty>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          {artifacts.map((a, i) => (
-            <div key={i} className="bg-card ring-1 ring-black/5 rounded-md px-3 py-2 text-xs flex items-center gap-2">
-              <span className="text-[9px] font-mono uppercase text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                {a.kind}
-              </span>
-              <span className="font-mono">{a.name}</span>
-              {a.component ? <span className="text-muted-foreground">· {a.component}</span> : null}
-              <ConfidenceBadge confidence={a.confidence} />
-            </div>
-          ))}
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {artifacts.map((a, i) => (
+              <div
+                key={i}
+                className="bg-card ring-1 ring-black/5 rounded-md px-3 py-2 text-xs flex items-center gap-2"
+              >
+                <span className="text-[9px] font-mono uppercase text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  {a.kind}
+                </span>
+                <span className="font-mono">{a.name}</span>
+                {a.component ? (
+                  <span className="text-muted-foreground">· {a.component}</span>
+                ) : null}
+                <ConfidenceBadge confidence={a.confidence} />
+              </div>
+            ))}
+          </div>
+          {withExpl.length > 0 ? (
+            <ul className="space-y-2">
+              {withExpl.map((a, i) => {
+                const ex = findExpl(a)!;
+                return (
+                  <li key={i} className="bg-card ring-1 ring-black/5 rounded-lg px-4 py-3">
+                    <div className="text-[11px] font-mono text-muted-foreground mb-1">
+                      {ex.label ?? `${a.kind} · ${a.name}`}
+                    </div>
+                    <ExplanationLine text={ex.text} confidence={ex.confidence} />
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
         </div>
       )}
     </SectionShell>
   );
 }
 
-function MessageTypesSection({ types }: { types: MessageType[] }) {
+function MessageTypesSection({
+  types,
+  explanations = [],
+}: {
+  types: MessageType[];
+  explanations?: import("@/lib/api-types").MessageTypeExplanation[];
+}) {
+  const findExpl = (t: MessageType) =>
+    explanations.find(
+      (e) => e.component === t.component && e.method === t.method && e.direction === t.direction,
+    );
   return (
     <SectionShell title="Message signatures" count={types.length}>
       {types.length === 0 ? (
         <Empty>No handler signatures found.</Empty>
       ) : (
-        <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-3 px-4 py-2 border-b bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-            <span>Component</span><span>Method</span><span>Dir</span><span>Message class</span><span>Conf</span>
-          </div>
-          <ul className="divide-y">
-            {types.map((t, i) => (
-              <li key={i} className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-3 px-4 py-2 text-xs items-center">
-                <span className="font-mono truncate">{t.component}</span>
-                <span className="font-mono truncate text-muted-foreground">{t.method ?? "—"}</span>
-                <span className="text-[10px] uppercase font-mono bg-muted rounded px-1.5 py-0.5">{t.direction ?? "—"}</span>
-                <span className="font-mono truncate">{t.messageClass ?? "—"}</span>
-                <ConfidenceBadge confidence={t.confidence} />
+        <ul className="space-y-1.5">
+          {types.map((t, i) => {
+            const ex = findExpl(t);
+            return (
+              <li key={i} className="bg-card ring-1 ring-black/5 rounded-lg px-4 py-2.5">
+                <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-3 text-xs items-center">
+                  <span className="font-mono truncate">{t.component}</span>
+                  <span className="font-mono truncate text-muted-foreground">
+                    {t.method ?? "—"}
+                  </span>
+                  <span className="text-[10px] uppercase font-mono bg-muted rounded px-1.5 py-0.5">
+                    {t.direction ?? "—"}
+                  </span>
+                  <span className="font-mono truncate">{t.messageClass ?? "—"}</span>
+                  <ConfidenceBadge confidence={t.confidence} />
+                </div>
+                <ExplanationLine text={ex?.text} confidence={ex?.confidence} />
               </li>
-            ))}
-          </ul>
-        </div>
+            );
+          })}
+        </ul>
       )}
     </SectionShell>
   );
 }
 
-function RulesSection({ rules }: { rules: RuleDetail[] }) {
+function RulesSection({
+  rules,
+  explanations = [],
+}: {
+  rules: RuleDetail[];
+  explanations?: import("@/lib/api-types").RuleExplanation[];
+}) {
+  const findExpl = (r: RuleDetail) =>
+    explanations.find((e) => e.name === r.name && e.component === r.component);
   return (
     <SectionShell title="Routing rules" count={rules.length}>
       {rules.length === 0 ? (
         <Empty>No accessible rule definitions.</Empty>
       ) : (
         <div className="space-y-3">
-          {rules.map((r, i) => (
-            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-semibold">{r.name}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground">{r.component}</div>
+          {rules.map((r, i) => {
+            const ex = findExpl(r);
+            return (
+              <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-sm font-semibold">{r.name}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground">{r.component}</div>
+                  </div>
+                  <ConfidenceBadge confidence={r.confidence} />
                 </div>
-                <ConfidenceBadge confidence={r.confidence} />
-              </div>
-              {(r.conditions ?? []).length > 0 ? (
-                <div className="space-y-2">
-                  {r.conditions!.map((c, j) => (
-                    <div key={j} className="border-l-2 border-iris-brand/40 pl-3 py-1">
-                      <div className="text-[11px] font-mono text-foreground/90">
-                        WHEN <span className="text-status-observed">{c.condition || "(default)"}</span>
-                      </div>
-                      {c.comment ? <div className="text-[10px] text-muted-foreground">{c.comment}</div> : null}
-                      {(c.sends ?? []).map((s, k) => (
-                        <div key={k} className="text-[11px] font-mono text-muted-foreground ml-4 mt-0.5">
-                          → {s.target}{s.transform ? ` via ${s.transform}` : ""}
+                {(r.conditions ?? []).length > 0 ? (
+                  <div className="space-y-2">
+                    {r.conditions!.map((c, j) => (
+                      <div key={j} className="border-l-2 border-iris-brand/40 pl-3 py-1">
+                        <div className="text-[11px] font-mono text-foreground/90">
+                          WHEN{" "}
+                          <span className="text-status-observed">
+                            {c.condition || "(default)"}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {(r.sends ?? []).length > 0 ? (
-                <div className="mt-2 text-[11px] font-mono text-muted-foreground">
-                  Default sends: {r.sends!.map((s) => s.target).join(", ")}
-                </div>
-              ) : null}
-            </div>
-          ))}
+                        {c.comment ? (
+                          <div className="text-[10px] text-muted-foreground">{c.comment}</div>
+                        ) : null}
+                        {(c.sends ?? []).map((s, k) => (
+                          <div
+                            key={k}
+                            className="text-[11px] font-mono text-muted-foreground ml-4 mt-0.5"
+                          >
+                            → {s.target}
+                            {s.transform ? ` via ${s.transform}` : ""}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {(r.sends ?? []).length > 0 ? (
+                  <div className="mt-2 text-[11px] font-mono text-muted-foreground">
+                    Default sends: {r.sends!.map((s) => s.target).join(", ")}
+                  </div>
+                ) : null}
+                <ExplanationLine text={ex?.text} confidence={ex?.confidence} />
+              </div>
+            );
+          })}
         </div>
       )}
     </SectionShell>
   );
 }
 
-function TransformsSection({ transforms }: { transforms: TransformationDetail[] }) {
+function TransformsSection({
+  transforms,
+  explanations = [],
+}: {
+  transforms: TransformationDetail[];
+  explanations?: import("@/lib/api-types").TransformationExplanation[];
+}) {
+  const findExpl = (t: TransformationDetail) => explanations.find((e) => e.name === t.name);
   return (
     <SectionShell title="DTL transformations" count={transforms.length}>
       {transforms.length === 0 ? (
         <Empty>No DTL transformations found.</Empty>
       ) : (
         <div className="space-y-3">
-          {transforms.map((t, i) => (
-            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold truncate">{t.name}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground truncate">
-                    {t.sourceClass ?? "?"} → {t.targetClass ?? "?"}{t.language ? ` · ${t.language}` : ""}
+          {transforms.map((t, i) => {
+            const ex = findExpl(t);
+            return (
+              <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{t.name}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground truncate">
+                      {t.sourceClass ?? "?"} → {t.targetClass ?? "?"}
+                      {t.language ? ` · ${t.language}` : ""}
+                    </div>
                   </div>
+                  <ConfidenceBadge confidence={t.confidence} />
                 </div>
-                <ConfidenceBadge confidence={t.confidence} />
+                {(t.assignments ?? []).length > 0 ? (
+                  <details className="mt-2">
+                    <summary className="text-[11px] font-mono text-muted-foreground cursor-pointer hover:text-foreground">
+                      {t.assignments!.length} assignments
+                    </summary>
+                    <ul className="mt-2 space-y-1 border-l border-border pl-3">
+                      {t.assignments!.slice(0, 50).map((a, j) => (
+                        <li key={j} className="text-[10px] font-mono text-foreground/80">
+                          <span className="text-status-observed">{a.action ?? "set"}</span>{" "}
+                          {a.property} = <span className="text-muted-foreground">{a.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+                <ExplanationLine text={ex?.text} confidence={ex?.confidence} />
               </div>
-              {(t.assignments ?? []).length > 0 ? (
-                <details className="mt-2">
-                  <summary className="text-[11px] font-mono text-muted-foreground cursor-pointer hover:text-foreground">
-                    {t.assignments!.length} assignments
-                  </summary>
-                  <ul className="mt-2 space-y-1 border-l border-border pl-3">
-                    {t.assignments!.slice(0, 50).map((a, j) => (
-                      <li key={j} className="text-[10px] font-mono text-foreground/80">
-                        <span className="text-status-observed">{a.action ?? "set"}</span>{" "}
-                        {a.property} = <span className="text-muted-foreground">{a.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </SectionShell>
   );
 }
 
-function ProcessesSection({ processes }: { processes: BusinessProcessDetail[] }) {
+function ProcessesSection({
+  processes,
+  explanations = [],
+}: {
+  processes: BusinessProcessDetail[];
+  explanations?: import("@/lib/api-types").BusinessProcessExplanation[];
+}) {
+  const findExpl = (p: BusinessProcessDetail) => explanations.find((e) => e.name === p.name);
   return (
     <SectionShell title="BPL processes" count={processes.length}>
       {processes.length === 0 ? (
         <Empty>No BPL definitions accessible.</Empty>
       ) : (
         <div className="space-y-3">
-          {processes.map((p, i) => (
-            <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold truncate">{p.name}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground truncate">{p.component}</div>
-                </div>
-                <ConfidenceBadge confidence={p.confidence} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] font-mono">
-                <Kv k="Request" v={p.requestClass} />
-                <Kv k="Response" v={p.responseClass} />
-                <Kv k="Context" v={p.contextClass} />
-              </div>
-              {(p.calls ?? []).length > 0 ? (
-                <div className="mt-3 border-t pt-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-                    Calls
+          {processes.map((p, i) => {
+            const ex = findExpl(p);
+            return (
+              <div key={i} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{p.name}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground truncate">
+                      {p.component}
+                    </div>
                   </div>
-                  <ul className="space-y-0.5">
-                    {p.calls!.map((c, j) => (
-                      <li key={j} className="text-[11px] font-mono text-foreground/80">
-                        → {c.target ?? "?"}{" "}
-                        <span className="text-muted-foreground">
-                          {c.async ? "async" : "sync"}{c.timeout ? ` · timeout=${c.timeout}` : ""}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <ConfidenceBadge confidence={p.confidence} />
                 </div>
-              ) : null}
-            </div>
-          ))}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] font-mono">
+                  <Kv k="Request" v={p.requestClass} />
+                  <Kv k="Response" v={p.responseClass} />
+                  <Kv k="Context" v={p.contextClass} />
+                </div>
+                {(p.calls ?? []).length > 0 ? (
+                  <div className="mt-3 border-t pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+                      Calls
+                    </div>
+                    <ul className="space-y-0.5">
+                      {p.calls!.map((c, j) => (
+                        <li key={j} className="text-[11px] font-mono text-foreground/80">
+                          → {c.target ?? "?"}{" "}
+                          <span className="text-muted-foreground">
+                            {c.async ? "async" : "sync"}
+                            {c.timeout ? ` · timeout=${c.timeout}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                <ExplanationLine text={ex?.text} confidence={ex?.confidence} />
+              </div>
+            );
+          })}
         </div>
       )}
     </SectionShell>
