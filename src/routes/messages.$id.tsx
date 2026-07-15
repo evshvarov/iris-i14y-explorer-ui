@@ -15,6 +15,7 @@ import type {
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
+import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
 
 export const Route = createFileRoute("/messages/$id")({
   head: ({ params }) => ({ meta: [{ title: `Message #${params.id} — IRIS Explainer` }] }),
@@ -246,9 +247,30 @@ function MessageDetailPage() {
 
             {/* Step timeline */}
             <section>
-              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-                Steps ({steps.length})
-              </h2>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                  Steps ({steps.length})
+                </h2>
+                {trace.data?.metrics ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <MetricChips>
+                      <MetricChip
+                        label="Steps"
+                        value={trace.data.metrics.stepCount ?? steps.length}
+                        tone="brand"
+                      />
+                      {(trace.data.metrics.warningCount ?? 0) > 0 ? (
+                        <MetricChip
+                          label="Warnings"
+                          value={trace.data.metrics.warningCount!}
+                          tone="error"
+                        />
+                      ) : null}
+                    </MetricChips>
+                    <EvidenceChips m={trace.data.metrics} />
+                  </div>
+                ) : null}
+              </div>
               {steps.length === 0 ? (
                 <div className="text-[11px] text-muted-foreground font-mono border border-dashed rounded-lg p-4">
                   No trace steps reconstructed.
