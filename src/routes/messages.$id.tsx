@@ -178,7 +178,12 @@ function MessageDetailPage() {
                     {explain.data.stepCount} steps
                   </span>
                 ) : null}
-                <ConfidenceBadge confidence={explain.data.confidence ?? explain.data.explanation?.confidence} />
+                <EvidencePopover
+                  confidence={explain.data.confidence ?? explain.data.explanation?.confidence}
+                  evidence={explain.data.evidence ?? explain.data.explanation?.evidence}
+                  label="message explanation"
+                />
+
               </div>
             </div>
             {explain.data.summary ? (
