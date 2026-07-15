@@ -1,5 +1,168 @@
 // Types mirroring the i14y-aid Swagger 2.0 spec.
 
+// ---- Metrics (spec v6) ----
+export type EvidenceMetrics = {
+  evidenceCount?: number;
+  confirmedEvidenceCount?: number;
+  observedEvidenceCount?: number;
+  inferredEvidenceCount?: number;
+  unknownEvidenceCount?: number;
+  warningCount?: number;
+};
+
+export type ProductionListMetrics = EvidenceMetrics & {
+  productionCount?: number;
+  runningProductionCount?: number;
+  componentCount?: number;
+  serviceCount?: number;
+  processCount?: number;
+  operationCount?: number;
+  disabledComponentCount?: number;
+};
+
+export type ProductionMetrics = EvidenceMetrics & {
+  componentCount?: number;
+  serviceCount?: number;
+  processCount?: number;
+  operationCount?: number;
+  disabledComponentCount?: number;
+  connectionCount?: number;
+  targetConfigConnectionCount?: number;
+  routingRuleConnectionCount?: number;
+  bplCallConnectionCount?: number;
+  externalSystemCount?: number;
+  artifactCount?: number;
+  ruleCount?: number;
+  messageTypeCount?: number;
+  transformationCount?: number;
+  businessProcessCount?: number;
+};
+
+export type GraphMetrics = EvidenceMetrics & {
+  nodeCount?: number;
+  edgeCount?: number;
+  serviceCount?: number;
+  processCount?: number;
+  operationCount?: number;
+  disabledNodeCount?: number;
+  targetConfigEdgeCount?: number;
+  routingRuleEdgeCount?: number;
+  bplCallEdgeCount?: number;
+};
+
+export type ComponentMetrics = EvidenceMetrics & {
+  connectionCount?: number;
+  externalSystemCount?: number;
+  artifactCount?: number;
+  ruleCount?: number;
+  messageTypeCount?: number;
+  transformationCount?: number;
+  businessProcessCount?: number;
+  explanationCount?: number;
+};
+
+export type TraceMetrics = EvidenceMetrics & {
+  stepCount?: number;
+};
+
+export type AnalysisCoverage = EvidenceMetrics & {
+  componentCount?: number;
+  connectionCount?: number;
+  messageTypeCount?: number;
+  externalSystemCount?: number;
+  artifactCount?: number;
+  ruleCount?: number;
+  transformationCount?: number;
+  businessProcessCount?: number;
+  componentAnalysisAvailable?: boolean;
+  targetAnalysisAvailable?: boolean;
+  messageSignatureAnalysisAvailable?: boolean;
+  ruleAnalysisAvailable?: boolean;
+  transformationAnalysisAvailable?: boolean;
+  businessProcessAnalysisAvailable?: boolean;
+  [k: string]: unknown;
+};
+
+// ---- Per-entity explanations (spec v6) ----
+export type RuleExplanation = {
+  name?: string;
+  component?: string;
+  conditionCount?: number;
+  targets?: string[];
+  transforms?: string[];
+  targetCount?: number;
+  transformCount?: number;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+export type TransformationExplanation = {
+  name?: string;
+  component?: string;
+  sourceKind?: string;
+  sourceClass?: string;
+  targetClass?: string;
+  assignmentCount?: number;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+export type BusinessProcessExplanation = {
+  name?: string;
+  component?: string;
+  requestClass?: string;
+  responseClass?: string;
+  contextClass?: string;
+  callTargets?: string[];
+  callCount?: number;
+  assignCount?: number;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+export type ExternalSystemExplanation = {
+  component?: string;
+  componentType?: string;
+  kind?: string;
+  value?: string;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+export type ArtifactExplanation = {
+  kind?: string;
+  name?: string;
+  component?: string;
+  label?: string;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+export type MessageTypeExplanation = {
+  component?: string;
+  componentType?: string;
+  className?: string;
+  method?: string;
+  parameter?: string;
+  direction?: string;
+  messageClass?: string;
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+export type ConnectionExplanation = {
+  from?: string;
+  to?: string;
+  kind?: string;
+  ruleName?: string;
+  processClass?: string;
+  messageClasses?: string[];
+  text?: string;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+
 export type Confidence = "confirmed" | "observed" | "inferred" | "unknown";
 
 export type Evidence = {
