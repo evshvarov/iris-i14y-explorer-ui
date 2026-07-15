@@ -15,6 +15,7 @@ import type {
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
+import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
 
 export const Route = createFileRoute("/messages/$id")({
