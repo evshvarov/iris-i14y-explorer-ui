@@ -366,6 +366,52 @@ function MessageDetailPage() {
   );
 }
 
+function ComponentLink({
+  name,
+  productionName,
+}: {
+  name?: string;
+  productionName?: string;
+}) {
+  if (!name) return <span className="text-muted-foreground">?</span>;
+  if (!productionName)
+    return <span className="truncate" title={name}>{name}</span>;
+  return (
+    <Link
+      to="/productions/$name/components/$componentName"
+      params={{ name: productionName, componentName: name }}
+      className="truncate underline-offset-2 hover:underline hover:text-iris-brand"
+      title={`Open ${name}`}
+    >
+      {name}
+    </Link>
+  );
+}
+
+function BodyClassLink({
+  className,
+  productionName,
+}: {
+  className?: string;
+  productionName?: string;
+}) {
+  if (!className) return <span>—</span>;
+  return (
+    <Link
+      to="/messages"
+      search={{
+        messageBodyClassName: className,
+        ...(productionName ? { productionName } : {}),
+      }}
+      className="truncate underline-offset-2 hover:underline hover:text-foreground"
+      title={`Filter messages by ${className}`}
+    >
+      {className}
+    </Link>
+  );
+}
+
+
 function Meta({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="p-3 bg-card ring-1 ring-black/5 rounded-lg">
