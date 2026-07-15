@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { ArrowRight, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, Search, ShieldAlert } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type { ProductionListResponse } from "@/lib/api-types";
@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { MetricChip, MetricChips } from "@/components/summary-bits";
+
 
 export const Route = createFileRoute("/productions/")({
   head: () => ({
