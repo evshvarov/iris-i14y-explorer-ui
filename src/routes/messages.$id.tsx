@@ -148,6 +148,19 @@ function MessageDetailPage() {
           <PayloadPanel data={payload.data} />
         ) : null}
 
+        {/* Payload scalar preview */}
+        {preview.data ? <PayloadPreviewPanel data={preview.data} /> : null}
+
+        {/* Resend result */}
+        {resend.data ? <ResendResultPanel data={resend.data} /> : null}
+        {resend.error ? (
+          <ErrorPanel error={resend.error as Error} label="resend" />
+        ) : null}
+
+        {/* Session summary (production-scoped) */}
+        {session.data ? <SessionSummaryPanel data={session.data} /> : null}
+
+
 
 
         {/* Standalone deterministic explanation */}
