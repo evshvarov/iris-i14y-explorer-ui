@@ -971,6 +971,25 @@ function GraphView({
 
   return (
     <>
+      <SummaryBullets bullets={data?.summaryBullets} />
+      {data?.metrics ? (
+        <MetricChips>
+          <MetricChip label="Nodes" value={data.metrics.nodeCount ?? nodes.length} tone="brand" />
+          <MetricChip label="Edges" value={data.metrics.edgeCount ?? edges.length} />
+          <MetricChip label="Services" value={data.metrics.serviceCount ?? 0} tone="observed" />
+          <MetricChip label="Processes" value={data.metrics.processCount ?? 0} tone="brand" />
+          <MetricChip label="Operations" value={data.metrics.operationCount ?? 0} tone="inferred" />
+          {(data.metrics.disabledNodeCount ?? 0) > 0 ? (
+            <MetricChip label="Disabled" value={data.metrics.disabledNodeCount!} />
+          ) : null}
+          {(data.metrics.routingRuleEdgeCount ?? 0) > 0 ? (
+            <MetricChip label="Rule edges" value={data.metrics.routingRuleEdgeCount!} />
+          ) : null}
+          {(data.metrics.bplCallEdgeCount ?? 0) > 0 ? (
+            <MetricChip label="BPL edges" value={data.metrics.bplCallEdgeCount!} />
+          ) : null}
+        </MetricChips>
+      ) : null}
       <SectionShell title="Nodes" count={nodes.length}>
         {nodes.length === 0 ? (
           <Empty>No graph nodes.</Empty>
