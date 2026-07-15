@@ -100,12 +100,25 @@ function MessageDetailPage() {
             : undefined
         }
         actions={
-          <Link
-            to="/messages"
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
-          >
-            <ArrowLeft className="size-3.5" /> Messages
-          </Link>
+          <div className="flex items-center gap-2">
+            {productionName ? (
+              <button
+                onClick={() => resend.mutate()}
+                disabled={resend.isPending}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted disabled:opacity-50"
+                title={`Resend via ${productionName}`}
+              >
+                <Send className="size-3.5" />
+                {resend.isPending ? "Resending…" : "Resend"}
+              </button>
+            ) : null}
+            <Link
+              to="/messages"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+            >
+              <ArrowLeft className="size-3.5" /> Messages
+            </Link>
+          </div>
         }
       />
 
