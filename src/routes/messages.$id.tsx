@@ -15,6 +15,7 @@ import type {
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
+import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
 
 export const Route = createFileRoute("/messages/$id")({
@@ -177,7 +178,12 @@ function MessageDetailPage() {
                     {explain.data.stepCount} steps
                   </span>
                 ) : null}
-                <ConfidenceBadge confidence={explain.data.confidence ?? explain.data.explanation?.confidence} />
+                <EvidencePopover
+                  confidence={explain.data.confidence ?? explain.data.explanation?.confidence}
+                  evidence={explain.data.evidence ?? explain.data.explanation?.evidence}
+                  label="message explanation"
+                />
+
               </div>
             </div>
             {explain.data.summary ? (
@@ -206,7 +212,12 @@ function MessageDetailPage() {
                   <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Trace summary
                   </h2>
-                  <ConfidenceBadge confidence={trace.data.confidence} />
+                  <EvidencePopover
+                    confidence={trace.data.confidence}
+                    evidence={trace.data.evidence}
+                    label="trace summary"
+                  />
+
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
                   {trace.data.summary}
@@ -237,7 +248,12 @@ function MessageDetailPage() {
                   <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Deterministic explanation
                   </h2>
-                  <ConfidenceBadge confidence={explanation.confidence} />
+                  <EvidencePopover
+                    confidence={explanation.confidence}
+                    evidence={explanation.evidence}
+                    label="trace explanation"
+                  />
+
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
                   {explanation.text}
@@ -288,8 +304,10 @@ function MessageDetailPage() {
                         <span className="text-[10px] font-mono bg-muted rounded px-1.5 py-0.5 text-muted-foreground uppercase">
                           #{s.sequence ?? i + 1}
                         </span>
-                        <span className="text-[11px] font-mono truncate flex-1">
-                          {s.source ?? "?"} → {s.target ?? "?"}
+                        <span className="text-[11px] font-mono truncate flex-1 flex items-center gap-1.5">
+                          <ComponentLink name={s.source} productionName={productionName} />
+                          <span className="text-muted-foreground">→</span>
+                          <ComponentLink name={s.target} productionName={productionName} />
                         </span>
                         {s.isError ? (
                           <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-destructive">
@@ -301,12 +319,33 @@ function MessageDetailPage() {
                             {s.status ?? "ok"}
                           </span>
                         )}
-                        <ConfidenceBadge confidence={s.confidence} />
+                        <EvidencePopover
+                          confidence={s.confidence}
+                          evidence={s.evidence}
+                          label={`step #${s.sequence ?? i + 1}`}
+                        />
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px] font-mono text-muted-foreground">
-                        <div>msg #{s.messageId}</div>
+                        <div>
+                          {s.messageId ? (
+                            <Link
+                              to="/messages/$id"
+                              params={{ id: String(s.messageId) }}
+                              className="hover:text-foreground underline-offset-2 hover:underline"
+                            >
+                              msg #{s.messageId}
+                            </Link>
+                          ) : (
+                            <>msg —</>
+                          )}
+                        </div>
                         <div>{s.invocation ?? "—"}</div>
-                        <div className="truncate col-span-2">{s.messageBodyClassName ?? "—"}</div>
+                        <div className="truncate col-span-2">
+                          <BodyClassLink
+                            className={s.messageBodyClassName}
+                            productionName={productionName}
+                          />
+                        </div>
                       </div>
                       {s.explanation ? (
                         <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
@@ -318,6 +357,8 @@ function MessageDetailPage() {
                 </ol>
               )}
             </section>
+
+
 
             {trace.data?.warnings && trace.data.warnings.length > 0 ? (
               <section>
@@ -339,6 +380,52 @@ function MessageDetailPage() {
     </>
   );
 }
+
+function ComponentLink({
+  name,
+  productionName,
+}: {
+  name?: string;
+  productionName?: string;
+}) {
+  if (!name) return <span className="text-muted-foreground">?</span>;
+  if (!productionName)
+    return <span className="truncate" title={name}>{name}</span>;
+  return (
+    <Link
+      to="/productions/$name/components/$componentName"
+      params={{ name: productionName, componentName: name }}
+      className="truncate underline-offset-2 hover:underline hover:text-iris-brand"
+      title={`Open ${name}`}
+    >
+      {name}
+    </Link>
+  );
+}
+
+function BodyClassLink({
+  className,
+  productionName,
+}: {
+  className?: string;
+  productionName?: string;
+}) {
+  if (!className) return <span>—</span>;
+  return (
+    <Link
+      to="/messages"
+      search={{
+        messageBodyClassName: className,
+        ...(productionName ? { productionName } : {}),
+      }}
+      className="truncate underline-offset-2 hover:underline hover:text-foreground"
+      title={`Filter messages by ${className}`}
+    >
+      {className}
+    </Link>
+  );
+}
+
 
 function Meta({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
