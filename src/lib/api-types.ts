@@ -375,6 +375,9 @@ export type MessageTraceResponse = {
   namespace?: string;
   messageId?: number;
   sessionId?: number;
+  productionName?: string;
+  productionScoped?: boolean;
+  productionStepCount?: number;
   selectedMessage?: MessageHeader;
   summary?: string;
   traceOverview?: TraceOverview;
