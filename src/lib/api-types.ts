@@ -202,6 +202,11 @@ export type AnalysisSettings = {
 export type SettingsResponse = {
   namespace?: string;
   settings?: AnalysisSettings;
+  metrics?: EvidenceMetrics & {
+    featureFlagCount?: number;
+    enabledFeatureFlagCount?: number;
+    limitSettingCount?: number;
+  };
   evidence?: Evidence[];
 };
 
@@ -231,6 +236,7 @@ export type ProductionListResponse = {
   namespace?: string;
   items: ProductionSummary[];
   count?: number;
+  metrics?: ProductionListMetrics;
   warnings?: Warning[];
 };
 
@@ -391,14 +397,24 @@ export type ProductionAnalysisResponse = {
   productionName?: string;
   production?: ProductionDetailResponse;
   summary?: string;
+  summaryBullets?: string[];
+  metrics?: ProductionMetrics;
+  analysisCoverage?: AnalysisCoverage;
   components?: Component[];
   connections?: Connection[];
+  connectionExplanations?: ConnectionExplanation[];
   externalSystems?: ExternalSystem[];
+  externalSystemExplanations?: ExternalSystemExplanation[];
   artifacts?: AnalysisArtifact[];
+  artifactExplanations?: ArtifactExplanation[];
   rules?: RuleDetail[];
+  ruleExplanations?: RuleExplanation[];
   messageTypes?: MessageType[];
+  messageTypeExplanations?: MessageTypeExplanation[];
   transformations?: TransformationDetail[];
+  transformationExplanations?: TransformationExplanation[];
   businessProcesses?: BusinessProcessDetail[];
+  businessProcessExplanations?: BusinessProcessExplanation[];
   componentExplanations?: ComponentExplanation[];
   warnings?: Warning[];
   evidence?: Evidence[];
@@ -466,6 +482,17 @@ export type MessageHeaderListResponse = {
   payloadReturned?: boolean;
   runtimeMessageAnalysisEnabled?: boolean;
   maxMessagesReturned?: number;
+  metrics?: EvidenceMetrics & {
+    itemCount?: number;
+    totalCount?: number;
+    errorCount?: number;
+    hasMore?: boolean;
+    sourceFacetCount?: number;
+    targetFacetCount?: number;
+    messageBodyClassFacetCount?: number;
+    sessionFacetCount?: number;
+    componentFacetCount?: number;
+  };
   warnings?: Warning[];
 };
 
@@ -545,6 +572,7 @@ export type MessageTraceResponse = {
   summary?: string;
   traceOverview?: TraceOverview;
   traceExplanation?: TraceExplanation;
+  metrics?: TraceMetrics;
   steps?: TraceStep[];
   stepCount?: number;
   maxTraceDepth?: number;
@@ -603,6 +631,8 @@ export type GraphEdge = {
 export type ProductionGraphResponse = {
   namespace?: string;
   productionName?: string;
+  summaryBullets?: string[];
+  metrics?: GraphMetrics;
   nodes?: GraphNode[];
   edges?: GraphEdge[];
   warnings?: Warning[];
@@ -731,13 +761,22 @@ export type ComponentDetailResponse = {
   componentName?: string;
   component?: Component;
   explanation?: ComponentExplanation;
+  summaryBullets?: string[];
+  metrics?: ComponentMetrics;
   connections?: Connection[];
+  connectionExplanations?: ConnectionExplanation[];
   externalSystems?: ExternalSystem[];
+  externalSystemExplanations?: ExternalSystemExplanation[];
   artifacts?: AnalysisArtifact[];
+  artifactExplanations?: ArtifactExplanation[];
   rules?: RuleDetail[];
+  ruleExplanations?: RuleExplanation[];
   messageTypes?: MessageType[];
+  messageTypeExplanations?: MessageTypeExplanation[];
   transformations?: TransformationDetail[];
+  transformationExplanations?: TransformationExplanation[];
   businessProcesses?: BusinessProcessDetail[];
+  businessProcessExplanations?: BusinessProcessExplanation[];
   warnings?: Warning[];
   evidence?: Evidence[];
   confidence?: Confidence;
