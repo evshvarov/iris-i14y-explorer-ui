@@ -6,7 +6,13 @@ import { apiFetch } from "@/lib/api-config";
 import type { ComponentDetailResponse } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConfidenceBadge } from "@/components/confidence-badge";
+import { ConfidenceBadge, ConfidenceDot } from "@/components/confidence-badge";
+import {
+  SummaryBullets,
+  MetricChip,
+  MetricChips,
+  EvidenceChips,
+} from "@/components/summary-bits";
 
 export const Route = createFileRoute(
   "/productions/$name/components/$componentName",
@@ -31,6 +37,7 @@ function ComponentDetailPage() {
 
   const c = q.data?.component;
   const settings = c?.settings ?? {};
+  const metrics = q.data?.metrics;
 
   return (
     <>
@@ -93,6 +100,25 @@ function ComponentDetailPage() {
               <p className="text-sm text-muted-foreground max-w-3xl">{c.comment}</p>
             ) : null}
 
+            <SummaryBullets bullets={q.data?.summaryBullets} />
+
+            {metrics ? (
+              <div className="space-y-2">
+                <MetricChips>
+                  <MetricChip label="Connections" value={metrics.connectionCount ?? 0} />
+                  <MetricChip label="Ext systems" value={metrics.externalSystemCount ?? 0} />
+                  <MetricChip label="Rules" value={metrics.ruleCount ?? 0} />
+                  <MetricChip label="Msg types" value={metrics.messageTypeCount ?? 0} />
+                  <MetricChip label="Transforms" value={metrics.transformationCount ?? 0} />
+                  <MetricChip label="BPL" value={metrics.businessProcessCount ?? 0} />
+                  {(metrics.warningCount ?? 0) > 0 ? (
+                    <MetricChip label="Warnings" value={metrics.warningCount!} tone="error" />
+                  ) : null}
+                </MetricChips>
+                <EvidenceChips m={metrics} />
+              </div>
+            ) : null}
+
             {q.data?.explanation?.text ? (
               <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 border-l-2 border-iris-brand max-w-4xl">
                 <div className="flex items-center justify-between mb-2">
@@ -127,59 +153,109 @@ function ComponentDetailPage() {
               </section>
             ) : null}
 
-            {(q.data?.connections?.length ?? 0) > 0 ? (
-              <section>
-                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-                  Connections
-                </h2>
-                <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
-                  <ul className="divide-y">
-                    {q.data!.connections!.map((cn, i) => (
-                      <li
-                        key={i}
-                        className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2 text-xs"
-                      >
-                        <span className="font-mono truncate">{cn.from}</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className="font-mono truncate">{cn.to}</span>
-                        <span className="text-[10px] uppercase font-mono bg-muted rounded px-1.5 py-0.5">
-                          {cn.kind ?? "—"}
-                        </span>
-                        <ConfidenceBadge confidence={cn.confidence} />
-                      </li>
-                    ))}
-                  </ul>
+            <EntitySection
+              title="Connections"
+              items={q.data?.connections ?? []}
+              explanations={q.data?.connectionExplanations ?? []}
+              matchKey={(cn) => `${cn.from}|${cn.to}|${cn.kind ?? ""}`}
+              explKey={(e) => `${e.from}|${e.to}|${e.kind ?? ""}`}
+              renderItem={(cn) => (
+                <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-3 text-xs">
+                  <span className="font-mono truncate">{cn.from}</span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="font-mono truncate">{cn.to}</span>
+                  <span className="text-[10px] uppercase font-mono bg-muted rounded px-1.5 py-0.5">
+                    {cn.kind ?? "—"}
+                  </span>
+                  <ConfidenceBadge confidence={cn.confidence} />
                 </div>
-              </section>
-            ) : null}
+              )}
+            />
 
-            {(q.data?.messageTypes?.length ?? 0) > 0 ? (
+            <EntitySection
+              title="Message signatures"
+              items={q.data?.messageTypes ?? []}
+              explanations={q.data?.messageTypeExplanations ?? []}
+              matchKey={(t) => `${t.method ?? ""}|${t.direction ?? ""}|${t.messageClass ?? ""}`}
+              explKey={(e) => `${e.method ?? ""}|${e.direction ?? ""}|${e.messageClass ?? ""}`}
+              renderItem={(t) => (
+                <div className="text-[11px] font-mono flex items-center gap-3">
+                  <span className="text-muted-foreground">[{t.direction ?? "—"}]</span>
+                  <span>
+                    {t.method} · {t.messageClass}
+                  </span>
+                </div>
+              )}
+            />
+
+            <EntitySection
+              title="External systems"
+              items={q.data?.externalSystems ?? []}
+              explanations={q.data?.externalSystemExplanations ?? []}
+              matchKey={(s) => `${s.kind ?? ""}|${s.value ?? ""}`}
+              explKey={(e) => `${e.kind ?? ""}|${e.value ?? ""}`}
+              renderItem={(s) => (
+                <div className="text-[11px] font-mono break-all">
+                  <span className="text-muted-foreground">{s.kind}:</span> {s.value}
+                </div>
+              )}
+            />
+
+            <EntitySection
+              title="Routing rules"
+              items={q.data?.rules ?? []}
+              explanations={q.data?.ruleExplanations ?? []}
+              matchKey={(r) => r.name ?? ""}
+              explKey={(e) => e.name ?? ""}
+              renderItem={(r) => (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold truncate">{r.name}</span>
+                  <ConfidenceBadge confidence={r.confidence} />
+                </div>
+              )}
+            />
+
+            <EntitySection
+              title="DTL transformations"
+              items={q.data?.transformations ?? []}
+              explanations={q.data?.transformationExplanations ?? []}
+              matchKey={(t) => t.name ?? ""}
+              explKey={(e) => e.name ?? ""}
+              renderItem={(t) => (
+                <div>
+                  <div className="text-sm font-semibold truncate">{t.name}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground truncate">
+                    {t.sourceClass ?? "?"} → {t.targetClass ?? "?"}
+                  </div>
+                </div>
+              )}
+            />
+
+            <EntitySection
+              title="BPL processes"
+              items={q.data?.businessProcesses ?? []}
+              explanations={q.data?.businessProcessExplanations ?? []}
+              matchKey={(p) => p.name ?? ""}
+              explKey={(e) => e.name ?? ""}
+              renderItem={(p) => (
+                <div>
+                  <div className="text-sm font-semibold truncate">{p.name}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground truncate">
+                    {p.requestClass ?? "?"} → {p.responseClass ?? "?"}
+                  </div>
+                </div>
+              )}
+            />
+
+            {q.data?.warnings && q.data.warnings.length > 0 ? (
               <section>
-                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-                  Message signatures
-                </h2>
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                  Warnings
+                </h3>
                 <ul className="space-y-1">
-                  {q.data!.messageTypes!.map((t, i) => (
-                    <li key={i} className="text-[11px] font-mono">
-                      <span className="text-muted-foreground">
-                        [{t.direction ?? "—"}]
-                      </span>{" "}
-                      {t.method} · {t.messageClass}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {(q.data?.externalSystems?.length ?? 0) > 0 ? (
-              <section>
-                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-                  External systems
-                </h2>
-                <ul className="space-y-1 text-[11px] font-mono break-all">
-                  {q.data!.externalSystems!.map((s, i) => (
-                    <li key={i}>
-                      <span className="text-muted-foreground">{s.kind}:</span> {s.value}
+                  {q.data.warnings.map((w, i) => (
+                    <li key={i} className="text-[11px] font-mono text-status-inferred">
+                      [{w.code}] {w.message}
                     </li>
                   ))}
                 </ul>
@@ -189,6 +265,50 @@ function ComponentDetailPage() {
         ) : null}
       </div>
     </>
+  );
+}
+
+function EntitySection<T, E extends { text?: string; confidence?: import("@/lib/api-types").Confidence }>({
+  title,
+  items,
+  explanations,
+  matchKey,
+  explKey,
+  renderItem,
+}: {
+  title: string;
+  items: T[];
+  explanations: E[];
+  matchKey: (item: T) => string;
+  explKey: (expl: E) => string;
+  renderItem: (item: T) => React.ReactNode;
+}) {
+  if (items.length === 0) return null;
+  const map = new Map(explanations.map((e) => [explKey(e), e]));
+  return (
+    <section>
+      <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+        {title} ({items.length})
+      </h2>
+      <ul className="space-y-2">
+        {items.map((it, i) => {
+          const ex = map.get(matchKey(it));
+          return (
+            <li key={i} className="bg-card ring-1 ring-black/5 rounded-lg px-4 py-3">
+              {renderItem(it)}
+              {ex?.text ? (
+                <div className="mt-2 pt-2 border-t border-border/50 flex items-start gap-2">
+                  <ConfidenceDot confidence={ex.confidence ?? "unknown"} />
+                  <p className="text-[11px] text-foreground/80 whitespace-pre-wrap text-pretty leading-relaxed">
+                    {ex.text}
+                  </p>
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

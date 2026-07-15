@@ -8,6 +8,7 @@ import type { ProductionListResponse } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { MetricChip, MetricChips } from "@/components/summary-bits";
 
 export const Route = createFileRoute("/productions/")({
   head: () => ({
@@ -48,6 +49,25 @@ function ProductionsPage() {
       />
 
       <div className="p-8 space-y-6">
+        {data?.metrics ? (
+          <MetricChips>
+            <MetricChip label="Productions" value={data.metrics.productionCount ?? data.items?.length ?? 0} tone="brand" />
+            {(data.metrics.runningProductionCount ?? 0) > 0 ? (
+              <MetricChip label="Running" value={data.metrics.runningProductionCount!} tone="confirmed" />
+            ) : null}
+            <MetricChip label="Components" value={data.metrics.componentCount ?? 0} />
+            <MetricChip label="Services" value={data.metrics.serviceCount ?? 0} tone="observed" />
+            <MetricChip label="Processes" value={data.metrics.processCount ?? 0} tone="brand" />
+            <MetricChip label="Operations" value={data.metrics.operationCount ?? 0} tone="inferred" />
+            {(data.metrics.disabledComponentCount ?? 0) > 0 ? (
+              <MetricChip label="Disabled" value={data.metrics.disabledComponentCount!} />
+            ) : null}
+            {(data.metrics.warningCount ?? 0) > 0 ? (
+              <MetricChip label="Warnings" value={data.metrics.warningCount!} tone="error" />
+            ) : null}
+          </MetricChips>
+        ) : null}
+
         <div className="flex items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
