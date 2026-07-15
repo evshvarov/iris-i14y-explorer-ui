@@ -248,7 +248,12 @@ function MessageDetailPage() {
                   <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Deterministic explanation
                   </h2>
-                  <ConfidenceBadge confidence={explanation.confidence} />
+                  <EvidencePopover
+                    confidence={explanation.confidence}
+                    evidence={explanation.evidence}
+                    label="trace explanation"
+                  />
+
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
                   {explanation.text}
