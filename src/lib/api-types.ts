@@ -375,6 +375,9 @@ export type MessageTraceResponse = {
   namespace?: string;
   messageId?: number;
   sessionId?: number;
+  productionName?: string;
+  productionScoped?: boolean;
+  productionStepCount?: number;
   selectedMessage?: MessageHeader;
   summary?: string;
   traceOverview?: TraceOverview;
@@ -490,6 +493,73 @@ export type MessageExplanationResponse = {
   warnings?: Warning[];
   evidence?: Evidence[];
   confidence?: Confidence;
+};
+
+export type PayloadPreviewField = {
+  name?: string;
+  type?: string;
+  value?: string;
+  redacted?: boolean;
+};
+
+export type MessagePayloadPreviewResponse = {
+  namespace?: string;
+  messageId?: number;
+  productionName?: string;
+  message?: MessageHeader;
+  metadata?: PayloadMetadata;
+  messageBodyClassName?: string;
+  messageBodyId?: string;
+  bodyReferenceAvailable?: boolean;
+  bodyContentReturned?: boolean;
+  payloadReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  payloadInspectionEnabled?: boolean;
+  payloadInspectionSupported?: boolean;
+  restricted?: boolean;
+  restrictionReason?: string;
+  fields?: PayloadPreviewField[];
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type MessageSessionSummaryResponse = {
+  namespace?: string;
+  productionName?: string;
+  messageId?: number;
+  sessionId?: number;
+  selectedMessage?: MessageHeader;
+  stepCount?: number;
+  productionStepCount?: number;
+  outsideProductionStepCount?: number;
+  errorCount?: number;
+  firstSeen?: string;
+  lastSeen?: string;
+  origin?: string;
+  finalTarget?: string;
+  path?: string;
+  participants?: string[];
+  text?: string;
+  confidence?: Confidence;
+  warnings?: Warning[];
+};
+
+export type MessageResendResponse = {
+  namespace?: string;
+  productionName?: string;
+  messageId?: number;
+  sessionId?: number;
+  action?: string;
+  requested?: boolean;
+  allowed?: boolean;
+  executed?: boolean;
+  dryRun?: boolean;
+  supported?: boolean;
+  changed?: boolean;
+  reason?: string;
+  statusText?: string;
+  messageResendEnabled?: boolean;
+  warnings?: Warning[];
 };
 
 export type ComponentDetailResponse = {

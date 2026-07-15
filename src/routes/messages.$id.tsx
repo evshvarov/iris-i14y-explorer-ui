@@ -1,13 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, AlertCircle, Lock } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, AlertCircle, Lock, Send, EyeOff } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
   MessageDetailResponse,
   MessageTraceResponse,
   MessagePayloadMetadataResponse,
+  MessagePayloadPreviewResponse,
   MessageExplanationResponse,
+  MessageSessionSummaryResponse,
+  MessageResendResponse,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +23,7 @@ export const Route = createFileRoute("/messages/$id")({
 
 function MessageDetailPage() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
 
   const detail = useQuery<MessageDetailResponse>({
     queryKey: ["message", id],
@@ -40,12 +44,45 @@ function MessageDetailPage() {
     retry: 0,
   });
 
+  const preview = useQuery<MessagePayloadPreviewResponse>({
+    queryKey: ["message", id, "payload", "preview"],
+    queryFn: () =>
+      apiFetch<MessagePayloadPreviewResponse>(
+        `/messages/${encodeURIComponent(id)}/payload/preview`,
+      ),
+    retry: 0,
+  });
+
   const explain = useQuery<MessageExplanationResponse>({
     queryKey: ["message", id, "explanation"],
     queryFn: () =>
       apiFetch<MessageExplanationResponse>(`/messages/${encodeURIComponent(id)}/explanation`),
     retry: 0,
   });
+
+  const productionName = trace.data?.productionName;
+
+  const session = useQuery<MessageSessionSummaryResponse>({
+    queryKey: ["message", id, "session", productionName],
+    queryFn: () =>
+      apiFetch<MessageSessionSummaryResponse>(
+        `/productions/${encodeURIComponent(productionName!)}/messages/${encodeURIComponent(id)}/session`,
+      ),
+    retry: 0,
+    enabled: !!productionName,
+  });
+
+  const resend = useMutation<MessageResendResponse, Error, void>({
+    mutationFn: () =>
+      apiFetch<MessageResendResponse>(
+        `/productions/${encodeURIComponent(productionName!)}/messages/${encodeURIComponent(id)}/resend`,
+        { method: "POST" },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["message", id] });
+    },
+  });
+
 
   const m = detail.data?.message;
   const overview = trace.data?.traceOverview;
@@ -63,12 +100,25 @@ function MessageDetailPage() {
             : undefined
         }
         actions={
-          <Link
-            to="/messages"
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
-          >
-            <ArrowLeft className="size-3.5" /> Messages
-          </Link>
+          <div className="flex items-center gap-2">
+            {productionName ? (
+              <button
+                onClick={() => resend.mutate()}
+                disabled={resend.isPending}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted disabled:opacity-50"
+                title={`Resend via ${productionName}`}
+              >
+                <Send className="size-3.5" />
+                {resend.isPending ? "Resending…" : "Resend"}
+              </button>
+            ) : null}
+            <Link
+              to="/messages"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+            >
+              <ArrowLeft className="size-3.5" /> Messages
+            </Link>
+          </div>
         }
       />
 
@@ -97,6 +147,19 @@ function MessageDetailPage() {
         ) : payload.data ? (
           <PayloadPanel data={payload.data} />
         ) : null}
+
+        {/* Payload scalar preview */}
+        {preview.data ? <PayloadPreviewPanel data={preview.data} /> : null}
+
+        {/* Resend result */}
+        {resend.data ? <ResendResultPanel data={resend.data} /> : null}
+        {resend.error ? (
+          <ErrorPanel error={resend.error as Error} label="resend" />
+        ) : null}
+
+        {/* Session summary (production-scoped) */}
+        {session.data ? <SessionSummaryPanel data={session.data} /> : null}
+
 
 
 
@@ -347,3 +410,143 @@ function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
     </section>
   );
 }
+
+function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) {
+  const fields = data.fields ?? [];
+  const restricted = data.restricted;
+  const enabled = data.payloadInspectionEnabled;
+  const supported = data.payloadInspectionSupported;
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          Payload preview
+        </h2>
+        <div className="flex items-center gap-2">
+          {restricted ? (
+            <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-status-inferred">
+              <Lock className="size-3" /> restricted
+            </span>
+          ) : null}
+          <span className="text-[10px] font-mono uppercase text-muted-foreground">
+            {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
+          </span>
+        </div>
+      </div>
+
+      {data.restrictionReason ? (
+        <p className="text-[11px] font-mono text-status-inferred mb-3">
+          {data.restrictionReason}
+        </p>
+      ) : null}
+
+      {fields.length > 0 ? (
+        <div className="ring-1 ring-black/5 rounded overflow-hidden">
+          <ul className="divide-y bg-background/40">
+            {fields.map((f, i) => (
+              <li
+                key={i}
+                className="grid grid-cols-[1fr_auto_2fr] items-center gap-3 px-3 py-1.5 text-[11px] font-mono"
+              >
+                <span className="truncate">{f.name ?? `field_${i}`}</span>
+                <span className="text-muted-foreground text-[10px] uppercase bg-muted rounded px-1.5 py-0.5">
+                  {f.type ?? "—"}
+                </span>
+                <span className="truncate flex items-center gap-2 justify-end text-foreground/80">
+                  {f.redacted ? (
+                    <EyeOff className="size-3 text-status-inferred shrink-0" />
+                  ) : null}
+                  <span className="truncate" title={f.value ?? ""}>
+                    {f.value ?? ""}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-[11px] font-mono text-muted-foreground">
+          No scalar fields returned.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function SessionSummaryPanel({ data }: { data: MessageSessionSummaryResponse }) {
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          Session summary
+          {data.productionName ? (
+            <span className="ml-2 text-muted-foreground normal-case font-mono tracking-normal">
+              · {data.productionName}
+            </span>
+          ) : null}
+        </h2>
+        <ConfidenceBadge confidence={data.confidence} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+        <MetaSmall label="Session" value={String(data.sessionId ?? "—")} />
+        <MetaSmall label="Steps" value={String(data.stepCount ?? 0)} />
+        <MetaSmall label="In-prod" value={String(data.productionStepCount ?? 0)} />
+        <MetaSmall label="Outside" value={String(data.outsideProductionStepCount ?? 0)} />
+        <MetaSmall label="Errors" value={String(data.errorCount ?? 0)} />
+        <MetaSmall label="Origin" value={data.origin ?? "—"} />
+        <MetaSmall label="Final target" value={data.finalTarget ?? "—"} />
+        <MetaSmall label="Path" value={data.path ?? "—"} />
+      </div>
+      {data.text ? (
+        <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+          {data.text}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function MetaSmall({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
+        {label}
+      </div>
+      <div className="text-xs font-mono truncate" title={value}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ResendResultPanel({ data }: { data: MessageResendResponse }) {
+  const ok = data.executed || data.allowed;
+  const tone = data.executed
+    ? "border-status-confirmed/40 bg-status-confirmed/5 text-status-confirmed"
+    : ok
+      ? "border-status-observed/40 bg-status-observed/5 text-status-observed"
+      : "border-status-inferred/40 bg-status-inferred/5 text-status-inferred";
+  return (
+    <section className={`rounded-lg p-4 border ${tone}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <Send className="size-3.5" />
+        <h3 className="text-[11px] font-semibold uppercase tracking-widest">
+          Resend {data.executed ? "executed" : data.allowed ? "allowed" : "not executed"}
+        </h3>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px] font-mono">
+        <div>action: {data.action ?? "—"}</div>
+        <div>supported: {String(data.supported ?? false)}</div>
+        <div>enabled: {String(data.messageResendEnabled ?? false)}</div>
+        <div>dryRun: {String(data.dryRun ?? false)}</div>
+      </div>
+      {data.reason || data.statusText ? (
+        <p className="mt-2 text-[11px] font-mono text-foreground/80">
+          {data.statusText ?? data.reason}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
