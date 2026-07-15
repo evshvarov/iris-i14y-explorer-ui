@@ -1,13 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, AlertCircle, Lock } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, AlertCircle, Lock, Send, EyeOff } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
   MessageDetailResponse,
   MessageTraceResponse,
   MessagePayloadMetadataResponse,
+  MessagePayloadPreviewResponse,
   MessageExplanationResponse,
+  MessageSessionSummaryResponse,
+  MessageResendResponse,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +23,7 @@ export const Route = createFileRoute("/messages/$id")({
 
 function MessageDetailPage() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
 
   const detail = useQuery<MessageDetailResponse>({
     queryKey: ["message", id],
@@ -40,12 +44,45 @@ function MessageDetailPage() {
     retry: 0,
   });
 
+  const preview = useQuery<MessagePayloadPreviewResponse>({
+    queryKey: ["message", id, "payload", "preview"],
+    queryFn: () =>
+      apiFetch<MessagePayloadPreviewResponse>(
+        `/messages/${encodeURIComponent(id)}/payload/preview`,
+      ),
+    retry: 0,
+  });
+
   const explain = useQuery<MessageExplanationResponse>({
     queryKey: ["message", id, "explanation"],
     queryFn: () =>
       apiFetch<MessageExplanationResponse>(`/messages/${encodeURIComponent(id)}/explanation`),
     retry: 0,
   });
+
+  const productionName = trace.data?.productionName;
+
+  const session = useQuery<MessageSessionSummaryResponse>({
+    queryKey: ["message", id, "session", productionName],
+    queryFn: () =>
+      apiFetch<MessageSessionSummaryResponse>(
+        `/productions/${encodeURIComponent(productionName!)}/messages/${encodeURIComponent(id)}/session`,
+      ),
+    retry: 0,
+    enabled: !!productionName,
+  });
+
+  const resend = useMutation<MessageResendResponse, Error, void>({
+    mutationFn: () =>
+      apiFetch<MessageResendResponse>(
+        `/productions/${encodeURIComponent(productionName!)}/messages/${encodeURIComponent(id)}/resend`,
+        { method: "POST" },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["message", id] });
+    },
+  });
+
 
   const m = detail.data?.message;
   const overview = trace.data?.traceOverview;
