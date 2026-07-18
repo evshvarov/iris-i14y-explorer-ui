@@ -20,10 +20,13 @@ function LogsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Runtime"
+        crumbs={[{ label: "Runtime" }, { label: "Logs" }]}
         title="Production Logs"
-        description="Recent Ens.Util.Log entries across all productions in the current namespace. Filter by type, source, or free text."
       />
+      <p className="text-sm text-muted-foreground -mt-4 max-w-2xl">
+        Recent Ens.Util.Log entries across all productions in the current namespace. Filter by
+        type, source, or free text.
+      </p>
       <LogsPanel />
     </div>
   );
