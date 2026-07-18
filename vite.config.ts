@@ -6,10 +6,26 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+const irisBase = process.env.IRIS_BUILD === "true" ? "/i14y-explorer-ui/" : "/";
+const isIrisBuild = process.env.IRIS_BUILD === "true";
+
 export default defineConfig({
+  nitro: isIrisBuild ? false : undefined,
+  vite: {
+    base: irisBase,
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    router: {
+      basepath: irisBase,
+    },
+    spa: {
+      enabled: isIrisBuild,
+      prerender: {
+        outputPath: "/index",
+      },
+    },
   },
 });
