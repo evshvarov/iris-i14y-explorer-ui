@@ -3,7 +3,7 @@
   <Document name="esh-i14y-explorer-ui.ZPM">
     <Module>
       <Name>esh-i14y-explorer-ui</Name>
-      <Version>0.1.1</Version>
+      <Version>0.1.2</Version>
       <Description>Frontend UI for the i14y-aid InterSystems IRIS Interoperability Production Explainer API</Description>
       <Keywords>IRIS,Interoperability,Frontend,React,TanStack,Lovable</Keywords>
       <Packaging>module</Packaging>
