@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge, ConfidenceDot } from "@/components/confidence-badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SummaryBullets, MetricChip, MetricChips, EvidenceChips } from "@/components/summary-bits";
+import { LogsPanel } from "@/components/logs-panel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/productions/$name")({
@@ -234,6 +235,7 @@ function ProductionDetailPage() {
             <TabsTrigger value="bpl">Processes</TabsTrigger>
             <TabsTrigger value="explanations">Explanations</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="logs">Logs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="pt-6">
@@ -352,6 +354,10 @@ function ProductionDetailPage() {
                 Open in Message Explainer →
               </Link>
             </div>
+          </TabsContent>
+
+          <TabsContent value="logs" className="pt-6">
+            <LogsPanel productionName={name} />
           </TabsContent>
         </Tabs>
 

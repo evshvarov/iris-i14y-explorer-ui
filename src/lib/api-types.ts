@@ -1,5 +1,53 @@
 // Types mirroring the i14y-aid Swagger 2.0 spec.
 
+// ---- Production Logs (spec v7) ----
+export type ProductionLogEntry = {
+  logId?: number;
+  timeLogged?: string;
+  type?: string;
+  source?: string;
+  sessionId?: string;
+  job?: string;
+  text?: string;
+  productionName?: string;
+  inProduction?: boolean;
+  confidence?: Confidence;
+  evidence?: Evidence[];
+};
+
+export type ProductionLogMetrics = {
+  itemCount?: number;
+  totalCount?: number;
+  hasMore?: boolean;
+  sourceFacetCount?: number;
+  typeFacetCount?: number;
+  warningCount?: number;
+  evidenceCount?: number;
+  confirmedEvidenceCount?: number;
+  observedEvidenceCount?: number;
+  inferredEvidenceCount?: number;
+  unknownEvidenceCount?: number;
+};
+
+export type ProductionLogListResponse = {
+  namespace?: string;
+  productionName?: string;
+  items?: ProductionLogEntry[];
+  count?: number;
+  totalCount?: number;
+  limit?: number;
+  offset?: number;
+  hasMore?: boolean;
+  type?: string;
+  source?: string;
+  contains?: string;
+  sourceNames?: string[];
+  typeNames?: string[];
+  logClassName?: string;
+  metrics?: ProductionLogMetrics;
+  warnings?: Warning[];
+};
+
 // ---- Metrics (spec v6) ----
 export type EvidenceMetrics = {
   evidenceCount?: number;

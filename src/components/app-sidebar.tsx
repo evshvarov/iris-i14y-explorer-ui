@@ -4,6 +4,7 @@ import {
   Boxes,
   FileCode2,
   MessageSquareText,
+  ScrollText,
   Settings2,
 } from "lucide-react";
 
@@ -31,6 +32,11 @@ const exploration = [
     title: "Message Explainer",
     url: "/messages",
     icon: MessageSquareText,
+  },
+  {
+    title: "Logs",
+    url: "/logs",
+    icon: ScrollText,
   },
 ];
 
