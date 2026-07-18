@@ -8,7 +8,7 @@
       <Keywords>IRIS,Interoperability,Frontend,React,TanStack,Lovable</Keywords>
       <Packaging>module</Packaging>
 
-      <CSPApplication Url="/i14y-explorer-ui" SourcePath="/dist/client" DeployPath="{$cspdir}/i14y-explorer-ui" ServeFiles="1" Recurse="1" CookiePath="/i14y-explorer-ui"/>
+      <CSPApplication Url="/i14y-explorer-ui" SourcePath="/dist/client" DeployPath="{$cspdir}i14y-explorer-ui" ServeFiles="1" Recurse="1" CookiePath="/i14y-explorer-ui"/>
       <SourcesRoot>src</SourcesRoot>
     </Module>
   </Document>
