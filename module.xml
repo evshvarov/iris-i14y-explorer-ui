@@ -3,12 +3,21 @@
   <Document name="esh-i14y-explorer-ui.ZPM">
     <Module>
       <Name>esh-i14y-explorer-ui</Name>
-      <Version>0.1.2</Version>
+      <Version>0.1.3</Version>
       <Description>Frontend UI for the i14y-aid InterSystems IRIS Interoperability Production Explainer API</Description>
       <Keywords>IRIS,Interoperability,Frontend,React,TanStack,Lovable</Keywords>
       <Packaging>module</Packaging>
 
-      <CSPApplication Url="/i14y-explorer-ui" SourcePath="/dist/client" DeployPath="{$cspdir}i14y-explorer-ui" ServeFiles="1" Recurse="1" CookiePath="/i14y-explorer-ui"/>
+      <FileCopy Name="dist/client/" Target="${cspdir}i14y-explorer-ui/" Defer="1"/>
+
+      <WebApplication
+        Name="/i14y-explorer-ui"
+        NameSpace="USER"
+        Path="${cspdir}i14y-explorer-ui/"
+        Recurse="1"
+        ServeFiles="1"
+        CookiePath="/i14y-explorer-ui"
+      />
       <SourcesRoot>src</SourcesRoot>
     </Module>
   </Document>
