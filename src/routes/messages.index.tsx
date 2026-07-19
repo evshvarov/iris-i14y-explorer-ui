@@ -390,7 +390,7 @@ function MessagesPage() {
                 {(listQuery.error as Error).message}
               </p>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : filteredByStatus.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground bg-card ring-1 ring-black/5 rounded-lg">
               No messages match these filters.
             </div>
@@ -405,31 +405,30 @@ function MessagesPage() {
                 <span></span>
               </div>
               <ul className="divide-y">
-                {filtered.map((m) => (
-                  <li key={m.messageId}>
-                    <Link
-                      to="/messages/$id"
-                      params={{ id: String(m.messageId) }}
-                      className="grid grid-cols-[80px_1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-muted/50 group"
-                    >
-                      <span className="text-[11px] font-mono text-foreground/80">#{m.messageId}</span>
-                      <span className="text-xs font-mono truncate">{m.sourceConfigName || "—"}</span>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="text-xs font-mono truncate">{m.targetConfigName || "—"}</span>
-                      <span
-                        className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                          m.isError
-                            ? "text-destructive bg-destructive/10 ring-1 ring-destructive/30"
-                            : "text-muted-foreground bg-muted"
-                        }`}
+                {filteredByStatus.map((m) => {
+                  const tone = m.isError ? "error" : statusTone(m.status);
+                  return (
+                    <li key={m.messageId}>
+                      <Link
+                        to="/messages/$id"
+                        params={{ id: String(m.messageId) }}
+                        className="grid grid-cols-[80px_1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-muted/50 group"
                       >
-                        {m.isError ? <AlertCircle className="size-3" /> : null}
-                        {m.status || "?"}
-                      </span>
-                      <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
-                    </Link>
-                  </li>
-                ))}
+                        <span className="text-[11px] font-mono text-foreground/80">#{m.messageId}</span>
+                        <span className="text-xs font-mono truncate">{m.sourceConfigName || "—"}</span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="text-xs font-mono truncate">{m.targetConfigName || "—"}</span>
+                        <span
+                          className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${statusPillClass(tone)}`}
+                        >
+                          {m.isError ? <AlertCircle className="size-3" /> : null}
+                          {m.status || "?"}
+                        </span>
+                        <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
