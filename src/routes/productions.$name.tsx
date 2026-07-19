@@ -1210,6 +1210,7 @@ function AIAskPanel({
   const [componentName, setComponentName] = useState<string>("");
   const [maxChunks, setMaxChunks] = useState<number>(8);
   const [history, setHistory] = useState<ProductionAIAskResponse[]>([]);
+  const [preview, setPreview] = useState<ProductionRAGContextResponse | null>(null);
 
   const mutation = useMutation({
     mutationFn: (body: { question: string; componentName?: string; maxChunks?: number }) =>
@@ -1222,6 +1223,24 @@ function AIAskPanel({
       setHistory((h) => [r, ...h]);
       if (r.generated) toast.success("AI answer generated");
       else if (r.warnings?.length) toast.message(r.warnings[0]?.message ?? "AI answer unavailable");
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const previewMutation = useMutation({
+    mutationFn: (body: { question?: string; componentName?: string; maxChunks?: number }) => {
+      const params = new URLSearchParams();
+      if (body.question) params.set("question", body.question);
+      if (body.componentName) params.set("componentName", body.componentName);
+      if (body.maxChunks) params.set("maxChunks", String(body.maxChunks));
+      const qs = params.toString();
+      return apiFetch<ProductionRAGContextResponse>(
+        `/productions/${encoded}/rag/context${qs ? `?${qs}` : ""}`,
+      );
+    },
+    onSuccess: (r) => {
+      setPreview(r);
+      toast.success(`Retrieved ${r.retrievedChunkCount ?? r.retrievedChunks?.length ?? 0} chunks`);
     },
     onError: (e) => toast.error((e as Error).message),
   });
