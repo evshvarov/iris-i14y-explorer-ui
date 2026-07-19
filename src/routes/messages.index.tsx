@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, AlertCircle, ArrowRight, X } from "lucide-react";
+import { Search, AlertCircle, ArrowRight, ArrowLeft, X } from "lucide-react";
 import { z } from "zod";
 
 import { apiFetch } from "@/lib/api-config";
