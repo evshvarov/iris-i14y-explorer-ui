@@ -18,8 +18,8 @@ function toQuery(params: Record<string, string | number | undefined>) {
   return q ? `?${q}` : "";
 }
 
-function typeTone(type?: string) {
-  const t = (type ?? "").toLowerCase();
+function typeTone(type?: string | number | null) {
+  const t = String(type ?? "").toLowerCase();
   if (t.includes("error") || t.includes("fatal") || t.includes("alert"))
     return "text-destructive ring-destructive/30 bg-destructive/10";
   if (t.includes("warn"))
