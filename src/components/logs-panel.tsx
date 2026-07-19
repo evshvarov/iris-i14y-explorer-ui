@@ -150,17 +150,6 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
             </option>
           ))}
         </select>
-        <select
-          value={limit}
-          onChange={(e) => setLimit(Number(e.target.value))}
-          className="h-9 rounded-md border bg-background px-2 text-xs font-mono"
-        >
-          {[50, 100, 200, 500].map((n) => (
-            <option key={n} value={n}>
-              Limit {n}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
