@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
-import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
+import { useState } from "react";
 import type { MessageHeaderListResponse } from "@/lib/api-types";
 
 import { apiFetch } from "@/lib/api-config";
