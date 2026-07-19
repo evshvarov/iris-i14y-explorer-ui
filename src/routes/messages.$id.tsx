@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AlertCircle, Lock, Send, EyeOff } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
+import type { MessageHeaderListResponse } from "@/lib/api-types";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -26,6 +28,38 @@ export const Route = createFileRoute("/messages/$id")({
 function MessageDetailPage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  // Neighbor list for prev/next navigation
+  const neighborList = useQuery<MessageHeaderListResponse>({
+    queryKey: ["messages", "neighbor-list"],
+    queryFn: () => apiFetch<MessageHeaderListResponse>(`/messages?limit=500`),
+    retry: 0,
+    staleTime: 30_000,
+  });
+
+  const { prevId, nextId } = useMemo(() => {
+    const items = neighborList.data?.items ?? [];
+    const ids = items.map((it) => String(it.messageId));
+    const idx = ids.indexOf(String(id));
+    if (idx === -1) return { prevId: undefined, nextId: undefined };
+    // list is typically newest-first: "previous in time" = idx+1, "next in time" = idx-1
+    return {
+      prevId: idx < ids.length - 1 ? ids[idx + 1] : undefined,
+      nextId: idx > 0 ? ids[idx - 1] : undefined,
+    };
+  }, [neighborList.data, id]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (e.key === "ArrowLeft" && prevId) navigate({ to: "/messages/$id", params: { id: prevId } });
+      if (e.key === "ArrowRight" && nextId) navigate({ to: "/messages/$id", params: { id: nextId } });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prevId, nextId, navigate]);
 
   const detail = useQuery<MessageDetailResponse>({
     queryKey: ["message", id],
@@ -103,6 +137,39 @@ function MessageDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-md ring-1 ring-black/5 bg-card overflow-hidden">
+              {prevId ? (
+                <Link
+                  to="/messages/$id"
+                  params={{ id: prevId }}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted"
+                  title={`Previous message #${prevId} (←)`}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  <span className="font-mono">#{prevId}</span>
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1 text-xs px-2.5 py-1.5 text-muted-foreground/50 cursor-not-allowed">
+                  <ChevronLeft className="size-3.5" />
+                </span>
+              )}
+              <span className="w-px h-5 bg-black/5" />
+              {nextId ? (
+                <Link
+                  to="/messages/$id"
+                  params={{ id: nextId }}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted"
+                  title={`Next message #${nextId} (→)`}
+                >
+                  <span className="font-mono">#{nextId}</span>
+                  <ChevronRight className="size-3.5" />
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1 text-xs px-2.5 py-1.5 text-muted-foreground/50 cursor-not-allowed">
+                  <ChevronRight className="size-3.5" />
+                </span>
+              )}
+            </div>
             {productionName ? (
               <button
                 onClick={() => resend.mutate()}
