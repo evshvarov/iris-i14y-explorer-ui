@@ -375,6 +375,18 @@ export type RAGIndexRebuildResponse = {
   runId?: number;
   status?: string;
   chunkCount?: number;
+  includeRuntime?: boolean;
+  includePayload?: boolean;
+  lookbackHours?: number;
+  startDate?: string;
+  endDate?: string;
+  maxMessages?: number;
+  maxLogs?: number;
+  maxPayloadFields?: number;
+  runtimeChunkCount?: number;
+  messageChunkCount?: number;
+  logChunkCount?: number;
+  payloadChunkCount?: number;
   metrics?: RAGContextMetrics;
   confidence?: Confidence;
   warnings?: Warning[];
