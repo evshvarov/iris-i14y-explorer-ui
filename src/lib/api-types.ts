@@ -255,6 +255,23 @@ export type AnalysisSettings = {
   aiApiKeySource?: string;
   openAIApiKey?: string; // write-only
   clearOpenAIApiKey?: boolean;
+  ragRuntimeDataEnabled?: boolean;
+  ragRuntimeLookbackHours?: number;
+  ragRuntimeMaxMessages?: number;
+  ragRuntimeMaxLogs?: number;
+  ragPayloadIndexingEnabled?: boolean;
+  ragPayloadMaxFields?: number;
+};
+
+export type RAGIndexRebuildRequest = {
+  includeRuntime?: boolean;
+  lookbackHours?: number;
+  startDate?: string;
+  endDate?: string;
+  maxMessages?: number;
+  maxLogs?: number;
+  includePayload?: boolean;
+  maxPayloadFields?: number;
 };
 
 export type ProductionAISummaryResponse = {
