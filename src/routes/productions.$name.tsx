@@ -11,6 +11,8 @@ import type {
   ProductionAnalysisResponse,
   ProductionSummaryResponse,
   ProductionAISummaryResponse,
+  ProductionAIAskResponse,
+  RAGChunk,
   ProductionRuntimeResponse,
   ProductionActionResponse,
   ProductionGraphResponse,
@@ -240,7 +242,10 @@ function ProductionDetailPage() {
             <TabsTrigger value="explanations">Explanations</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
+            <TabsTrigger value="ask">Ask AI</TabsTrigger>
           </TabsList>
+
+
 
           <TabsContent value="overview" className="pt-6">
             {comps.error ? <ErrorPanel error={comps.error as Error} label="components" /> : null}
@@ -363,7 +368,16 @@ function ProductionDetailPage() {
           <TabsContent value="logs" className="pt-6">
             <LogsPanel productionName={name} />
           </TabsContent>
+
+          <TabsContent value="ask" className="pt-6">
+            <AIAskPanel
+              productionName={name}
+              encoded={encoded}
+              componentNames={components.map((c) => c.name ?? c.className ?? "").filter(Boolean) as string[]}
+            />
+          </TabsContent>
         </Tabs>
+
 
         {analysis.data?.warnings && analysis.data.warnings.length > 0 ? (
           <section>
