@@ -517,6 +517,30 @@ function ErrorPanel({ error, label }: { error: Error; label: string }) {
   );
 }
 
+function CopyButton({ getText, label = "Copy" }: { getText: () => string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(getText());
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        } catch {
+          /* ignore */
+        }
+      }}
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      title={label}
+    >
+      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      {copied ? "copied" : label}
+    </button>
+  );
+}
+
 function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
   const meta = data.metadata;
   const fields = meta?.fields ?? [];
