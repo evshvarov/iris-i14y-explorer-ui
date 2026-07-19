@@ -213,7 +213,12 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
           No log entries.
         </div>
       ) : (
-        <ul className="divide-y divide-border/60 rounded-lg ring-1 ring-black/5 bg-card overflow-hidden">
+        <div className="rounded-lg ring-1 ring-black/5 bg-card overflow-hidden">
+        <div className="grid grid-cols-[auto_1fr] gap-3 px-4 py-2 bg-muted/50 border-b border-border/60 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <span className="w-14">Type</span>
+          <span>Time · Source · Session · Job{!productionName ? " · Production" : ""} — Message</span>
+        </div>
+        <ul className="divide-y divide-border/60">
           {items.map((e, i) => (
             <li
               key={`${e.logId ?? i}-${e.timeLogged ?? i}`}
