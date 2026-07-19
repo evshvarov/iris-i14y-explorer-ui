@@ -1195,3 +1195,253 @@ function AISummaryPanel({ productionName, encoded }: { productionName: string; e
     </section>
   );
 }
+
+function AIAskPanel({
+  productionName,
+  encoded,
+  componentNames,
+}: {
+  productionName: string;
+  encoded: string;
+  componentNames: string[];
+}) {
+  const [question, setQuestion] = useState("");
+  const [componentName, setComponentName] = useState<string>("");
+  const [maxChunks, setMaxChunks] = useState<number>(8);
+  const [history, setHistory] = useState<ProductionAIAskResponse[]>([]);
+
+  const mutation = useMutation({
+    mutationFn: (body: { question: string; componentName?: string; maxChunks?: number }) =>
+      apiFetch<ProductionAIAskResponse>(`/productions/${encoded}/ai/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (r) => {
+      setHistory((h) => [r, ...h]);
+      if (r.generated) toast.success("AI answer generated");
+      else if (r.warnings?.length) toast.message(r.warnings[0]?.message ?? "AI answer unavailable");
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim() || mutation.isPending) return;
+    mutation.mutate({
+      question: question.trim(),
+      componentName: componentName || undefined,
+      maxChunks: maxChunks || undefined,
+    });
+  };
+
+  const suggestions = [
+    "What does this production do?",
+    "Why might messages fail here?",
+    "Which components have the most warnings?",
+    "How are services connected to operations?",
+  ];
+
+  return (
+    <section className="space-y-6 max-w-4xl">
+      <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="size-9 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center shrink-0">
+            <Sparkles className="size-4" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold">Ask about this production</h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Retrieval-augmented answer grounded in analysis chunks.{" "}
+              <span className="font-mono">POST /productions/{productionName}/ai/ask</span>
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={submit} className="space-y-3">
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="e.g. Why does this production route messages the way it does?"
+            rows={3}
+            className="w-full text-sm rounded-md ring-1 ring-black/10 bg-background px-3 py-2 font-mono focus:outline-none focus:ring-iris-brand"
+          />
+
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setQuestion(s)}
+                className="text-[11px] font-mono text-muted-foreground hover:text-foreground rounded-full ring-1 ring-black/10 px-2.5 py-1 bg-muted/40 hover:bg-muted"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5">
+              <span className="uppercase tracking-wider">Scope</span>
+              <select
+                value={componentName}
+                onChange={(e) => setComponentName(e.target.value)}
+                className="bg-card ring-1 ring-black/10 rounded px-2 py-1 font-mono text-foreground"
+              >
+                <option value="">Whole production</option>
+                {componentNames.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5">
+              <span className="uppercase tracking-wider">Max chunks</span>
+              <input
+                type="number"
+                min={1}
+                max={32}
+                value={maxChunks}
+                onChange={(e) => setMaxChunks(Number(e.target.value) || 8)}
+                className="w-16 bg-card ring-1 ring-black/10 rounded px-2 py-1 font-mono text-foreground"
+              />
+            </label>
+            <div className="ml-auto">
+              <button
+                type="submit"
+                disabled={!question.trim() || mutation.isPending}
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md bg-iris-brand text-white px-3 py-1.5 hover:bg-iris-brand/90 disabled:opacity-50"
+              >
+                {mutation.isPending ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+                {mutation.isPending ? "Asking…" : "Ask"}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {mutation.error ? (
+          <div className="text-xs font-mono text-destructive break-all mt-3">
+            {(mutation.error as Error).message}
+          </div>
+        ) : null}
+      </div>
+
+      {history.length === 0 && !mutation.isPending ? (
+        <p className="text-xs text-muted-foreground italic">
+          Ask a question to have the module retrieve grounded analysis chunks and generate an answer.
+          Requires <span className="font-mono">aiProviderEnabled</span> and an OpenAI key on the server;
+          otherwise a deterministic fallback is returned.
+        </p>
+      ) : null}
+
+      <div className="space-y-4">
+        {history.map((r, idx) => (
+          <AIAskResult key={idx} result={r} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <article className="bg-card ring-1 ring-black/5 rounded-lg p-5 space-y-3">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">
+            Question{result.componentName ? ` · ${result.componentName}` : ""}
+          </p>
+          <p className="text-sm font-medium text-foreground/90">{result.question}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {result.confidence ? <ConfidenceBadge confidence={result.confidence} /> : null}
+          <span
+            className={`text-[10px] font-mono rounded px-2 py-0.5 ring-1 ${
+              result.generated
+                ? "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10"
+                : "text-muted-foreground ring-black/10"
+            }`}
+          >
+            {result.generated ? "AI GENERATED" : "FALLBACK"}
+          </span>
+        </div>
+      </header>
+
+      {result.answer ? (
+        <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">{result.answer}</p>
+      ) : (
+        <p className="text-xs text-muted-foreground italic">No answer text returned.</p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono text-muted-foreground">
+        {result.provider ? <span>provider: {result.provider}</span> : null}
+        {result.model ? <span>model: {result.model}</span> : null}
+        {result.aiApiKeySource ? <span>key: {result.aiApiKeySource}</span> : null}
+        {typeof result.chunkCount === "number" ? (
+          <span>
+            chunks: {result.chunkCount}
+            {typeof result.totalChunkCount === "number" ? ` / ${result.totalChunkCount}` : ""}
+          </span>
+        ) : null}
+      </div>
+
+      {result.warnings?.length ? (
+        <ul className="text-[11px] font-mono text-amber-700 space-y-0.5">
+          {result.warnings.map((w, i) => (
+            <li key={i}>⚠ {w.code ? `${w.code}: ` : ""}{w.message}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      {result.chunks && result.chunks.length > 0 ? (
+        <div>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-[11px] font-mono text-muted-foreground hover:text-foreground uppercase tracking-wider"
+          >
+            {expanded ? "Hide" : "Show"} retrieved chunks ({result.chunks.length})
+          </button>
+          {expanded ? (
+            <ul className="mt-2 space-y-2">
+              {result.chunks.map((c: RAGChunk, i) => (
+                <li key={c.id ?? i} className="ring-1 ring-black/5 rounded-md p-3 bg-muted/30">
+                  <div className="flex items-center flex-wrap gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-iris-brand">
+                      {c.kind ?? "chunk"}
+                    </span>
+                    {c.title ? (
+                      <span className="text-xs font-semibold">{c.title}</span>
+                    ) : null}
+                    {c.component ? (
+                      <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
+                    ) : null}
+                    {typeof c.score === "number" ? (
+                      <span className="text-[10px] font-mono text-muted-foreground ml-auto">
+                        score {c.score}
+                      </span>
+                    ) : null}
+                    {c.confidence ? <ConfidenceBadge confidence={c.confidence} /> : null}
+                  </div>
+                  {c.text ? (
+                    <p className="text-[11px] font-mono text-foreground/80 whitespace-pre-wrap">
+                      {c.text}
+                    </p>
+                  ) : null}
+                  {c.source ? (
+                    <p className="text-[10px] font-mono text-muted-foreground mt-1">
+                      source: {c.source}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  );
+}
