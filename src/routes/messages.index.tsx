@@ -119,22 +119,11 @@ function MessagesPage() {
 
 
   const items = listQuery.data?.items ?? [];
-  const dateFiltered = useMemo(() => {
-    if (!search.dateFrom && !search.dateTo) return items;
-    const fromMs = search.dateFrom ? new Date(`${search.dateFrom}T00:00:00`).getTime() : -Infinity;
-    const toMs = search.dateTo ? new Date(`${search.dateTo}T23:59:59.999`).getTime() : Infinity;
-    return items.filter((m) => {
-      if (!m.timeCreated) return false;
-      const t = new Date(m.timeCreated).getTime();
-      if (Number.isNaN(t)) return false;
-      return t >= fromMs && t <= toMs;
-    });
-  }, [items, search.dateFrom, search.dateTo]);
 
   const filtered = useMemo(() => {
-    if (!text.trim()) return dateFiltered;
+    if (!text.trim()) return items;
     const t = text.toLowerCase();
-    return dateFiltered.filter(
+    return items.filter(
       (m) =>
         String(m.messageId ?? "").includes(t) ||
         String(m.sessionId ?? "").includes(t) ||
@@ -142,7 +131,8 @@ function MessagesPage() {
         (m.targetConfigName ?? "").toLowerCase().includes(t) ||
         (m.messageBodyClassName ?? "").toLowerCase().includes(t),
     );
-  }, [dateFiltered, text]);
+  }, [items, text]);
+
 
   const setSearchParam = (patch: Partial<typeof search>) =>
     navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
