@@ -158,22 +158,48 @@ function MessagesPage() {
   }, [items, text]);
 
 
+  // Build a map from numeric status code -> human status name (from facets / items)
+  const statusNameByCode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const f of facetsQuery.data?.statusFacets ?? []) {
+      const name = String(f.statusName ?? f.name ?? "").trim();
+      const code = String(f.status ?? "").trim();
+      if (name && code) map.set(code, name);
+    }
+    for (const m of items) {
+      const code = String(m.status ?? "").trim();
+      const name = String(m.statusName ?? "").trim();
+      if (name && code && !map.has(code)) map.set(code, name);
+    }
+    return map;
+  }, [facetsQuery.data?.statusFacets, items]);
+
   const statusLabels = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const m of items) {
-      const s = String(m.status ?? "").trim();
-      if (!s) continue;
-      counts.set(s, (counts.get(s) ?? 0) + 1);
+    // Prefer server statusFacets (name + count)
+    for (const f of facetsQuery.data?.statusFacets ?? []) {
+      const name = String(f.statusName ?? f.name ?? "").trim();
+      if (!name) continue;
+      counts.set(name, (counts.get(name) ?? 0) + Number(f.count ?? 0));
     }
-    // Merge in server-provided statusNames facet (from /messages/facets)
-    const facetNames = facetsQuery.data?.statusNames ?? [];
-    for (const s of facetNames) {
-      const key = String(s ?? "").trim();
-      if (!key) continue;
-      if (!counts.has(key)) counts.set(key, 0);
+    if (counts.size === 0) {
+      // Fall back to items — use statusName, else lookup by numeric status, else the raw code
+      for (const m of items) {
+        const code = String(m.status ?? "").trim();
+        const label =
+          String(m.statusName ?? "").trim() ||
+          statusNameByCode.get(code) ||
+          code;
+        if (!label) continue;
+        counts.set(label, (counts.get(label) ?? 0) + 1);
+      }
+      for (const s of facetsQuery.data?.statusNames ?? []) {
+        const key = String(s ?? "").trim();
+        if (key && !counts.has(key)) counts.set(key, 0);
+      }
     }
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-  }, [items, facetsQuery.data?.statusNames]);
+  }, [items, facetsQuery.data?.statusFacets, facetsQuery.data?.statusNames, statusNameByCode]);
 
   // Server now filters by `status` when provided; keep list as-is.
   const filteredByStatus = filtered;
@@ -428,7 +454,7 @@ function MessagesPage() {
                           className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${statusPillClass(tone)}`}
                         >
                           {m.isError ? <AlertCircle className="size-3" /> : null}
-                          {m.statusName || m.status || "?"}
+                          {m.statusName || statusNameByCode.get(String(m.status ?? "")) || m.status || "?"}
                         </span>
                         <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
                       </Link>
