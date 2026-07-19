@@ -454,7 +454,7 @@ function MessagesPage() {
                           className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${statusPillClass(tone)}`}
                         >
                           {m.isError ? <AlertCircle className="size-3" /> : null}
-                          {m.statusName || m.status || "?"}
+                          {m.statusName || statusNameByCode.get(String(m.status ?? "")) || m.status || "?"}
                         </span>
                         <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
                       </Link>
