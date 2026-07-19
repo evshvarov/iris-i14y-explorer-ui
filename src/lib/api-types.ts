@@ -721,6 +721,7 @@ export type MessageHeader = {
   messageBodyId?: string;
   status?: string;
   statusName?: string;
+  statusLabel?: string;
   isError?: boolean;
   errorStatus?: string;
   type?: string;
