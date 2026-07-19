@@ -1409,9 +1409,28 @@ function RAGIndexSection({
     retry: 0,
   });
 
+  const [includeRuntime, setIncludeRuntime] = useState(false);
+  const [includePayload, setIncludePayload] = useState(false);
+  const [lookbackHours, setLookbackHours] = useState<number | "">("");
+  const [maxMessages, setMaxMessages] = useState<number | "">("");
+  const [maxLogs, setMaxLogs] = useState<number | "">("");
+
   const rebuild = useMutation({
-    mutationFn: () =>
-      apiFetch<RAGIndexRebuildResponse>(`/productions/${encoded}/rag/index`, { method: "POST" }),
+    mutationFn: () => {
+      const body: Record<string, unknown> = {};
+      if (includeRuntime) {
+        body.includeRuntime = true;
+        if (lookbackHours !== "") body.lookbackHours = Number(lookbackHours);
+        if (maxMessages !== "") body.maxMessages = Number(maxMessages);
+        if (maxLogs !== "") body.maxLogs = Number(maxLogs);
+      }
+      if (includePayload) body.includePayload = true;
+      return apiFetch<RAGIndexRebuildResponse>(`/productions/${encoded}/rag/index`, {
+        method: "POST",
+        headers: Object.keys(body).length ? { "Content-Type": "application/json" } : undefined,
+        body: Object.keys(body).length ? JSON.stringify(body) : undefined,
+      });
+    },
     onSuccess: (r) => {
       toast.success(`Index rebuilt · ${r.chunkCount ?? 0} chunks · run #${r.runId ?? "?"}`);
       qc.invalidateQueries({ queryKey: ["rag-index", productionName] });
@@ -1460,6 +1479,66 @@ function RAGIndexSection({
         </div>
       </header>
 
+      <div className="rounded-md ring-1 ring-black/5 bg-muted/30 p-3 space-y-2">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Rebuild options
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-mono">
+          <label className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={includeRuntime}
+              onChange={(e) => setIncludeRuntime(e.target.checked)}
+            />
+            Include runtime (messages + logs)
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={includePayload}
+              onChange={(e) => setIncludePayload(e.target.checked)}
+            />
+            Include payload metadata
+          </label>
+          {includeRuntime ? (
+            <>
+              <label className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="uppercase tracking-wider">Lookback h</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={lookbackHours}
+                  onChange={(e) => setLookbackHours(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="w-20 bg-card ring-1 ring-black/10 rounded px-2 py-1 text-foreground"
+                  placeholder="24"
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="uppercase tracking-wider">Max msg</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={maxMessages}
+                  onChange={(e) => setMaxMessages(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="w-20 bg-card ring-1 ring-black/10 rounded px-2 py-1 text-foreground"
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="uppercase tracking-wider">Max log</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={maxLogs}
+                  onChange={(e) => setMaxLogs(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="w-20 bg-card ring-1 ring-black/10 rounded px-2 py-1 text-foreground"
+                />
+              </label>
+            </>
+          ) : null}
+        </div>
+      </div>
+
+
       {status.isLoading ? (
         <Skeleton className="h-4 w-64" />
       ) : status.error ? (
@@ -1481,6 +1560,10 @@ function RAGIndexSection({
               ["BPL", s.metrics?.businessProcessChunkCount],
               ["externals", s.metrics?.externalSystemChunkCount],
               ["warnings", s.metrics?.warningChunkCount],
+              ["messages", s.metrics?.messageChunkCount],
+              ["logs", s.metrics?.logChunkCount],
+              ["payloads", s.metrics?.payloadChunkCount],
+              ["runtime", s.metrics?.runtimeChunkCount],
             ]
               .filter(([, v]) => typeof v === "number")
               .map(([k, v]) => (

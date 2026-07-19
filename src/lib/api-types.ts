@@ -255,6 +255,23 @@ export type AnalysisSettings = {
   aiApiKeySource?: string;
   openAIApiKey?: string; // write-only
   clearOpenAIApiKey?: boolean;
+  ragRuntimeDataEnabled?: boolean;
+  ragRuntimeLookbackHours?: number;
+  ragRuntimeMaxMessages?: number;
+  ragRuntimeMaxLogs?: number;
+  ragPayloadIndexingEnabled?: boolean;
+  ragPayloadMaxFields?: number;
+};
+
+export type RAGIndexRebuildRequest = {
+  includeRuntime?: boolean;
+  lookbackHours?: number;
+  startDate?: string;
+  endDate?: string;
+  maxMessages?: number;
+  maxLogs?: number;
+  includePayload?: boolean;
+  maxPayloadFields?: number;
 };
 
 export type ProductionAISummaryResponse = {
@@ -358,6 +375,18 @@ export type RAGIndexRebuildResponse = {
   runId?: number;
   status?: string;
   chunkCount?: number;
+  includeRuntime?: boolean;
+  includePayload?: boolean;
+  lookbackHours?: number;
+  startDate?: string;
+  endDate?: string;
+  maxMessages?: number;
+  maxLogs?: number;
+  maxPayloadFields?: number;
+  runtimeChunkCount?: number;
+  messageChunkCount?: number;
+  logChunkCount?: number;
+  payloadChunkCount?: number;
   metrics?: RAGContextMetrics;
   confidence?: Confidence;
   warnings?: Warning[];
@@ -408,6 +437,10 @@ export type RAGContextMetrics = {
   transformationChunkCount?: number;
   businessProcessChunkCount?: number;
   warningChunkCount?: number;
+  messageChunkCount?: number;
+  logChunkCount?: number;
+  payloadChunkCount?: number;
+  runtimeChunkCount?: number;
 };
 
 export type ProductionRAGContextResponse = {
