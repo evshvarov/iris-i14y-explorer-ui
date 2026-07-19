@@ -24,7 +24,43 @@ const searchSchema = z.object({
   errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
   limit: z.coerce.number().optional(),
   offset: z.coerce.number().optional(),
+  dateFrom: toStr,
+  dateTo: toStr,
+  datePreset: toStr,
 });
+
+type DatePreset = "today" | "week" | "month" | "lastMonth" | "custom";
+
+function ymd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function rangeForPreset(preset: DatePreset): { dateFrom?: string; dateTo?: string } {
+  const now = new Date();
+  if (preset === "today") {
+    const s = ymd(now);
+    return { dateFrom: s, dateTo: s };
+  }
+  if (preset === "week") {
+    const d = new Date(now);
+    const dow = (d.getDay() + 6) % 7; // Monday-based
+    d.setDate(d.getDate() - dow);
+    return { dateFrom: ymd(d), dateTo: ymd(now) };
+  }
+  if (preset === "month") {
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { dateFrom: ymd(first), dateTo: ymd(now) };
+  }
+  if (preset === "lastMonth") {
+    const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { dateFrom: ymd(first), dateTo: ymd(last) };
+  }
+  return {};
+}
 
 export const Route = createFileRoute("/messages/")({
   head: () => ({ meta: [{ title: "Message Explainer — IRIS Explainer" }] }),
@@ -77,10 +113,22 @@ function MessagesPage() {
   });
 
   const items = listQuery.data?.items ?? [];
+  const dateFiltered = useMemo(() => {
+    if (!search.dateFrom && !search.dateTo) return items;
+    const fromMs = search.dateFrom ? new Date(`${search.dateFrom}T00:00:00`).getTime() : -Infinity;
+    const toMs = search.dateTo ? new Date(`${search.dateTo}T23:59:59.999`).getTime() : Infinity;
+    return items.filter((m) => {
+      if (!m.timeCreated) return false;
+      const t = new Date(m.timeCreated).getTime();
+      if (Number.isNaN(t)) return false;
+      return t >= fromMs && t <= toMs;
+    });
+  }, [items, search.dateFrom, search.dateTo]);
+
   const filtered = useMemo(() => {
-    if (!text.trim()) return items;
+    if (!text.trim()) return dateFiltered;
     const t = text.toLowerCase();
-    return items.filter(
+    return dateFiltered.filter(
       (m) =>
         String(m.messageId ?? "").includes(t) ||
         String(m.sessionId ?? "").includes(t) ||
@@ -88,7 +136,7 @@ function MessagesPage() {
         (m.targetConfigName ?? "").toLowerCase().includes(t) ||
         (m.messageBodyClassName ?? "").toLowerCase().includes(t),
     );
-  }, [items, text]);
+  }, [dateFiltered, text]);
 
   const setSearchParam = (patch: Partial<typeof search>) =>
     navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
@@ -107,7 +155,25 @@ function MessagesPage() {
     ["Body", search.messageBodyClassName],
     ["Session", search.sessionId],
     search.errorsOnly ? ["Errors", "only"] : undefined,
+    search.dateFrom || search.dateTo
+      ? ["Date", `${search.dateFrom ?? "…"} → ${search.dateTo ?? "…"}`]
+      : undefined,
   ].filter(Boolean) as [string, string][];
+
+  const applyPreset = (preset: DatePreset) => {
+    if (preset === "custom") {
+      setSearchParam({ datePreset: "custom" });
+      return;
+    }
+    const r = rangeForPreset(preset);
+    setSearchParam({ datePreset: preset, dateFrom: r.dateFrom, dateTo: r.dateTo });
+  };
+
+  const clearDates = () =>
+    setSearchParam({ datePreset: undefined, dateFrom: undefined, dateTo: undefined });
+
+  const activePreset = (search.datePreset as DatePreset | undefined) ??
+    (search.dateFrom || search.dateTo ? "custom" : undefined);
 
   return (
     <>
@@ -169,6 +235,16 @@ function MessagesPage() {
 
         {/* List */}
         <div className="space-y-4 min-w-0">
+          <DateFilterBar
+            preset={activePreset}
+            dateFrom={search.dateFrom}
+            dateTo={search.dateTo}
+            onPreset={applyPreset}
+            onFrom={(v) => setSearchParam({ datePreset: "custom", dateFrom: v || undefined })}
+            onTo={(v) => setSearchParam({ datePreset: "custom", dateTo: v || undefined })}
+            onClear={clearDates}
+          />
+
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -368,6 +444,79 @@ function FacetList({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function DateFilterBar({
+  preset,
+  dateFrom,
+  dateTo,
+  onPreset,
+  onFrom,
+  onTo,
+  onClear,
+}: {
+  preset?: DatePreset;
+  dateFrom?: string;
+  dateTo?: string;
+  onPreset: (p: DatePreset) => void;
+  onFrom: (v: string) => void;
+  onTo: (v: string) => void;
+  onClear: () => void;
+}) {
+  const presets: { key: DatePreset; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "This week" },
+    { key: "month", label: "This month" },
+    { key: "lastMonth", label: "Last month" },
+    { key: "custom", label: "Custom" },
+  ];
+  return (
+    <div className="bg-card ring-1 ring-black/5 rounded-lg p-3 flex flex-wrap items-center gap-2">
+      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mr-1">
+        Date
+      </span>
+      {presets.map((p) => {
+        const active = preset === p.key;
+        return (
+          <button
+            key={p.key}
+            onClick={() => onPreset(p.key)}
+            className={`text-[11px] font-mono uppercase px-2 py-1 rounded ring-1 transition ${
+              active
+                ? "bg-iris-brand/10 text-iris-brand ring-iris-brand/30"
+                : "bg-muted/40 text-foreground/80 ring-black/5 hover:bg-muted"
+            }`}
+          >
+            {p.label}
+          </button>
+        );
+      })}
+      <div className="flex items-center gap-1.5 ml-auto">
+        <label className="text-[10px] font-mono uppercase text-muted-foreground">From</label>
+        <input
+          type="date"
+          value={dateFrom ?? ""}
+          onChange={(e) => onFrom(e.target.value)}
+          className="h-8 px-2 rounded ring-1 ring-black/5 bg-background text-xs font-mono"
+        />
+        <label className="text-[10px] font-mono uppercase text-muted-foreground">To</label>
+        <input
+          type="date"
+          value={dateTo ?? ""}
+          onChange={(e) => onTo(e.target.value)}
+          className="h-8 px-2 rounded ring-1 ring-black/5 bg-background text-xs font-mono"
+        />
+        {(dateFrom || dateTo || preset) ? (
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1 text-[10px] font-mono uppercase text-muted-foreground hover:text-foreground px-1.5 py-1"
+          >
+            <X className="size-3" /> Clear
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
