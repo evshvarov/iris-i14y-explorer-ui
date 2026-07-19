@@ -218,6 +218,11 @@ function ModuleSettingsSection() {
               onChange={(v) => set("payloadInspectionEnabled", v)}
             />
             <ToggleRow
+              label="Payload metadata"
+              checked={!!draft.payloadMetadataEnabled}
+              onChange={(v) => set("payloadMetadataEnabled", v)}
+            />
+            <ToggleRow
               label="Source-code inference"
               checked={!!draft.sourceCodeInferenceEnabled}
               onChange={(v) => set("sourceCodeInferenceEnabled", v)}
