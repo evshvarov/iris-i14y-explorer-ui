@@ -132,7 +132,7 @@ function MessageDetailPage() {
         title={`#${id}`}
         status={
           m
-            ? { label: m.statusName ?? m.status ?? "unknown", tone: m.isError ? "inferred" : "confirmed" }
+            ? { label: m.statusLabel ?? m.statusName ?? m.status ?? "unknown", tone: m.isError ? "inferred" : "confirmed" }
             : undefined
         }
         actions={
@@ -389,11 +389,11 @@ function MessageDetailPage() {
                         {s.isError ? (
                           <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-destructive">
                             <AlertCircle className="size-3" />
-                            {s.statusName ?? s.status}
+                            {s.statusLabel ?? s.statusName ?? s.status}
                           </span>
                         ) : (
                           <span className="text-[10px] font-mono uppercase text-muted-foreground bg-muted rounded px-1.5 py-0.5">
-                            {s.statusName ?? s.status ?? "ok"}
+                            {s.statusLabel ?? s.statusName ?? s.status ?? "ok"}
                           </span>
                         )}
                         <EvidencePopover

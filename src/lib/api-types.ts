@@ -721,6 +721,7 @@ export type MessageHeader = {
   messageBodyId?: string;
   status?: string;
   statusName?: string;
+  statusLabel?: string;
   isError?: boolean;
   errorStatus?: string;
   type?: string;
@@ -774,7 +775,8 @@ export type MessageFacetResponse = {
   sessionIds?: string[];
   componentNames?: string[];
   statusNames?: string[];
-  statusFacets?: Array<{ status?: number | string; statusName?: string; name?: string; count?: number }>;
+  statusLabels?: string[];
+  statusFacets?: Array<{ status?: number | string; statusName?: string; statusLabel?: string; name?: string; label?: string; count?: number }>;
   runtimeMessageAnalysisEnabled?: boolean;
   warnings?: Warning[];
 };
@@ -799,6 +801,7 @@ export type TraceStep = {
   messageBodyClassName?: string;
   status?: string;
   statusName?: string;
+  statusLabel?: string;
   isError?: boolean;
   invocation?: string;
   correspondingMessageId?: number;
