@@ -184,6 +184,17 @@ function MessagesPage() {
               }
             : undefined
         }
+        actions={
+          search.productionName ? (
+            <Link
+              to="/productions/$name"
+              params={{ name: search.productionName }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+            >
+              <ArrowLeft className="size-3.5" /> Back to production
+            </Link>
+          ) : undefined
+        }
       />
 
       <div className="p-8 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
