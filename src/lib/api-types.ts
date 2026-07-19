@@ -771,6 +771,7 @@ export type MessageFacetResponse = {
   sessionIds?: string[];
   componentNames?: string[];
   statusNames?: string[];
+  statusFacets?: Array<{ status?: number | string; statusName?: string; name?: string; count?: number }>;
   runtimeMessageAnalysisEnabled?: boolean;
   warnings?: Warning[];
 };
