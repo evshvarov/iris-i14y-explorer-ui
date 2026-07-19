@@ -10,6 +10,7 @@ import type {
   ProductionDetailResponse,
   ProductionAnalysisResponse,
   ProductionSummaryResponse,
+  ProductionAISummaryResponse,
   ProductionRuntimeResponse,
   ProductionActionResponse,
   ProductionGraphResponse,
