@@ -794,6 +794,7 @@ export type TraceStep = {
   target?: string;
   messageBodyClassName?: string;
   status?: string;
+  statusName?: string;
   isError?: boolean;
   invocation?: string;
   correspondingMessageId?: number;
