@@ -4,8 +4,9 @@
 export type ProductionLogEntry = {
   logId?: number;
   timeLogged?: string;
-  type?: string;
+  type?: string | number;
   typeName?: string;
+  typeLabel?: string;
   source?: string;
   sessionId?: string;
   job?: string;
@@ -44,7 +45,8 @@ export type ProductionLogListResponse = {
   contains?: string;
   sourceNames?: string[];
   typeNames?: string[];
-  typeFacets?: Array<{ type?: number | string; typeName?: string; name?: string; count?: number }>;
+  typeLabels?: string[];
+  typeFacets?: Array<{ type?: number | string; typeName?: string; typeLabel?: string; name?: string; label?: string; count?: number }>;
   logClassName?: string;
   metrics?: ProductionLogMetrics;
   warnings?: Warning[];

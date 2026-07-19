@@ -64,20 +64,20 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
   const items = query.data?.items ?? [];
   const sourceOptions = query.data?.sourceNames ?? [];
   const typeFacets = query.data?.typeFacets ?? [];
-  // Prefer typeFacets (name+code+count); fall back to typeNames array.
+  // Prefer typeFacets (name+code+count); fall back to typeLabels/typeNames array.
   const typeOptions: Array<{ value: string; label: string; count?: number }> =
     typeFacets.length > 0
       ? typeFacets.map((f) => {
-          const label = String(f.typeName ?? f.name ?? f.type ?? "").trim();
-          const value = String(f.typeName ?? f.name ?? f.type ?? "").trim();
+          const label = String(f.typeLabel ?? f.typeName ?? f.label ?? f.name ?? f.type ?? "").trim();
+          const value = label;
           return { value, label, count: f.count };
         })
-      : (query.data?.typeNames ?? []).map((t) => ({ value: t, label: t }));
-  // Map numeric type code -> human name for row badges
+      : (query.data?.typeLabels ?? query.data?.typeNames ?? []).map((t) => ({ value: t, label: t }));
+  // Map numeric type code -> human label for row badges
   const typeNameByCode = new Map<string, string>();
   for (const f of typeFacets) {
     const code = String(f.type ?? "").trim();
-    const name = String(f.typeName ?? f.name ?? "").trim();
+    const name = String(f.typeLabel ?? f.typeName ?? f.label ?? f.name ?? "").trim();
     if (code && name) typeNameByCode.set(code, name);
   }
   const metrics = query.data?.metrics;
@@ -242,10 +242,10 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
             >
               <div className="flex items-start gap-3">
                 <span
-                  className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded ring-1 shrink-0 ${typeTone(e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type)}`}
+                  className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded ring-1 shrink-0 ${typeTone(e.typeLabel ?? e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type)}`}
                   title={e.type != null ? `code ${e.type}` : undefined}
                 >
-                  {e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type ?? "log"}
+                  {e.typeLabel ?? e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type ?? "log"}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
