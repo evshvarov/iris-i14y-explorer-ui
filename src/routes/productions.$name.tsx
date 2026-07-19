@@ -1490,3 +1490,117 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
     </article>
   );
 }
+
+function RAGContextPanel({
+  data,
+  onClose,
+}: {
+  data: ProductionRAGContextResponse;
+  onClose: () => void;
+}) {
+  const chunks = data.retrievedChunks && data.retrievedChunks.length > 0
+    ? data.retrievedChunks
+    : data.chunks ?? [];
+  const m = data.metrics ?? {};
+  const chips: Array<[string, number | undefined]> = [
+    ["retrieved", data.retrievedChunkCount ?? m.retrievedChunkCount],
+    ["total", data.chunkCount ?? m.chunkCount],
+    ["components", m.componentChunkCount],
+    ["connections", m.connectionChunkCount],
+    ["rules", m.ruleChunkCount],
+    ["msg types", m.messageTypeChunkCount],
+    ["externals", m.externalSystemChunkCount],
+    ["transforms", m.transformationChunkCount],
+    ["BPL", m.businessProcessChunkCount],
+    ["warnings", m.warningChunkCount],
+  ];
+  return (
+    <section className="bg-card ring-1 ring-iris-brand/20 rounded-lg p-5 space-y-3">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-iris-brand mb-1">
+            Retrieval preview · GET /rag/context
+          </p>
+          <p className="text-sm font-medium">
+            {data.question ? (
+              <>Question: <span className="font-mono text-foreground/80">{data.question}</span></>
+            ) : (
+              <span className="text-muted-foreground italic">No question — showing default retrieval set</span>
+            )}
+          </p>
+          {data.componentName ? (
+            <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+              scope: {data.componentName}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {data.confidence ? <ConfidenceBadge confidence={data.confidence} /> : null}
+          <button
+            onClick={onClose}
+            className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground ring-1 ring-black/10 rounded px-2 py-0.5"
+          >
+            Close
+          </button>
+        </div>
+      </header>
+
+      <div className="flex flex-wrap gap-1.5">
+        {chips
+          .filter(([, v]) => typeof v === "number")
+          .map(([k, v]) => (
+            <span
+              key={k}
+              className="text-[10px] font-mono rounded-full bg-muted/60 ring-1 ring-black/5 px-2 py-0.5 text-foreground/80"
+            >
+              {k}: {v}
+            </span>
+          ))}
+      </div>
+
+      {data.warnings?.length ? (
+        <ul className="text-[11px] font-mono text-amber-700 space-y-0.5">
+          {data.warnings.map((w, i) => (
+            <li key={i}>⚠ {w.code ? `${w.code}: ` : ""}{w.message}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      {chunks.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">No chunks returned.</p>
+      ) : (
+        <ul className="space-y-2">
+          {chunks.map((c: RAGChunk, i) => (
+            <li key={c.id ?? i} className="ring-1 ring-black/5 rounded-md p-3 bg-muted/30">
+              <div className="flex items-center flex-wrap gap-2 mb-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-iris-brand">
+                  {c.kind ?? "chunk"}
+                </span>
+                {c.title ? <span className="text-xs font-semibold">{c.title}</span> : null}
+                {c.component ? (
+                  <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
+                ) : null}
+                {typeof c.score === "number" ? (
+                  <span className="text-[10px] font-mono text-muted-foreground ml-auto">
+                    score {c.score}
+                  </span>
+                ) : null}
+                {c.confidence ? <ConfidenceBadge confidence={c.confidence} /> : null}
+              </div>
+              {c.text ? (
+                <p className="text-[11px] font-mono text-foreground/80 whitespace-pre-wrap">
+                  {c.text}
+                </p>
+              ) : null}
+              {c.source ? (
+                <p className="text-[10px] font-mono text-muted-foreground mt-1">
+                  source: {c.source}
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
