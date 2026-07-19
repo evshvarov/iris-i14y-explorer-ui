@@ -447,3 +447,76 @@ function FacetList({
     </div>
   );
 }
+
+function DateFilterBar({
+  preset,
+  dateFrom,
+  dateTo,
+  onPreset,
+  onFrom,
+  onTo,
+  onClear,
+}: {
+  preset?: DatePreset;
+  dateFrom?: string;
+  dateTo?: string;
+  onPreset: (p: DatePreset) => void;
+  onFrom: (v: string) => void;
+  onTo: (v: string) => void;
+  onClear: () => void;
+}) {
+  const presets: { key: DatePreset; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "This week" },
+    { key: "month", label: "This month" },
+    { key: "lastMonth", label: "Last month" },
+    { key: "custom", label: "Custom" },
+  ];
+  return (
+    <div className="bg-card ring-1 ring-black/5 rounded-lg p-3 flex flex-wrap items-center gap-2">
+      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mr-1">
+        Date
+      </span>
+      {presets.map((p) => {
+        const active = preset === p.key;
+        return (
+          <button
+            key={p.key}
+            onClick={() => onPreset(p.key)}
+            className={`text-[11px] font-mono uppercase px-2 py-1 rounded ring-1 transition ${
+              active
+                ? "bg-iris-brand/10 text-iris-brand ring-iris-brand/30"
+                : "bg-muted/40 text-foreground/80 ring-black/5 hover:bg-muted"
+            }`}
+          >
+            {p.label}
+          </button>
+        );
+      })}
+      <div className="flex items-center gap-1.5 ml-auto">
+        <label className="text-[10px] font-mono uppercase text-muted-foreground">From</label>
+        <input
+          type="date"
+          value={dateFrom ?? ""}
+          onChange={(e) => onFrom(e.target.value)}
+          className="h-8 px-2 rounded ring-1 ring-black/5 bg-background text-xs font-mono"
+        />
+        <label className="text-[10px] font-mono uppercase text-muted-foreground">To</label>
+        <input
+          type="date"
+          value={dateTo ?? ""}
+          onChange={(e) => onTo(e.target.value)}
+          className="h-8 px-2 rounded ring-1 ring-black/5 bg-background text-xs font-mono"
+        />
+        {(dateFrom || dateTo || preset) ? (
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1 text-[10px] font-mono uppercase text-muted-foreground hover:text-foreground px-1.5 py-1"
+          >
+            <X className="size-3" /> Clear
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
