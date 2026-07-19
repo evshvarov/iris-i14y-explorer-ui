@@ -545,7 +545,8 @@ function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
   const fields = meta?.fields ?? [];
   const restricted = data.restricted || meta?.restricted;
   const supported = data.payloadInspectionSupported ?? meta?.payloadInspectionSupported;
-  const enabled = data.payloadInspectionEnabled ?? meta?.payloadInspectionEnabled;
+  const inspectionEnabled = data.payloadInspectionEnabled ?? meta?.payloadInspectionEnabled;
+  const metadataEnabled = data.payloadMetadataEnabled ?? meta?.payloadMetadataEnabled;
 
   return (
     <section className="bg-card ring-1 ring-black/5 rounded-lg p-5">
@@ -559,8 +560,11 @@ function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
               <Lock className="size-3" /> restricted
             </span>
           ) : null}
-          <span className="text-[10px] font-mono uppercase text-muted-foreground">
-            {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
+          <span className="text-[10px] font-mono uppercase text-muted-foreground" title="Payload metadata flag">
+            metadata: {supported ? (metadataEnabled ? "enabled" : "disabled") : "unsupported"}
+          </span>
+          <span className="text-[10px] font-mono uppercase text-muted-foreground" title="Payload inspection flag">
+            inspection: {supported ? (inspectionEnabled ? "enabled" : "disabled") : "unsupported"}
           </span>
           <CopyButton
             label="Copy JSON"
