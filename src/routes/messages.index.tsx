@@ -24,7 +24,43 @@ const searchSchema = z.object({
   errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
   limit: z.coerce.number().optional(),
   offset: z.coerce.number().optional(),
+  dateFrom: toStr,
+  dateTo: toStr,
+  datePreset: toStr,
 });
+
+type DatePreset = "today" | "week" | "month" | "lastMonth" | "custom";
+
+function ymd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function rangeForPreset(preset: DatePreset): { dateFrom?: string; dateTo?: string } {
+  const now = new Date();
+  if (preset === "today") {
+    const s = ymd(now);
+    return { dateFrom: s, dateTo: s };
+  }
+  if (preset === "week") {
+    const d = new Date(now);
+    const dow = (d.getDay() + 6) % 7; // Monday-based
+    d.setDate(d.getDate() - dow);
+    return { dateFrom: ymd(d), dateTo: ymd(now) };
+  }
+  if (preset === "month") {
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { dateFrom: ymd(first), dateTo: ymd(now) };
+  }
+  if (preset === "lastMonth") {
+    const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { dateFrom: ymd(first), dateTo: ymd(last) };
+  }
+  return {};
+}
 
 export const Route = createFileRoute("/messages/")({
   head: () => ({ meta: [{ title: "Message Explainer — IRIS Explainer" }] }),
