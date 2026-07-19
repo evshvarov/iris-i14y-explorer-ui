@@ -1325,7 +1325,27 @@ function AIAskPanel({
                 className="w-16 bg-card ring-1 ring-black/10 rounded px-2 py-1 font-mono text-foreground"
               />
             </label>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                disabled={previewMutation.isPending}
+                onClick={() =>
+                  previewMutation.mutate({
+                    question: question.trim() || undefined,
+                    componentName: componentName || undefined,
+                    maxChunks: maxChunks || undefined,
+                  })
+                }
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md ring-1 ring-iris-brand/40 text-iris-brand px-3 py-1.5 hover:bg-iris-brand/10 disabled:opacity-50"
+                title="GET /productions/{name}/rag/context — inspect retrieved chunks without invoking AI"
+              >
+                {previewMutation.isPending ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Eye className="w-3.5 h-3.5" />
+                )}
+                {previewMutation.isPending ? "Retrieving…" : "Preview retrieval"}
+              </button>
               <button
                 type="submit"
                 disabled={!question.trim() || mutation.isPending}
