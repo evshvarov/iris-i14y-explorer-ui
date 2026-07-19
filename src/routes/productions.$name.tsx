@@ -1657,6 +1657,13 @@ function RAGChunkBrowser({
 
 function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
   const [expanded, setExpanded] = useState(false);
+  const citedIds = new Set(
+    (result.citations ?? []).map((c) => c.chunkId).filter(Boolean) as string[],
+  );
+  const uncitedIds = new Set(result.uncitedChunkIds ?? []);
+  const invalidIds = result.invalidCitationIds ?? [];
+  const hasCitations = (result.citations?.length ?? 0) > 0;
+  const groundedKnown = typeof result.answerGrounded === "boolean";
   return (
     <article className="bg-card ring-1 ring-black/5 rounded-lg p-5 space-y-3">
       <header className="flex items-start justify-between gap-3">
@@ -1667,6 +1674,22 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
           <p className="text-sm font-medium text-foreground/90">{result.question}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {groundedKnown ? (
+            <span
+              className={`text-[10px] font-mono rounded px-2 py-0.5 ring-1 ${
+                result.answerGrounded
+                  ? "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10"
+                  : "text-amber-700 ring-amber-500/30 bg-amber-500/10"
+              }`}
+              title={
+                result.answerGrounded
+                  ? "Every citation in the answer resolves to a retrieved chunk"
+                  : "Answer contains invalid or missing citations"
+              }
+            >
+              {result.answerGrounded ? "GROUNDED" : "UNGROUNDED"}
+            </span>
+          ) : null}
           {result.confidence ? <ConfidenceBadge confidence={result.confidence} /> : null}
           <span
             className={`text-[10px] font-mono rounded px-2 py-0.5 ring-1 ${
@@ -1696,9 +1719,61 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
             {typeof result.totalChunkCount === "number" ? ` / ${result.totalChunkCount}` : ""}
           </span>
         ) : null}
+        {typeof result.citationCount === "number" ? (
+          <span>citations: {result.citationCount}</span>
+        ) : null}
+        {typeof result.invalidCitationCount === "number" && result.invalidCitationCount > 0 ? (
+          <span className="text-amber-700">invalid: {result.invalidCitationCount}</span>
+        ) : null}
+        {uncitedIds.size > 0 ? <span>uncited: {uncitedIds.size}</span> : null}
         {result.chunkSource ? <span>source: {result.chunkSource}</span> : null}
         {typeof result.runId === "number" ? <span>run #{result.runId}</span> : null}
       </div>
+
+      {hasCitations ? (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            Citations
+          </p>
+          <ul className="space-y-1">
+            {result.citations!.map((c, i) => (
+              <li
+                key={c.chunkId ?? i}
+                className="flex items-start gap-2 text-[11px] font-mono ring-1 ring-iris-brand/20 bg-iris-brand/5 rounded px-2 py-1"
+              >
+                <span className="text-iris-brand shrink-0">[{i + 1}]</span>
+                <span className="text-iris-brand shrink-0 uppercase tracking-wider">
+                  {c.kind ?? "chunk"}
+                </span>
+                {c.title ? (
+                  <span className="text-foreground/90 truncate">{c.title}</span>
+                ) : null}
+                {c.component ? (
+                  <span className="text-muted-foreground truncate">· {c.component}</span>
+                ) : null}
+                {c.confidence ? (
+                  <span className="ml-auto shrink-0">
+                    <ConfidenceBadge confidence={c.confidence} />
+                  </span>
+                ) : null}
+                {c.chunkId ? (
+                  <span className="text-muted-foreground/70 shrink-0 ml-1">{c.chunkId}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {invalidIds.length > 0 ? (
+        <div className="text-[11px] font-mono text-amber-700 ring-1 ring-amber-500/30 bg-amber-500/5 rounded p-2">
+          <p className="uppercase tracking-wider mb-1">Invalid citations</p>
+          <p className="break-all">{invalidIds.join(", ")}</p>
+          <p className="text-[10px] mt-1 text-amber-700/80">
+            The model referenced these chunk ids, but they were not in the retrieval set.
+          </p>
+        </div>
+      ) : null}
 
       {result.warnings?.length ? (
         <ul className="text-[11px] font-mono text-amber-700 space-y-0.5">
@@ -1714,41 +1789,69 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
             onClick={() => setExpanded((v) => !v)}
             className="text-[11px] font-mono text-muted-foreground hover:text-foreground uppercase tracking-wider"
           >
-            {expanded ? "Hide" : "Show"} retrieved chunks ({result.chunks.length})
+            {expanded ? "Hide" : "Show"} retrieved chunks ({result.chunks.length}
+            {citedIds.size > 0 ? `, ${citedIds.size} cited` : ""})
           </button>
           {expanded ? (
             <ul className="mt-2 space-y-2">
-              {result.chunks.map((c: RAGChunk, i) => (
-                <li key={c.id ?? i} className="ring-1 ring-black/5 rounded-md p-3 bg-muted/30">
-                  <div className="flex items-center flex-wrap gap-2 mb-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-iris-brand">
-                      {c.kind ?? "chunk"}
-                    </span>
-                    {c.title ? (
-                      <span className="text-xs font-semibold">{c.title}</span>
-                    ) : null}
-                    {c.component ? (
-                      <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
-                    ) : null}
-                    {typeof c.score === "number" ? (
-                      <span className="text-[10px] font-mono text-muted-foreground ml-auto">
-                        score {c.score}
+              {result.chunks.map((c: RAGChunk, i) => {
+                const cited = c.id ? citedIds.has(c.id) : false;
+                const uncited = c.id ? uncitedIds.has(c.id) : false;
+                return (
+                  <li
+                    key={c.id ?? i}
+                    className={`ring-1 rounded-md p-3 ${
+                      cited
+                        ? "ring-iris-brand/40 bg-iris-brand/5"
+                        : uncited
+                          ? "ring-black/5 bg-muted/20 opacity-70"
+                          : "ring-black/5 bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
+                      {cited ? (
+                        <span className="text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 bg-iris-brand text-white">
+                          cited
+                        </span>
+                      ) : uncited ? (
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                          uncited
+                        </span>
+                      ) : null}
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-iris-brand">
+                        {c.kind ?? "chunk"}
                       </span>
+                      {c.title ? (
+                        <span className="text-xs font-semibold">{c.title}</span>
+                      ) : null}
+                      {c.component ? (
+                        <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
+                      ) : null}
+                      {c.id ? (
+                        <span className="text-[10px] font-mono text-muted-foreground/70">
+                          {c.id}
+                        </span>
+                      ) : null}
+                      {typeof c.score === "number" ? (
+                        <span className="text-[10px] font-mono text-muted-foreground ml-auto">
+                          score {c.score}
+                        </span>
+                      ) : null}
+                      {c.confidence ? <ConfidenceBadge confidence={c.confidence} /> : null}
+                    </div>
+                    {c.text ? (
+                      <p className="text-[11px] font-mono text-foreground/80 whitespace-pre-wrap">
+                        {c.text}
+                      </p>
                     ) : null}
-                    {c.confidence ? <ConfidenceBadge confidence={c.confidence} /> : null}
-                  </div>
-                  {c.text ? (
-                    <p className="text-[11px] font-mono text-foreground/80 whitespace-pre-wrap">
-                      {c.text}
-                    </p>
-                  ) : null}
-                  {c.source ? (
-                    <p className="text-[10px] font-mono text-muted-foreground mt-1">
-                      source: {c.source}
-                    </p>
-                  ) : null}
-                </li>
-              ))}
+                    {c.source ? (
+                      <p className="text-[10px] font-mono text-muted-foreground mt-1">
+                        source: {c.source}
+                      </p>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
         </div>
@@ -1756,6 +1859,7 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
     </article>
   );
 }
+
 
 function RAGContextPanel({
   data,
