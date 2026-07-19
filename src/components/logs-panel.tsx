@@ -138,8 +138,8 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
         >
           <option value="">All types</option>
           {typeOptions.map((t) => (
-            <option key={t} value={t}>
-              {t}
+            <option key={t.value} value={t.value}>
+              {t.label}{typeof t.count === "number" ? ` (${t.count})` : ""}
             </option>
           ))}
         </select>
