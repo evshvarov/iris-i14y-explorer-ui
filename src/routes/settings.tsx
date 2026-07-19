@@ -223,11 +223,12 @@ function ModuleSettingsSection() {
               onChange={(v) => set("sourceCodeInferenceEnabled", v)}
             />
             <ToggleRow
-              label="AI provider"
-              checked={!!draft.aiProviderEnabled}
-              onChange={(v) => set("aiProviderEnabled", v)}
+              label="Message resend"
+              checked={!!draft.messageResendEnabled}
+              onChange={(v) => set("messageResendEnabled", v)}
             />
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <NumberField
