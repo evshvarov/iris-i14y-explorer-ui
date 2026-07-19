@@ -63,7 +63,23 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
 
   const items = query.data?.items ?? [];
   const sourceOptions = query.data?.sourceNames ?? [];
-  const typeOptions = query.data?.typeNames ?? [];
+  const typeFacets = query.data?.typeFacets ?? [];
+  // Prefer typeFacets (name+code+count); fall back to typeNames array.
+  const typeOptions: Array<{ value: string; label: string; count?: number }> =
+    typeFacets.length > 0
+      ? typeFacets.map((f) => {
+          const label = String(f.typeName ?? f.name ?? f.type ?? "").trim();
+          const value = String(f.typeName ?? f.name ?? f.type ?? "").trim();
+          return { value, label, count: f.count };
+        })
+      : (query.data?.typeNames ?? []).map((t) => ({ value: t, label: t }));
+  // Map numeric type code -> human name for row badges
+  const typeNameByCode = new Map<string, string>();
+  for (const f of typeFacets) {
+    const code = String(f.type ?? "").trim();
+    const name = String(f.typeName ?? f.name ?? "").trim();
+    if (code && name) typeNameByCode.set(code, name);
+  }
   const metrics = query.data?.metrics;
 
   const filters = useMemo(
