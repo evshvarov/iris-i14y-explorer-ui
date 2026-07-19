@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
-import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 import type { MessageHeaderListResponse } from "@/lib/api-types";
 
 import { apiFetch } from "@/lib/api-config";
@@ -516,6 +516,30 @@ function ErrorPanel({ error, label }: { error: Error; label: string }) {
   );
 }
 
+function CopyButton({ getText, label = "Copy" }: { getText: () => string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(getText());
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        } catch {
+          /* ignore */
+        }
+      }}
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      title={label}
+    >
+      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      {copied ? "copied" : label}
+    </button>
+  );
+}
+
 function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
   const meta = data.metadata;
   const fields = meta?.fields ?? [];
@@ -538,6 +562,10 @@ function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
           <span className="text-[10px] font-mono uppercase text-muted-foreground">
             {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
           </span>
+          <CopyButton
+            label="Copy JSON"
+            getText={() => JSON.stringify(data, null, 2)}
+          />
         </div>
       </div>
 
@@ -608,6 +636,22 @@ function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) 
           <span className="text-[10px] font-mono uppercase text-muted-foreground">
             {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
           </span>
+          {fields.length > 0 ? (
+            <>
+              <CopyButton
+                label="Copy TSV"
+                getText={() =>
+                  fields
+                    .map((f) => `${f.name ?? ""}\t${f.type ?? ""}\t${f.value ?? ""}`)
+                    .join("\n")
+                }
+              />
+              <CopyButton
+                label="Copy JSON"
+                getText={() => JSON.stringify(data, null, 2)}
+              />
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -623,7 +667,7 @@ function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) 
             {fields.map((f, i) => (
               <li
                 key={i}
-                className="grid grid-cols-[1fr_auto_2fr] items-center gap-3 px-3 py-1.5 text-[11px] font-mono"
+                className="group grid grid-cols-[1fr_auto_2fr_auto] items-center gap-3 px-3 py-1.5 text-[11px] font-mono"
               >
                 <span className="truncate">{f.name ?? `field_${i}`}</span>
                 <span className="text-muted-foreground text-[10px] uppercase bg-muted rounded px-1.5 py-0.5">
@@ -636,6 +680,12 @@ function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) 
                   <span className="truncate" title={f.value ?? ""}>
                     {f.value ?? ""}
                   </span>
+                </span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <CopyButton
+                    label=""
+                    getText={() => f.value ?? ""}
+                  />
                 </span>
               </li>
             ))}
