@@ -44,6 +44,7 @@ export type ProductionLogListResponse = {
   contains?: string;
   sourceNames?: string[];
   typeNames?: string[];
+  typeFacets?: Array<{ type?: number | string; typeName?: string; name?: string; count?: number }>;
   logClassName?: string;
   metrics?: ProductionLogMetrics;
   warnings?: Warning[];
