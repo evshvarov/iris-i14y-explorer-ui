@@ -277,6 +277,45 @@ export type ProductionAISummaryResponse = {
   evidence?: Evidence[];
 };
 
+export type RAGChunk = {
+  id?: string;
+  kind?: string;
+  title?: string;
+  text?: string;
+  source?: string;
+  component?: string;
+  confidence?: Confidence;
+  score?: number;
+  evidence?: Evidence[];
+};
+
+export type ProductionAIAskRequest = {
+  question: string;
+  componentName?: string;
+  maxChunks?: number;
+};
+
+export type ProductionAIAskResponse = {
+  namespace?: string;
+  productionName?: string;
+  question?: string;
+  componentName?: string;
+  provider?: string;
+  model?: string;
+  generated?: boolean;
+  answer?: string;
+  chunkCount?: number;
+  totalChunkCount?: number;
+  chunks?: RAGChunk[];
+  aiProviderEnabled?: boolean;
+  aiApiKeyConfigured?: boolean;
+  aiApiKeySource?: string;
+  rawUsage?: Record<string, unknown>;
+  confidence?: Confidence;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
 export type SettingsResponse = {
   namespace?: string;
   settings?: AnalysisSettings;
