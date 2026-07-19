@@ -85,8 +85,11 @@ function MessagesPage() {
   const limit = search.limit ?? 50;
   const offset = search.offset ?? 0;
 
+  const startDate = search.dateFrom ? `${search.dateFrom}T00:00:00` : undefined;
+  const endDate = search.dateTo ? `${search.dateTo}T23:59:59` : undefined;
+
   const listQuery = useQuery<MessageHeaderListResponse>({
-    queryKey: ["messages", search, limit, offset],
+    queryKey: ["messages", search, limit, offset, startDate, endDate],
     queryFn: () =>
       apiFetch<MessageHeaderListResponse>(
         `/messages${toQuery({
@@ -96,6 +99,8 @@ function MessagesPage() {
           messageBodyClassName: search.messageBodyClassName,
           sessionId: search.sessionId,
           errorsOnly: search.errorsOnly,
+          startDate,
+          endDate,
           limit,
           offset,
         })}`,
@@ -104,13 +109,14 @@ function MessagesPage() {
   });
 
   const facetsQuery = useQuery<MessageFacetResponse>({
-    queryKey: ["messages-facets", search.productionName],
+    queryKey: ["messages-facets", search.productionName, startDate, endDate],
     queryFn: () =>
       apiFetch<MessageFacetResponse>(
-        `/messages/facets${toQuery({ productionName: search.productionName, limit: 500 })}`,
+        `/messages/facets${toQuery({ productionName: search.productionName, startDate, endDate, limit: 500 })}`,
       ),
     retry: 0,
   });
+
 
   const items = listQuery.data?.items ?? [];
   const dateFiltered = useMemo(() => {
