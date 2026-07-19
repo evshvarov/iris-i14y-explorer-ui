@@ -380,6 +380,51 @@ function ModuleSettingsSection() {
             </p>
           </div>
 
+          <div className="space-y-3 rounded-md ring-1 ring-black/5 p-4 bg-muted/30">
+            <div>
+              <h3 className="text-xs font-semibold">RAG runtime indexing</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Controls whether the persisted index also incorporates recent
+                messages, logs, and payload metadata for grounded AI answers.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ToggleRow
+                label="Include runtime data (messages + logs)"
+                checked={!!draft.ragRuntimeDataEnabled}
+                onChange={(v) => set("ragRuntimeDataEnabled", v)}
+              />
+              <ToggleRow
+                label="Include payload metadata"
+                checked={!!draft.ragPayloadIndexingEnabled}
+                onChange={(v) => set("ragPayloadIndexingEnabled", v)}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <NumberField
+                label="Lookback hours"
+                value={draft.ragRuntimeLookbackHours}
+                onChange={(v) => set("ragRuntimeLookbackHours", v)}
+              />
+              <NumberField
+                label="Max messages"
+                value={draft.ragRuntimeMaxMessages}
+                onChange={(v) => set("ragRuntimeMaxMessages", v)}
+              />
+              <NumberField
+                label="Max logs"
+                value={draft.ragRuntimeMaxLogs}
+                onChange={(v) => set("ragRuntimeMaxLogs", v)}
+              />
+              <NumberField
+                label="Max payload fields"
+                value={draft.ragPayloadMaxFields}
+                onChange={(v) => set("ragPayloadMaxFields", v)}
+              />
+            </div>
+          </div>
+
+
 
 
           <div className="flex items-center gap-3">
