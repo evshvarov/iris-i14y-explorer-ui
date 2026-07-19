@@ -30,9 +30,9 @@ const searchSchema = z.object({
   datePreset: toStr,
 });
 
-function statusTone(label?: string): "ok" | "warn" | "error" | "muted" {
-  if (!label) return "muted";
-  const s = label.toLowerCase();
+function statusTone(label?: unknown): "ok" | "warn" | "error" | "muted" {
+  if (label === null || label === undefined || label === "") return "muted";
+  const s = String(label).toLowerCase();
   if (/(error|abort|discard|fail|suspend)/.test(s)) return "error";
   if (/(complete|delivered|ok|processed|done)/.test(s)) return "ok";
   if (/(queued|pending|deferred|created|waiting|inprogress|in progress|running)/.test(s)) return "warn";
