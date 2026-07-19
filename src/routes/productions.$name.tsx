@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer } from "lucide-react";
 import { useState } from "react";
@@ -1018,6 +1018,9 @@ function GraphView({
           ) : null}
         </MetricChips>
       ) : null}
+
+      <GraphDiagram nodes={nodes} edges={edges} productionName={productionName} />
+
       <SectionShell title="Nodes" count={nodes.length}>
         {nodes.length === 0 ? (
           <Empty>No graph nodes.</Empty>
@@ -1095,6 +1098,262 @@ function GraphView({
     </>
   );
 }
+
+function GraphDiagram({
+  nodes,
+  edges,
+  productionName,
+}: {
+  nodes: import("@/lib/api-types").GraphNode[];
+  edges: import("@/lib/api-types").GraphEdge[];
+  productionName: string;
+}) {
+  const navigate = useNavigate();
+  const [hoverEdge, setHoverEdge] = useState<number | null>(null);
+  const [hoverNode, setHoverNode] = useState<string | null>(null);
+
+  if (nodes.length === 0) return null;
+
+  // Bucket nodes by tier
+  const tierOf = (t?: string): 0 | 1 | 2 => {
+    const s = (t ?? "").toLowerCase();
+    if (s.includes("service")) return 0;
+    if (s.includes("operation")) return 2;
+    return 1; // process / default
+  };
+  const cols: import("@/lib/api-types").GraphNode[][] = [[], [], []];
+  nodes.forEach((n) => cols[tierOf(n.type)].push(n));
+
+  // Layout
+  const colW = 260;
+  const colGap = 80;
+  const rowH = 72;
+  const padX = 16;
+  const padY = 40;
+  const nodeW = 220;
+  const nodeH = 56;
+  const maxRows = Math.max(1, ...cols.map((c) => c.length));
+  const width = padX * 2 + colW * 3 + colGap * 2;
+  const height = padY * 2 + maxRows * rowH;
+
+  type Pos = { x: number; y: number; col: number; row: number };
+  const posById = new Map<string, Pos>();
+  cols.forEach((col, ci) => {
+    const colX = padX + ci * (colW + colGap);
+    const offset = (maxRows - col.length) / 2;
+    col.forEach((n, ri) => {
+      const key = n.id ?? n.label ?? "";
+      posById.set(key, {
+        x: colX + (colW - nodeW) / 2,
+        y: padY + (offset + ri) * rowH,
+        col: ci,
+        row: ri,
+      });
+    });
+  });
+
+  const colorForType = (t?: string) => {
+    const tier = tierOf(t);
+    if (tier === 0) return { fill: "#dbeafe", stroke: "#60a5fa", text: "#1e3a8a" }; // service - blue
+    if (tier === 2) return { fill: "#fed7aa", stroke: "#fb923c", text: "#7c2d12" }; // op - orange
+    return { fill: "#d1fae5", stroke: "#34d399", text: "#065f46" }; // process - green
+  };
+  const edgeColor = (rel?: string) => {
+    const r = (rel ?? "").toLowerCase();
+    if (r.includes("rout") || r.includes("rule")) return "#0d9488";
+    if (r.includes("bpl") || r.includes("call")) return "#7c3aed";
+    if (r.includes("target") || r.includes("config")) return "#2563eb";
+    return "#64748b";
+  };
+
+  // Build edge paths
+  const edgePaths = edges.map((e, i) => {
+    const s = posById.get(e.source ?? "");
+    const t = posById.get(e.target ?? "");
+    if (!s || !t) return null;
+    const x1 = s.x + nodeW;
+    const y1 = s.y + nodeH / 2;
+    const x2 = t.x;
+    const y2 = t.y + nodeH / 2;
+    // If target is left of / same col as source, route around
+    let d: string;
+    if (t.col > s.col) {
+      const mx = (x1 + x2) / 2;
+      d = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+    } else {
+      // same or backwards column: loop
+      const bend = 40 + Math.abs(s.row - t.row) * 8;
+      const sx = s.x + nodeW / 2;
+      const tx = t.x + nodeW / 2;
+      const sy = s.y + nodeH;
+      const ty = t.y;
+      d = `M ${sx} ${sy} C ${sx} ${sy + bend}, ${tx} ${ty + bend}, ${tx} ${ty}`;
+    }
+    return { i, d, edge: e, color: edgeColor(e.relationship) };
+  });
+
+  return (
+    <SectionShell title="Component graph" count={edges.length}>
+      <div className="bg-card ring-1 ring-black/5 rounded-lg p-2 overflow-x-auto">
+        <div className="flex items-center gap-4 px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-[#dbeafe] ring-1 ring-[#60a5fa]" /> Services</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-[#d1fae5] ring-1 ring-[#34d399]" /> Processes</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-[#fed7aa] ring-1 ring-[#fb923c]" /> Operations</span>
+          <span className="ml-auto">Click a node to open its details</span>
+        </div>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          width="100%"
+          style={{ maxWidth: width, minWidth: 600 }}
+          className="block"
+        >
+          <defs>
+            {["#0d9488", "#7c3aed", "#2563eb", "#64748b"].map((c) => (
+              <marker
+                key={c}
+                id={`arrow-${c.replace("#", "")}`}
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill={c} />
+              </marker>
+            ))}
+          </defs>
+
+          {/* Column headers */}
+          {["Services", "Processes", "Operations"].map((lbl, ci) => (
+            <text
+              key={lbl}
+              x={padX + ci * (colW + colGap) + colW / 2}
+              y={20}
+              textAnchor="middle"
+              className="fill-muted-foreground"
+              style={{ fontSize: 10, fontFamily: "var(--font-mono, monospace)", letterSpacing: 2, textTransform: "uppercase" }}
+            >
+              {lbl.toUpperCase()} · {cols[ci].length}
+            </text>
+          ))}
+
+          {/* Edges */}
+          {edgePaths.map((ep) =>
+            ep ? (
+              <g key={ep.i}>
+                <path
+                  d={ep.d}
+                  fill="none"
+                  stroke={ep.color}
+                  strokeWidth={hoverEdge === ep.i ? 2.5 : 1.5}
+                  strokeOpacity={
+                    hoverNode
+                      ? ep.edge.source === hoverNode || ep.edge.target === hoverNode
+                        ? 1
+                        : 0.15
+                      : hoverEdge === null || hoverEdge === ep.i
+                        ? 0.85
+                        : 0.2
+                  }
+                  markerEnd={`url(#arrow-${ep.color.replace("#", "")})`}
+                  onMouseEnter={() => setHoverEdge(ep.i)}
+                  onMouseLeave={() => setHoverEdge(null)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <title>
+                    {(ep.edge.relationship ?? "edge")}
+                    {ep.edge.kind ? ` · ${ep.edge.kind}` : ""}
+                    {ep.edge.ruleName ? ` · ${ep.edge.ruleName}` : ""}
+                    {"\n"}
+                    {ep.edge.source} → {ep.edge.target}
+                    {ep.edge.messageTypes?.length ? `\n${ep.edge.messageTypes.join(", ")}` : ""}
+                  </title>
+                </path>
+              </g>
+            ) : null,
+          )}
+
+          {/* Nodes */}
+          {nodes.map((n) => {
+            const key = n.id ?? n.label ?? "";
+            const p = posById.get(key);
+            if (!p) return null;
+            const c = colorForType(n.type);
+            const isDim =
+              hoverNode && hoverNode !== key
+                ? !edges.some(
+                    (e) =>
+                      (e.source === hoverNode && e.target === key) ||
+                      (e.target === hoverNode && e.source === key),
+                  )
+                : false;
+            return (
+              <g
+                key={key}
+                transform={`translate(${p.x}, ${p.y})`}
+                style={{ cursor: "pointer", opacity: isDim ? 0.35 : 1 }}
+                onMouseEnter={() => setHoverNode(key)}
+                onMouseLeave={() => setHoverNode(null)}
+                onClick={() =>
+                  navigate({
+                    to: "/productions/$name/components/$componentName",
+                    params: { name: productionName, componentName: n.label ?? n.id ?? "" },
+                  })
+                }
+              >
+                <rect
+                  width={nodeW}
+                  height={nodeH}
+                  rx={8}
+                  fill={c.fill}
+                  stroke={c.stroke}
+                  strokeWidth={hoverNode === key ? 2 : 1}
+                />
+                <text
+                  x={12}
+                  y={22}
+                  style={{ fontSize: 13, fontWeight: 600, fill: c.text }}
+                >
+                  {truncate(n.label ?? n.id ?? "", 26)}
+                </text>
+                <text
+                  x={12}
+                  y={40}
+                  style={{ fontSize: 10, fontFamily: "var(--font-mono, monospace)", fill: c.text, opacity: 0.75 }}
+                >
+                  {truncate(n.className ?? n.type ?? "", 30)}
+                </text>
+                {n.enabled === false ? (
+                  <text x={nodeW - 10} y={16} textAnchor="end" style={{ fontSize: 9, fill: "#991b1b", fontFamily: "var(--font-mono, monospace)" }}>
+                    DISABLED
+                  </text>
+                ) : null}
+                <title>
+                  {n.label ?? n.id}
+                  {"\n"}
+                  {n.type ?? ""} · {n.className ?? ""}
+                </title>
+              </g>
+            );
+          })}
+        </svg>
+
+        {edges.length === 0 ? (
+          <div className="px-3 pb-2 text-[11px] text-muted-foreground">
+            No source→target relationships reported by the backend for this production.
+          </div>
+        ) : null}
+      </div>
+    </SectionShell>
+  );
+}
+
+function truncate(s: string, n: number) {
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+
 
 function AISummaryPanel({ productionName, encoded }: { productionName: string; encoded: string }) {
   const [result, setResult] = useState<ProductionAISummaryResponse | null>(null);
