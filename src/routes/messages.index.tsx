@@ -168,7 +168,7 @@ function MessagesPage() {
   }, [items]);
 
   const filteredByStatus = useMemo(
-    () => (search.status ? filtered.filter((m) => m.status === search.status) : filtered),
+    () => (search.status ? filtered.filter((m) => String(m.status ?? "") === search.status) : filtered),
     [filtered, search.status],
   );
 
