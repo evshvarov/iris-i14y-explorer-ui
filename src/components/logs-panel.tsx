@@ -41,19 +41,25 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
   const [source, setSource] = useState<string>("");
   const [contains, setContains] = useState<string>("");
   const [limit, setLimit] = useState<number>(100);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  const startDate = dateFrom ? `${dateFrom}T00:00:00` : undefined;
+  const endDate = dateTo ? `${dateTo}T23:59:59` : undefined;
 
   const path = productionName
     ? `/productions/${encodeURIComponent(productionName)}/logs`
     : `/logs`;
 
   const query = useQuery<ProductionLogListResponse>({
-    queryKey: ["logs", productionName ?? "*", type, source, contains, limit],
+    queryKey: ["logs", productionName ?? "*", type, source, contains, limit, startDate, endDate],
     queryFn: () =>
       apiFetch<ProductionLogListResponse>(
-        `${path}${toQuery({ type: type || undefined, source: source || undefined, contains: contains || undefined, limit })}`,
+        `${path}${toQuery({ type: type || undefined, source: source || undefined, contains: contains || undefined, startDate, endDate, limit })}`,
       ),
     retry: 0,
   });
+
 
   const items = query.data?.items ?? [];
   const sourceOptions = query.data?.sourceNames ?? [];
