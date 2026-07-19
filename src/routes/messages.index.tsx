@@ -151,9 +151,9 @@ function MessagesPage() {
       (m) =>
         String(m.messageId ?? "").includes(t) ||
         String(m.sessionId ?? "").includes(t) ||
-        (m.sourceConfigName ?? "").toLowerCase().includes(t) ||
-        (m.targetConfigName ?? "").toLowerCase().includes(t) ||
-        (m.messageBodyClassName ?? "").toLowerCase().includes(t),
+        String(m.sourceConfigName ?? "").toLowerCase().includes(t) ||
+        String(m.targetConfigName ?? "").toLowerCase().includes(t) ||
+        String(m.messageBodyClassName ?? "").toLowerCase().includes(t),
     );
   }, [items, text]);
 
