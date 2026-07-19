@@ -4,8 +4,9 @@
 export type ProductionLogEntry = {
   logId?: number;
   timeLogged?: string;
-  type?: string;
+  type?: string | number;
   typeName?: string;
+  typeLabel?: string;
   source?: string;
   sessionId?: string;
   job?: string;
