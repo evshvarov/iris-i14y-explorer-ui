@@ -295,6 +295,15 @@ export type ProductionAIAskRequest = {
   maxChunks?: number;
 };
 
+export type AIAnswerCitation = {
+  chunkId?: string;
+  kind?: string;
+  title?: string;
+  component?: string;
+  source?: string;
+  confidence?: Confidence;
+};
+
 export type ProductionAIAskResponse = {
   namespace?: string;
   productionName?: string;
@@ -309,6 +318,12 @@ export type ProductionAIAskResponse = {
   chunkCount?: number;
   totalChunkCount?: number;
   chunks?: RAGChunk[];
+  citations?: AIAnswerCitation[];
+  citationCount?: number;
+  invalidCitationIds?: string[];
+  invalidCitationCount?: number;
+  uncitedChunkIds?: string[];
+  answerGrounded?: boolean;
   aiProviderEnabled?: boolean;
   aiApiKeyConfigured?: boolean;
   aiApiKeySource?: string;
@@ -317,6 +332,7 @@ export type ProductionAIAskResponse = {
   warnings?: Warning[];
   evidence?: Evidence[];
 };
+
 
 export type RAGIndexStatusResponse = {
   namespace?: string;
