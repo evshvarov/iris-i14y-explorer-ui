@@ -442,11 +442,6 @@ export type RAGContextMetrics = {
   payloadChunkCount?: number;
   runtimeChunkCount?: number;
 };
-  externalSystemChunkCount?: number;
-  transformationChunkCount?: number;
-  businessProcessChunkCount?: number;
-  warningChunkCount?: number;
-};
 
 export type ProductionRAGContextResponse = {
   namespace?: string;
