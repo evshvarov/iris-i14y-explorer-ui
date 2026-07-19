@@ -1696,6 +1696,8 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
             {typeof result.totalChunkCount === "number" ? ` / ${result.totalChunkCount}` : ""}
           </span>
         ) : null}
+        {result.chunkSource ? <span>source: {result.chunkSource}</span> : null}
+        {typeof result.runId === "number" ? <span>run #{result.runId}</span> : null}
       </div>
 
       {result.warnings?.length ? (
