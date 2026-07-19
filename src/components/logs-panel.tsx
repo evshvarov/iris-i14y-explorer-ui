@@ -150,6 +150,55 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
             </option>
           ))}
         </select>
+        <select
+          value={limit}
+          onChange={(e) => setLimit(Number(e.target.value))}
+          className="h-9 rounded-md border bg-background px-2 text-xs font-mono"
+        >
+          {[50, 100, 200, 500].map((n) => (
+            <option key={n} value={n}>
+              Limit {n}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Date</span>
+        {([
+          ["today", "Today"],
+          ["week", "This week"],
+          ["month", "This month"],
+          ["lastMonth", "Last month"],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              const ymd = (d: Date) =>
+                `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+              if (key === "today") { const s = ymd(now); setDateFrom(s); setDateTo(s); }
+              else if (key === "week") { const d = new Date(now); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); setDateFrom(ymd(d)); setDateTo(ymd(now)); }
+              else if (key === "month") { setDateFrom(ymd(new Date(now.getFullYear(), now.getMonth(), 1))); setDateTo(ymd(now)); }
+              else { setDateFrom(ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1))); setDateTo(ymd(new Date(now.getFullYear(), now.getMonth(), 0))); }
+            }}
+            className="text-[11px] font-mono uppercase px-2 py-1 rounded ring-1 ring-black/5 bg-muted/40 hover:bg-muted"
+          >
+            {label}
+          </button>
+        ))}
+        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+          className="h-8 px-2 rounded ring-1 ring-black/5 bg-background text-xs font-mono" />
+        <span className="text-[10px] text-muted-foreground">→</span>
+        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+          className="h-8 px-2 rounded ring-1 ring-black/5 bg-background text-xs font-mono" />
+        {(dateFrom || dateTo) ? (
+          <button type="button" onClick={() => { setDateFrom(""); setDateTo(""); }}
+            className="flex items-center gap-1 text-[10px] font-mono uppercase text-muted-foreground hover:text-foreground">
+            <X className="size-3" /> Clear
+          </button>
+        ) : null}
       </div>
 
       {filters.length > 0 ? (
@@ -157,6 +206,7 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
           {filters.length} filter{filters.length === 1 ? "" : "s"} active
         </div>
       ) : null}
+
 
       {query.error ? (
         <div className="rounded-lg ring-1 ring-destructive/30 bg-destructive/5 p-4 text-xs text-destructive flex items-start gap-2">
