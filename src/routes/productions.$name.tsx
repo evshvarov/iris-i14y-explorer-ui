@@ -1077,3 +1077,107 @@ function GraphView({
     </>
   );
 }
+
+function AISummaryPanel({ productionName, encoded }: { productionName: string; encoded: string }) {
+  const [result, setResult] = useState<ProductionAISummaryResponse | null>(null);
+  const mutation = useMutation({
+    mutationFn: () =>
+      apiFetch<ProductionAISummaryResponse>(`/productions/${encoded}/ai/summary`, {
+        method: "POST",
+      }),
+    onSuccess: (r) => {
+      setResult(r);
+      if (r.generated) toast.success("AI summary generated");
+      else if (r.warnings?.length) toast.message(r.warnings[0]?.message ?? "AI summary unavailable");
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 max-w-4xl">
+      <div className="flex items-center justify-between mb-3 gap-3">
+        <div>
+          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+            AI-assisted summary
+          </h2>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Calls <span className="font-mono">POST /productions/{productionName}/ai/summary</span>.
+            Requires <span className="font-mono">aiProviderEnabled</span> +{" "}
+            <span className="font-mono">aiSummaryEnabled</span> and an OpenAI key on the server.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {result?.confidence ? <ConfidenceBadge confidence={result.confidence} /> : null}
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md bg-iris-brand text-white px-3 py-1.5 hover:bg-iris-brand/90 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${mutation.isPending ? "animate-spin" : ""}`} />
+            {mutation.isPending ? "Generating…" : result ? "Regenerate" : "Generate AI summary"}
+          </button>
+        </div>
+      </div>
+
+      {mutation.error ? (
+        <div className="text-xs font-mono text-destructive break-all mb-2">
+          {(mutation.error as Error).message}
+        </div>
+      ) : null}
+
+      {result ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
+            <span
+              className={`rounded px-2 py-0.5 ring-1 ${
+                result.generated
+                  ? "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10"
+                  : "text-muted-foreground ring-black/10"
+              }`}
+            >
+              {result.generated ? "AI GENERATED" : "FALLBACK"}
+            </span>
+            {result.provider ? <span className="text-muted-foreground">provider: {result.provider}</span> : null}
+            {result.model ? <span className="text-muted-foreground">model: {result.model}</span> : null}
+            {result.aiApiKeySource ? (
+              <span className="text-muted-foreground">key: {result.aiApiKeySource}</span>
+            ) : null}
+          </div>
+
+          {result.summary ? (
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+              {result.summary}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">No AI summary text returned.</p>
+          )}
+
+          {!result.generated && result.deterministicSummary ? (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                Deterministic fallback
+              </summary>
+              <p className="mt-2 whitespace-pre-wrap text-foreground/80">
+                {result.deterministicSummary}
+              </p>
+              <SummaryBullets bullets={result.deterministicSummaryBullets} />
+            </details>
+          ) : null}
+
+          {result.warnings?.length ? (
+            <ul className="text-[11px] font-mono text-amber-700 space-y-0.5">
+              {result.warnings.map((w, i) => (
+                <li key={i}>⚠ {w.code ? `${w.code}: ` : ""}{w.message}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Click <em>Generate AI summary</em> to have the module compose a narrative summary from
+          the deterministic analysis and evidence.
+        </p>
+      )}
+    </section>
+  );
+}
