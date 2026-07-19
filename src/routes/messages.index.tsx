@@ -21,6 +21,7 @@ const searchSchema = z.object({
   targetConfigName: toStr,
   messageBodyClassName: toStr,
   sessionId: toStr,
+  status: toStr,
   errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
   limit: z.coerce.number().optional(),
   offset: z.coerce.number().optional(),
@@ -28,6 +29,28 @@ const searchSchema = z.object({
   dateTo: toStr,
   datePreset: toStr,
 });
+
+function statusTone(label?: string): "ok" | "warn" | "error" | "muted" {
+  if (!label) return "muted";
+  const s = label.toLowerCase();
+  if (/(error|abort|discard|fail|suspend)/.test(s)) return "error";
+  if (/(complete|delivered|ok|processed|done)/.test(s)) return "ok";
+  if (/(queued|pending|deferred|created|waiting|inprogress|in progress|running)/.test(s)) return "warn";
+  return "muted";
+}
+
+function statusPillClass(tone: ReturnType<typeof statusTone>) {
+  switch (tone) {
+    case "error":
+      return "text-destructive bg-destructive/10 ring-1 ring-destructive/30";
+    case "ok":
+      return "text-status-confirmed bg-status-confirmed/10 ring-1 ring-status-confirmed/30";
+    case "warn":
+      return "text-status-inferred bg-status-inferred/10 ring-1 ring-status-inferred/30";
+    default:
+      return "text-muted-foreground bg-muted ring-1 ring-black/5";
+  }
+}
 
 type DatePreset = "today" | "week" | "month" | "lastMonth" | "custom";
 
@@ -134,6 +157,21 @@ function MessagesPage() {
   }, [items, text]);
 
 
+  const statusLabels = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of items) {
+      const s = (m.status ?? "").trim();
+      if (!s) continue;
+      counts.set(s, (counts.get(s) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [items]);
+
+  const filteredByStatus = useMemo(
+    () => (search.status ? filtered.filter((m) => m.status === search.status) : filtered),
+    [filtered, search.status],
+  );
+
   const setSearchParam = (patch: Partial<typeof search>) =>
     navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
 
@@ -150,6 +188,7 @@ function MessagesPage() {
     ["Target", search.targetConfigName],
     ["Body", search.messageBodyClassName],
     ["Session", search.sessionId],
+    search.status ? ["Status", search.status] : undefined,
     search.errorsOnly ? ["Errors", "only"] : undefined,
     search.dateFrom || search.dateTo
       ? ["Date", `${search.dateFrom ?? "…"} → ${search.dateTo ?? "…"}`]
@@ -201,7 +240,7 @@ function MessagesPage() {
         {/* Facet sidebar */}
         <aside className="space-y-6">
           <FacetGroup
-            label="Status"
+            label="Errors"
             items={[
               { key: "all messages", value: undefined, count: facetsQuery.data?.totalCount },
               { key: "errors only", value: true, count: facetsQuery.data?.errorCount },
@@ -209,6 +248,57 @@ function MessagesPage() {
             selected={search.errorsOnly}
             onSelect={(v) => setSearchParam({ errorsOnly: v as boolean | undefined })}
           />
+          {statusLabels.length > 0 ? (
+            <div>
+              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                Status
+              </h4>
+              <ul className="space-y-0.5 max-h-56 overflow-auto pr-1">
+                {search.status ? (
+                  <li>
+                    <button
+                      onClick={() => setSearchParam({ status: undefined })}
+                      className="w-full text-left text-[10px] font-mono uppercase text-muted-foreground px-2 py-1 hover:text-foreground"
+                    >
+                      × clear
+                    </button>
+                  </li>
+                ) : null}
+                {statusLabels.map(([label, count]) => {
+                  const active = search.status === label;
+                  const tone = statusTone(label);
+                  const dot =
+                    tone === "error"
+                      ? "bg-destructive"
+                      : tone === "ok"
+                        ? "bg-status-confirmed"
+                        : tone === "warn"
+                          ? "bg-status-inferred"
+                          : "bg-muted-foreground/60";
+                  return (
+                    <li key={label}>
+                      <button
+                        onClick={() => setSearchParam({ status: active ? undefined : label })}
+                        className={`w-full flex items-center justify-between gap-2 text-left text-[11px] font-mono px-2 py-1 rounded ${
+                          active ? "bg-iris-brand/10 text-iris-brand" : "hover:bg-muted"
+                        }`}
+                        title={label}
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className={`inline-block size-1.5 rounded-full ${dot}`} />
+                          <span className="truncate">{label}</span>
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{count}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-[10px] font-mono text-muted-foreground/70 mt-1">
+                From loaded page
+              </p>
+            </div>
+          ) : null}
           <FacetList
             label="Source component"
             values={facetsQuery.data?.sourceConfigNames}
@@ -300,7 +390,7 @@ function MessagesPage() {
                 {(listQuery.error as Error).message}
               </p>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : filteredByStatus.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground bg-card ring-1 ring-black/5 rounded-lg">
               No messages match these filters.
             </div>
@@ -315,31 +405,30 @@ function MessagesPage() {
                 <span></span>
               </div>
               <ul className="divide-y">
-                {filtered.map((m) => (
-                  <li key={m.messageId}>
-                    <Link
-                      to="/messages/$id"
-                      params={{ id: String(m.messageId) }}
-                      className="grid grid-cols-[80px_1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-muted/50 group"
-                    >
-                      <span className="text-[11px] font-mono text-foreground/80">#{m.messageId}</span>
-                      <span className="text-xs font-mono truncate">{m.sourceConfigName || "—"}</span>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="text-xs font-mono truncate">{m.targetConfigName || "—"}</span>
-                      <span
-                        className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                          m.isError
-                            ? "text-destructive bg-destructive/10 ring-1 ring-destructive/30"
-                            : "text-muted-foreground bg-muted"
-                        }`}
+                {filteredByStatus.map((m) => {
+                  const tone = m.isError ? "error" : statusTone(m.status);
+                  return (
+                    <li key={m.messageId}>
+                      <Link
+                        to="/messages/$id"
+                        params={{ id: String(m.messageId) }}
+                        className="grid grid-cols-[80px_1fr_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-muted/50 group"
                       >
-                        {m.isError ? <AlertCircle className="size-3" /> : null}
-                        {m.status || "?"}
-                      </span>
-                      <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
-                    </Link>
-                  </li>
-                ))}
+                        <span className="text-[11px] font-mono text-foreground/80">#{m.messageId}</span>
+                        <span className="text-xs font-mono truncate">{m.sourceConfigName || "—"}</span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="text-xs font-mono truncate">{m.targetConfigName || "—"}</span>
+                        <span
+                          className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${statusPillClass(tone)}`}
+                        >
+                          {m.isError ? <AlertCircle className="size-3" /> : null}
+                          {m.status || "?"}
+                        </span>
+                        <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
