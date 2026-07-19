@@ -273,7 +273,9 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
             </li>
           ))}
         </ul>
+        </div>
       )}
+
 
       {query.data?.warnings && query.data.warnings.length > 0 ? (
         <div className="text-[11px] text-muted-foreground space-y-1">
