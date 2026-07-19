@@ -157,6 +157,21 @@ function MessagesPage() {
   }, [items, text]);
 
 
+  const statusLabels = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of items) {
+      const s = (m.status ?? "").trim();
+      if (!s) continue;
+      counts.set(s, (counts.get(s) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [items]);
+
+  const filteredByStatus = useMemo(
+    () => (search.status ? filtered.filter((m) => m.status === search.status) : filtered),
+    [filtered, search.status],
+  );
+
   const setSearchParam = (patch: Partial<typeof search>) =>
     navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
 
@@ -173,6 +188,7 @@ function MessagesPage() {
     ["Target", search.targetConfigName],
     ["Body", search.messageBodyClassName],
     ["Session", search.sessionId],
+    search.status ? ["Status", search.status] : undefined,
     search.errorsOnly ? ["Errors", "only"] : undefined,
     search.dateFrom || search.dateTo
       ? ["Date", `${search.dateFrom ?? "…"} → ${search.dateTo ?? "…"}`]
