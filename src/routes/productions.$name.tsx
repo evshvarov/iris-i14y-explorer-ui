@@ -12,6 +12,7 @@ import type {
   ProductionSummaryResponse,
   ProductionAISummaryResponse,
   ProductionAIAskResponse,
+  ProductionRAGContextResponse,
   RAGChunk,
   ProductionRuntimeResponse,
   ProductionActionResponse,
