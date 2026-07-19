@@ -333,10 +333,30 @@ function MessagesPage() {
             </div>
           )}
 
-          {listQuery.data?.hasMore ? (
+          {items.length > 0 ? (
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-mono text-muted-foreground">
-                offset {offset} · limit {limit}
+              <div className="flex items-center gap-3 text-[11px] font-mono text-muted-foreground">
+                <span>offset {offset} · showing {items.length}</span>
+                <label className="flex items-center gap-1.5">
+                  <span className="uppercase tracking-wider">page size</span>
+                  <select
+                    value={limit}
+                    onChange={(e) =>
+                      navigate({
+                        search: ((s: typeof search) => ({
+                          ...s,
+                          limit: Number(e.target.value),
+                          offset: 0,
+                        })) as never,
+                      })
+                    }
+                    className="bg-card ring-1 ring-black/5 rounded px-1.5 py-0.5 font-mono"
+                  >
+                    {[25, 50, 100, 200, 500].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
               <div className="flex gap-2">
                 <button
@@ -347,14 +367,16 @@ function MessagesPage() {
                   Previous
                 </button>
                 <button
+                  disabled={!listQuery.data?.hasMore}
                   onClick={() => navigate({ search: ((s: typeof search) => ({ ...s, offset: offset + limit })) as never })}
-                  className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+                  className="text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted disabled:opacity-40"
                 >
                   Next
                 </button>
               </div>
             </div>
           ) : null}
+
 
           {items.length > 0 && items[0]?.confidence ? (
             <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground uppercase">
