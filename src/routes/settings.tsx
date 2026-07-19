@@ -223,11 +223,12 @@ function ModuleSettingsSection() {
               onChange={(v) => set("sourceCodeInferenceEnabled", v)}
             />
             <ToggleRow
-              label="AI provider"
-              checked={!!draft.aiProviderEnabled}
-              onChange={(v) => set("aiProviderEnabled", v)}
+              label="Message resend"
+              checked={!!draft.messageResendEnabled}
+              onChange={(v) => set("messageResendEnabled", v)}
             />
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <NumberField
@@ -279,6 +280,102 @@ function ModuleSettingsSection() {
               />
             </Field>
           </div>
+
+          <div className="space-y-3 rounded-md ring-1 ring-black/5 p-4 bg-muted/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-semibold">AI assistant</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Optional OpenAI-assisted production summaries. Deterministic
+                  analysis always runs regardless of this section.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-mono">
+                <span
+                  className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ring-1 ${
+                    draft.aiApiKeyConfigured
+                      ? "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10"
+                      : "text-muted-foreground ring-black/10 bg-background"
+                  }`}
+                >
+                  {draft.aiApiKeyConfigured ? "KEY CONFIGURED" : "NO KEY"}
+                  {draft.aiApiKeySource ? ` · ${draft.aiApiKeySource}` : ""}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ToggleRow
+                label="AI provider enabled"
+                checked={!!draft.aiProviderEnabled}
+                onChange={(v) => set("aiProviderEnabled", v)}
+              />
+              <ToggleRow
+                label="AI production summary"
+                checked={!!draft.aiSummaryEnabled}
+                onChange={(v) => set("aiSummaryEnabled", v)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Field label="Provider">
+                <Input
+                  value={draft.aiProvider ?? ""}
+                  onChange={(e) => set("aiProvider", e.target.value)}
+                  placeholder="openai"
+                  className="font-mono text-sm"
+                />
+              </Field>
+              <Field label="Model">
+                <Input
+                  value={draft.aiModel ?? ""}
+                  onChange={(e) => set("aiModel", e.target.value)}
+                  placeholder="gpt-4o-mini"
+                  className="font-mono text-sm"
+                />
+              </Field>
+              <Field label="Endpoint (optional)">
+                <Input
+                  value={draft.aiEndpoint ?? ""}
+                  onChange={(e) => set("aiEndpoint", e.target.value)}
+                  placeholder="https://api.openai.com/v1/chat/completions"
+                  className="font-mono text-xs"
+                />
+              </Field>
+            </div>
+
+            <Field label="OpenAI API key (write-only)">
+              <Input
+                type="password"
+                value={draft.openAIApiKey ?? ""}
+                onChange={(e) => set("openAIApiKey", e.target.value)}
+                placeholder={
+                  draft.aiApiKeyConfigured
+                    ? "•••• leave blank to keep existing key ••••"
+                    : "sk-..."
+                }
+                className="font-mono text-sm"
+                autoComplete="new-password"
+              />
+            </Field>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-[11px]">
+                <input
+                  type="checkbox"
+                  checked={!!draft.clearOpenAIApiKey}
+                  onChange={(e) => set("clearOpenAIApiKey", e.target.checked)}
+                />
+                Clear stored API key on save
+              </label>
+            </div>
+            <p className="text-[10px] text-muted-foreground font-mono">
+              The key is write-only: the server never returns it. It can also be
+              supplied via the <span>OPENAI_API_KEY</span> environment variable
+              on the IRIS host.
+            </p>
+          </div>
+
+
 
           <div className="flex items-center gap-3">
             <Button

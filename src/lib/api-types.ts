@@ -236,6 +236,7 @@ export type HealthResponse = {
 export type AnalysisSettings = {
   runtimeMessageAnalysisEnabled?: boolean;
   payloadInspectionEnabled?: boolean;
+  messageResendEnabled?: boolean;
   maxMessagesReturned?: number;
   maxTraceDepth?: number;
   defaultMessageLookbackDays?: number;
@@ -245,6 +246,34 @@ export type AnalysisSettings = {
   sourceCodeInferenceEnabled?: boolean;
   explanationVerbosity?: string;
   aiProviderEnabled?: boolean;
+  aiSummaryEnabled?: boolean;
+  aiProvider?: string;
+  aiModel?: string;
+  aiEndpoint?: string;
+  aiApiKeyConfigured?: boolean;
+  aiApiKeySource?: string;
+  openAIApiKey?: string; // write-only
+  clearOpenAIApiKey?: boolean;
+};
+
+export type ProductionAISummaryResponse = {
+  namespace?: string;
+  productionName?: string;
+  provider?: string;
+  model?: string;
+  generated?: boolean;
+  summary?: string;
+  deterministicSummary?: string;
+  deterministicSummaryBullets?: string[];
+  metrics?: ProductionMetrics;
+  aiProviderEnabled?: boolean;
+  aiSummaryEnabled?: boolean;
+  aiApiKeyConfigured?: boolean;
+  aiApiKeySource?: string;
+  rawUsage?: Record<string, unknown>;
+  confidence?: Confidence;
+  warnings?: Warning[];
+  evidence?: Evidence[];
 };
 
 export type SettingsResponse = {
