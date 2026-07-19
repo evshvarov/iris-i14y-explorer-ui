@@ -28,6 +28,38 @@ export const Route = createFileRoute("/messages/$id")({
 function MessageDetailPage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  // Neighbor list for prev/next navigation
+  const neighborList = useQuery<MessageHeaderListResponse>({
+    queryKey: ["messages", "neighbor-list"],
+    queryFn: () => apiFetch<MessageHeaderListResponse>(`/messages?limit=500`),
+    retry: 0,
+    staleTime: 30_000,
+  });
+
+  const { prevId, nextId } = useMemo(() => {
+    const items = neighborList.data?.items ?? [];
+    const ids = items.map((it) => String(it.messageId));
+    const idx = ids.indexOf(String(id));
+    if (idx === -1) return { prevId: undefined, nextId: undefined };
+    // list is typically newest-first: "previous in time" = idx+1, "next in time" = idx-1
+    return {
+      prevId: idx < ids.length - 1 ? ids[idx + 1] : undefined,
+      nextId: idx > 0 ? ids[idx - 1] : undefined,
+    };
+  }, [neighborList.data, id]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (e.key === "ArrowLeft" && prevId) navigate({ to: "/messages/$id", params: { id: prevId } });
+      if (e.key === "ArrowRight" && nextId) navigate({ to: "/messages/$id", params: { id: nextId } });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prevId, nextId, navigate]);
 
   const detail = useQuery<MessageDetailResponse>({
     queryKey: ["message", id],
