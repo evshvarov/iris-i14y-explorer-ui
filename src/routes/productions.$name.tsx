@@ -1409,9 +1409,28 @@ function RAGIndexSection({
     retry: 0,
   });
 
+  const [includeRuntime, setIncludeRuntime] = useState(false);
+  const [includePayload, setIncludePayload] = useState(false);
+  const [lookbackHours, setLookbackHours] = useState<number | "">("");
+  const [maxMessages, setMaxMessages] = useState<number | "">("");
+  const [maxLogs, setMaxLogs] = useState<number | "">("");
+
   const rebuild = useMutation({
-    mutationFn: () =>
-      apiFetch<RAGIndexRebuildResponse>(`/productions/${encoded}/rag/index`, { method: "POST" }),
+    mutationFn: () => {
+      const body: Record<string, unknown> = {};
+      if (includeRuntime) {
+        body.includeRuntime = true;
+        if (lookbackHours !== "") body.lookbackHours = Number(lookbackHours);
+        if (maxMessages !== "") body.maxMessages = Number(maxMessages);
+        if (maxLogs !== "") body.maxLogs = Number(maxLogs);
+      }
+      if (includePayload) body.includePayload = true;
+      return apiFetch<RAGIndexRebuildResponse>(`/productions/${encoded}/rag/index`, {
+        method: "POST",
+        headers: Object.keys(body).length ? { "Content-Type": "application/json" } : undefined,
+        body: Object.keys(body).length ? JSON.stringify(body) : undefined,
+      });
+    },
     onSuccess: (r) => {
       toast.success(`Index rebuilt · ${r.chunkCount ?? 0} chunks · run #${r.runId ?? "?"}`);
       qc.invalidateQueries({ queryKey: ["rag-index", productionName] });
