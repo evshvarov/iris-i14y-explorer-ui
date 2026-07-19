@@ -240,7 +240,7 @@ function MessagesPage() {
         {/* Facet sidebar */}
         <aside className="space-y-6">
           <FacetGroup
-            label="Status"
+            label="Errors"
             items={[
               { key: "all messages", value: undefined, count: facetsQuery.data?.totalCount },
               { key: "errors only", value: true, count: facetsQuery.data?.errorCount },
@@ -248,6 +248,57 @@ function MessagesPage() {
             selected={search.errorsOnly}
             onSelect={(v) => setSearchParam({ errorsOnly: v as boolean | undefined })}
           />
+          {statusLabels.length > 0 ? (
+            <div>
+              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                Status
+              </h4>
+              <ul className="space-y-0.5 max-h-56 overflow-auto pr-1">
+                {search.status ? (
+                  <li>
+                    <button
+                      onClick={() => setSearchParam({ status: undefined })}
+                      className="w-full text-left text-[10px] font-mono uppercase text-muted-foreground px-2 py-1 hover:text-foreground"
+                    >
+                      × clear
+                    </button>
+                  </li>
+                ) : null}
+                {statusLabels.map(([label, count]) => {
+                  const active = search.status === label;
+                  const tone = statusTone(label);
+                  const dot =
+                    tone === "error"
+                      ? "bg-destructive"
+                      : tone === "ok"
+                        ? "bg-status-confirmed"
+                        : tone === "warn"
+                          ? "bg-status-inferred"
+                          : "bg-muted-foreground/60";
+                  return (
+                    <li key={label}>
+                      <button
+                        onClick={() => setSearchParam({ status: active ? undefined : label })}
+                        className={`w-full flex items-center justify-between gap-2 text-left text-[11px] font-mono px-2 py-1 rounded ${
+                          active ? "bg-iris-brand/10 text-iris-brand" : "hover:bg-muted"
+                        }`}
+                        title={label}
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className={`inline-block size-1.5 rounded-full ${dot}`} />
+                          <span className="truncate">{label}</span>
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{count}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-[10px] font-mono text-muted-foreground/70 mt-1">
+                From loaded page
+              </p>
+            </div>
+          ) : null}
           <FacetList
             label="Source component"
             values={facetsQuery.data?.sourceConfigNames}
