@@ -203,6 +203,9 @@ function ProductionDetailPage() {
           </section>
         ) : null}
 
+        <AISummaryPanel productionName={name} encoded={encoded} />
+
+
         <SummaryBullets bullets={analysis.data?.summaryBullets} />
 
         {analysis.data?.metrics ? (
