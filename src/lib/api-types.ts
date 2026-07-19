@@ -304,6 +304,8 @@ export type ProductionAIAskResponse = {
   model?: string;
   generated?: boolean;
   answer?: string;
+  runId?: number;
+  chunkSource?: string;
   chunkCount?: number;
   totalChunkCount?: number;
   chunks?: RAGChunk[];
@@ -311,6 +313,69 @@ export type ProductionAIAskResponse = {
   aiApiKeyConfigured?: boolean;
   aiApiKeySource?: string;
   rawUsage?: Record<string, unknown>;
+  confidence?: Confidence;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type RAGIndexStatusResponse = {
+  namespace?: string;
+  productionName?: string;
+  indexed?: boolean;
+  stale?: boolean;
+  status?: string;
+  statusText?: string;
+  runId?: number;
+  runTimestamp?: string;
+  chunkCount?: number;
+  latestSourceChangedAt?: string;
+  latestSourceClassName?: string;
+  sourceClassCount?: number;
+  metrics?: RAGContextMetrics;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type RAGIndexRebuildResponse = {
+  namespace?: string;
+  productionName?: string;
+  runId?: number;
+  status?: string;
+  chunkCount?: number;
+  metrics?: RAGContextMetrics;
+  confidence?: Confidence;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type RAGChunkListResponse = {
+  namespace?: string;
+  productionName?: string;
+  runId?: number;
+  limit?: number;
+  offset?: number;
+  count?: number;
+  totalCount?: number;
+  hasMore?: boolean;
+  kind?: string;
+  componentName?: string;
+  items?: RAGChunk[];
+  metrics?: RAGContextMetrics;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
+export type RAGChunkSearchResponse = {
+  namespace?: string;
+  productionName?: string;
+  runId?: number;
+  question?: string;
+  componentName?: string;
+  maxChunks?: number;
+  count?: number;
+  totalChunkCount?: number;
+  chunks?: RAGChunk[];
+  metrics?: RAGContextMetrics;
   confidence?: Confidence;
   warnings?: Warning[];
   evidence?: Evidence[];

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye } from "lucide-react";
+import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer } from "lucide-react";
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
@@ -14,6 +14,9 @@ import type {
   ProductionAIAskResponse,
   ProductionRAGContextResponse,
   RAGChunk,
+  RAGIndexStatusResponse,
+  RAGIndexRebuildResponse,
+  RAGChunkListResponse,
   ProductionRuntimeResponse,
   ProductionActionResponse,
   ProductionGraphResponse,
@@ -1371,8 +1374,7 @@ function AIAskPanel({
 
       {preview ? <RAGContextPanel data={preview} onClose={() => setPreview(null)} /> : null}
 
-
-
+      <RAGIndexSection encoded={encoded} productionName={productionName} componentNames={componentNames} />
 
       {history.length === 0 && !mutation.isPending ? (
         <p className="text-xs text-muted-foreground italic">
@@ -1388,6 +1390,268 @@ function AIAskPanel({
         ))}
       </div>
     </section>
+  );
+}
+
+function RAGIndexSection({
+  encoded,
+  productionName,
+  componentNames,
+}: {
+  encoded: string;
+  productionName: string;
+  componentNames: string[];
+}) {
+  const qc = useQueryClient();
+  const status = useQuery<RAGIndexStatusResponse>({
+    queryKey: ["rag-index", productionName],
+    queryFn: () => apiFetch<RAGIndexStatusResponse>(`/productions/${encoded}/rag/index`),
+    retry: 0,
+  });
+
+  const rebuild = useMutation({
+    mutationFn: () =>
+      apiFetch<RAGIndexRebuildResponse>(`/productions/${encoded}/rag/index`, { method: "POST" }),
+    onSuccess: (r) => {
+      toast.success(`Index rebuilt · ${r.chunkCount ?? 0} chunks · run #${r.runId ?? "?"}`);
+      qc.invalidateQueries({ queryKey: ["rag-index", productionName] });
+      qc.invalidateQueries({ queryKey: ["rag-chunks", productionName] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const s = status.data;
+  const indexed = s?.indexed;
+  const stale = s?.stale;
+  const statusChip = indexed
+    ? stale
+      ? { label: "STALE", tone: "text-amber-700 ring-amber-500/30 bg-amber-500/10" }
+      : { label: "READY", tone: "text-status-confirmed ring-status-confirmed/30 bg-status-confirmed/10" }
+    : { label: "NOT INDEXED", tone: "text-muted-foreground ring-black/10 bg-muted/40" };
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 space-y-4">
+      <header className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="size-9 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center shrink-0">
+            <Database className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold">Persisted RAG index</h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Deterministic analysis chunks stored server-side. Ask AI uses this index when present.{" "}
+              <span className="font-mono">GET /rag/index</span>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-[10px] font-mono uppercase tracking-wider ring-1 rounded px-2 py-0.5 ${statusChip.tone}`}>
+            {statusChip.label}
+          </span>
+          <button
+            onClick={() => rebuild.mutate()}
+            disabled={rebuild.isPending}
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md ring-1 ring-iris-brand/40 text-iris-brand px-3 py-1.5 hover:bg-iris-brand/10 disabled:opacity-50"
+            title="POST /rag/index — rebuild deterministic index"
+          >
+            {rebuild.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Hammer className="w-3.5 h-3.5" />}
+            {rebuild.isPending ? "Rebuilding…" : "Rebuild index"}
+          </button>
+        </div>
+      </header>
+
+      {status.isLoading ? (
+        <Skeleton className="h-4 w-64" />
+      ) : status.error ? (
+        <p className="text-xs font-mono text-destructive break-all">
+          {(status.error as Error).message}
+        </p>
+      ) : s ? (
+        <>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              ["chunks", s.chunkCount],
+              ["source classes", s.sourceClassCount],
+              ["run", s.runId],
+              ["components", s.metrics?.componentChunkCount],
+              ["connections", s.metrics?.connectionChunkCount],
+              ["rules", s.metrics?.ruleChunkCount],
+              ["msg types", s.metrics?.messageTypeChunkCount],
+              ["transforms", s.metrics?.transformationChunkCount],
+              ["BPL", s.metrics?.businessProcessChunkCount],
+              ["externals", s.metrics?.externalSystemChunkCount],
+              ["warnings", s.metrics?.warningChunkCount],
+            ]
+              .filter(([, v]) => typeof v === "number")
+              .map(([k, v]) => (
+                <span
+                  key={String(k)}
+                  className="text-[10px] font-mono rounded-full bg-muted/60 ring-1 ring-black/5 px-2 py-0.5 text-foreground/80"
+                >
+                  {String(k)}: {String(v)}
+                </span>
+              ))}
+          </div>
+          <div className="text-[11px] font-mono text-muted-foreground space-y-0.5">
+            {s.statusText ? <p>{s.statusText}</p> : s.status ? <p>status: {s.status}</p> : null}
+            {s.runTimestamp ? <p>indexed at: {s.runTimestamp}</p> : null}
+            {s.latestSourceChangedAt ? (
+              <p>
+                latest source change: {s.latestSourceChangedAt}
+                {s.latestSourceClassName ? ` · ${s.latestSourceClassName}` : ""}
+              </p>
+            ) : null}
+          </div>
+          {s.warnings?.length ? (
+            <ul className="text-[11px] font-mono text-amber-700 space-y-0.5">
+              {s.warnings.map((w, i) => (
+                <li key={i}>⚠ {w.code ? `${w.code}: ` : ""}{w.message}</li>
+              ))}
+            </ul>
+          ) : null}
+        </>
+      ) : null}
+
+      {indexed ? (
+        <RAGChunkBrowser encoded={encoded} productionName={productionName} componentNames={componentNames} />
+      ) : (
+        <p className="text-xs text-muted-foreground italic">
+          Rebuild the index to browse persisted chunks and enable fast retrieval search.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function RAGChunkBrowser({
+  encoded,
+  productionName,
+  componentNames,
+}: {
+  encoded: string;
+  productionName: string;
+  componentNames: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState("");
+  const [componentName, setComponentName] = useState("");
+  const [offset, setOffset] = useState(0);
+  const limit = 20;
+
+  const chunks = useQuery<RAGChunkListResponse>({
+    queryKey: ["rag-chunks", productionName, kind, componentName, offset],
+    queryFn: () => {
+      const p = new URLSearchParams();
+      p.set("limit", String(limit));
+      p.set("offset", String(offset));
+      if (kind) p.set("kind", kind);
+      if (componentName) p.set("componentName", componentName);
+      return apiFetch<RAGChunkListResponse>(`/productions/${encoded}/rag/chunks?${p.toString()}`);
+    },
+    enabled: open,
+    retry: 0,
+  });
+
+  const items = chunks.data?.items ?? [];
+  const total = chunks.data?.totalCount ?? 0;
+  const hasMore = chunks.data?.hasMore ?? false;
+
+  const kinds = [
+    "", "component", "connection", "rule", "messageType", "externalSystem",
+    "transformation", "businessProcess", "warning", "summary",
+  ];
+
+  return (
+    <div className="border-t border-black/5 pt-4 mt-1">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+      >
+        <Search className="w-3.5 h-3.5" />
+        {open ? "Hide" : "Browse"} persisted chunks
+      </button>
+
+      {open ? (
+        <div className="mt-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+            <label className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="uppercase tracking-wider">Kind</span>
+              <select
+                value={kind}
+                onChange={(e) => { setKind(e.target.value); setOffset(0); }}
+                className="bg-card ring-1 ring-black/10 rounded px-2 py-1 text-foreground"
+              >
+                {kinds.map((k) => (
+                  <option key={k} value={k}>{k || "any"}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="uppercase tracking-wider">Component</span>
+              <select
+                value={componentName}
+                onChange={(e) => { setComponentName(e.target.value); setOffset(0); }}
+                className="bg-card ring-1 ring-black/10 rounded px-2 py-1 text-foreground"
+              >
+                <option value="">any</option>
+                {componentNames.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            <span className="text-muted-foreground ml-auto">
+              {chunks.isLoading ? "loading…" : `${offset + 1}-${offset + items.length} of ${total}`}
+            </span>
+            <button
+              onClick={() => setOffset(Math.max(0, offset - limit))}
+              disabled={offset === 0}
+              className="ring-1 ring-black/10 rounded px-2 py-1 disabled:opacity-40"
+            >
+              ← Prev
+            </button>
+            <button
+              onClick={() => setOffset(offset + limit)}
+              disabled={!hasMore}
+              className="ring-1 ring-black/10 rounded px-2 py-1 disabled:opacity-40"
+            >
+              Next →
+            </button>
+          </div>
+
+          {chunks.error ? (
+            <p className="text-xs font-mono text-destructive break-all">
+              {(chunks.error as Error).message}
+            </p>
+          ) : items.length === 0 && !chunks.isLoading ? (
+            <p className="text-xs text-muted-foreground italic">No chunks match the current filters.</p>
+          ) : (
+            <ul className="space-y-2">
+              {items.map((c, i) => (
+                <li key={c.id ?? i} className="ring-1 ring-black/5 rounded-md p-3 bg-muted/30">
+                  <div className="flex items-center flex-wrap gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-iris-brand">
+                      {c.kind ?? "chunk"}
+                    </span>
+                    {c.title ? <span className="text-xs font-semibold">{c.title}</span> : null}
+                    {c.component ? (
+                      <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
+                    ) : null}
+                    {c.id ? (
+                      <span className="text-[10px] font-mono text-muted-foreground ml-auto">{c.id}</span>
+                    ) : null}
+                    {c.confidence ? <ConfidenceBadge confidence={c.confidence} /> : null}
+                  </div>
+                  {c.text ? (
+                    <p className="text-[11px] font-mono text-foreground/80 whitespace-pre-wrap">{c.text}</p>
+                  ) : null}
+                  {c.source ? (
+                    <p className="text-[10px] font-mono text-muted-foreground mt-1">source: {c.source}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -1432,6 +1696,8 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
             {typeof result.totalChunkCount === "number" ? ` / ${result.totalChunkCount}` : ""}
           </span>
         ) : null}
+        {result.chunkSource ? <span>source: {result.chunkSource}</span> : null}
+        {typeof result.runId === "number" ? <span>run #{result.runId}</span> : null}
       </div>
 
       {result.warnings?.length ? (
