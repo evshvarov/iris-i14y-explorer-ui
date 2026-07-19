@@ -5,6 +5,7 @@ export type ProductionLogEntry = {
   logId?: number;
   timeLogged?: string;
   type?: string;
+  typeName?: string;
   source?: string;
   sessionId?: string;
   job?: string;
@@ -768,6 +769,7 @@ export type MessageFacetResponse = {
   messageBodyClassNames?: string[];
   sessionIds?: string[];
   componentNames?: string[];
+  statusNames?: string[];
   runtimeMessageAnalysisEnabled?: boolean;
   warnings?: Warning[];
 };

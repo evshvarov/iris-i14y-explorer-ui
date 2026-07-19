@@ -121,6 +121,7 @@ function MessagesPage() {
           targetConfigName: search.targetConfigName,
           messageBodyClassName: search.messageBodyClassName,
           sessionId: search.sessionId,
+          status: search.status,
           errorsOnly: search.errorsOnly,
           startDate,
           endDate,
@@ -164,13 +165,18 @@ function MessagesPage() {
       if (!s) continue;
       counts.set(s, (counts.get(s) ?? 0) + 1);
     }
+    // Merge in server-provided statusNames facet (from /messages/facets)
+    const facetNames = facetsQuery.data?.statusNames ?? [];
+    for (const s of facetNames) {
+      const key = String(s ?? "").trim();
+      if (!key) continue;
+      if (!counts.has(key)) counts.set(key, 0);
+    }
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-  }, [items]);
+  }, [items, facetsQuery.data?.statusNames]);
 
-  const filteredByStatus = useMemo(
-    () => (search.status ? filtered.filter((m) => String(m.status ?? "") === search.status) : filtered),
-    [filtered, search.status],
-  );
+  // Server now filters by `status` when provided; keep list as-is.
+  const filteredByStatus = filtered;
 
   const setSearchParam = (patch: Partial<typeof search>) =>
     navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
