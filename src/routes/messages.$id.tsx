@@ -132,7 +132,7 @@ function MessageDetailPage() {
         title={`#${id}`}
         status={
           m
-            ? { label: m.status ?? "unknown", tone: m.isError ? "inferred" : "confirmed" }
+            ? { label: m.statusName ?? m.status ?? "unknown", tone: m.isError ? "inferred" : "confirmed" }
             : undefined
         }
         actions={
