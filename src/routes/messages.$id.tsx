@@ -181,6 +181,16 @@ function MessageDetailPage() {
                 {resend.isPending ? "Resending…" : "Resend"}
               </button>
             ) : null}
+            {productionName ? (
+              <Link
+                to="/productions/$name"
+                params={{ name: productionName }}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+                title={`Back to ${productionName}`}
+              >
+                <ArrowLeft className="size-3.5" /> Production
+              </Link>
+            ) : null}
             <Link
               to="/messages"
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
