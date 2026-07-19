@@ -563,6 +563,10 @@ function PayloadPanel({ data }: { data: MessagePayloadMetadataResponse }) {
           <span className="text-[10px] font-mono uppercase text-muted-foreground">
             {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
           </span>
+          <CopyButton
+            label="Copy JSON"
+            getText={() => JSON.stringify(data, null, 2)}
+          />
         </div>
       </div>
 
