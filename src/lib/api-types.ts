@@ -316,6 +316,35 @@ export type ProductionAIAskResponse = {
   evidence?: Evidence[];
 };
 
+export type RAGContextMetrics = {
+  chunkCount?: number;
+  retrievedChunkCount?: number;
+  componentChunkCount?: number;
+  connectionChunkCount?: number;
+  ruleChunkCount?: number;
+  messageTypeChunkCount?: number;
+  externalSystemChunkCount?: number;
+  transformationChunkCount?: number;
+  businessProcessChunkCount?: number;
+  warningChunkCount?: number;
+};
+
+export type ProductionRAGContextResponse = {
+  namespace?: string;
+  productionName?: string;
+  question?: string;
+  componentName?: string;
+  maxChunks?: number;
+  chunkCount?: number;
+  retrievedChunkCount?: number;
+  chunks?: RAGChunk[];
+  retrievedChunks?: RAGChunk[];
+  metrics?: RAGContextMetrics;
+  confidence?: Confidence;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
 export type SettingsResponse = {
   namespace?: string;
   settings?: AnalysisSettings;
