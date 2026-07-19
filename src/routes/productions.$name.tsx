@@ -1500,6 +1500,10 @@ function RAGIndexSection({
               ["BPL", s.metrics?.businessProcessChunkCount],
               ["externals", s.metrics?.externalSystemChunkCount],
               ["warnings", s.metrics?.warningChunkCount],
+              ["messages", s.metrics?.messageChunkCount],
+              ["logs", s.metrics?.logChunkCount],
+              ["payloads", s.metrics?.payloadChunkCount],
+              ["runtime", s.metrics?.runtimeChunkCount],
             ]
               .filter(([, v]) => typeof v === "number")
               .map(([k, v]) => (
