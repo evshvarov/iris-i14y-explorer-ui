@@ -242,10 +242,10 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
             >
               <div className="flex items-start gap-3">
                 <span
-                  className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded ring-1 shrink-0 ${typeTone(e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type)}`}
+                  className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded ring-1 shrink-0 ${typeTone(e.typeLabel ?? e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type)}`}
                   title={e.type != null ? `code ${e.type}` : undefined}
                 >
-                  {e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type ?? "log"}
+                  {e.typeLabel ?? e.typeName ?? typeNameByCode.get(String(e.type ?? "")) ?? e.type ?? "log"}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
