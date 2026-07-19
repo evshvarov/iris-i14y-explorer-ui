@@ -236,6 +236,7 @@ export type HealthResponse = {
 export type AnalysisSettings = {
   runtimeMessageAnalysisEnabled?: boolean;
   payloadInspectionEnabled?: boolean;
+  payloadMetadataEnabled?: boolean;
   messageResendEnabled?: boolean;
   maxMessagesReturned?: number;
   maxTraceDepth?: number;
