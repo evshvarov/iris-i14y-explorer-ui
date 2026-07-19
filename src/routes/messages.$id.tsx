@@ -637,6 +637,22 @@ function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) 
           <span className="text-[10px] font-mono uppercase text-muted-foreground">
             {supported ? (enabled ? "enabled" : "disabled") : "unsupported"}
           </span>
+          {fields.length > 0 ? (
+            <>
+              <CopyButton
+                label="Copy TSV"
+                getText={() =>
+                  fields
+                    .map((f) => `${f.name ?? ""}\t${f.type ?? ""}\t${f.value ?? ""}`)
+                    .join("\n")
+                }
+              />
+              <CopyButton
+                label="Copy JSON"
+                getText={() => JSON.stringify(data, null, 2)}
+              />
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -652,7 +668,7 @@ function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) 
             {fields.map((f, i) => (
               <li
                 key={i}
-                className="grid grid-cols-[1fr_auto_2fr] items-center gap-3 px-3 py-1.5 text-[11px] font-mono"
+                className="group grid grid-cols-[1fr_auto_2fr_auto] items-center gap-3 px-3 py-1.5 text-[11px] font-mono"
               >
                 <span className="truncate">{f.name ?? `field_${i}`}</span>
                 <span className="text-muted-foreground text-[10px] uppercase bg-muted rounded px-1.5 py-0.5">
@@ -665,6 +681,12 @@ function PayloadPreviewPanel({ data }: { data: MessagePayloadPreviewResponse }) 
                   <span className="truncate" title={f.value ?? ""}>
                     {f.value ?? ""}
                   </span>
+                </span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <CopyButton
+                    label=""
+                    getText={() => f.value ?? ""}
+                  />
                 </span>
               </li>
             ))}
