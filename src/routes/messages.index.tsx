@@ -21,6 +21,7 @@ const searchSchema = z.object({
   targetConfigName: toStr,
   messageBodyClassName: toStr,
   sessionId: toStr,
+  status: toStr,
   errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
   limit: z.coerce.number().optional(),
   offset: z.coerce.number().optional(),
@@ -28,6 +29,28 @@ const searchSchema = z.object({
   dateTo: toStr,
   datePreset: toStr,
 });
+
+function statusTone(label?: string): "ok" | "warn" | "error" | "muted" {
+  if (!label) return "muted";
+  const s = label.toLowerCase();
+  if (/(error|abort|discard|fail|suspend)/.test(s)) return "error";
+  if (/(complete|delivered|ok|processed|done)/.test(s)) return "ok";
+  if (/(queued|pending|deferred|created|waiting|inprogress|in progress|running)/.test(s)) return "warn";
+  return "muted";
+}
+
+function statusPillClass(tone: ReturnType<typeof statusTone>) {
+  switch (tone) {
+    case "error":
+      return "text-destructive bg-destructive/10 ring-1 ring-destructive/30";
+    case "ok":
+      return "text-status-confirmed bg-status-confirmed/10 ring-1 ring-status-confirmed/30";
+    case "warn":
+      return "text-status-inferred bg-status-inferred/10 ring-1 ring-status-inferred/30";
+    default:
+      return "text-muted-foreground bg-muted ring-1 ring-black/5";
+  }
+}
 
 type DatePreset = "today" | "week" | "month" | "lastMonth" | "custom";
 
