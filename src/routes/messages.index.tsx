@@ -160,7 +160,7 @@ function MessagesPage() {
   const statusLabels = useMemo(() => {
     const counts = new Map<string, number>();
     for (const m of items) {
-      const s = (m.status ?? "").trim();
+      const s = String(m.status ?? "").trim();
       if (!s) continue;
       counts.set(s, (counts.get(s) ?? 0) + 1);
     }
@@ -168,7 +168,7 @@ function MessagesPage() {
   }, [items]);
 
   const filteredByStatus = useMemo(
-    () => (search.status ? filtered.filter((m) => m.status === search.status) : filtered),
+    () => (search.status ? filtered.filter((m) => String(m.status ?? "") === search.status) : filtered),
     [filtered, search.status],
   );
 
