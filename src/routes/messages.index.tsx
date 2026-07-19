@@ -30,9 +30,9 @@ const searchSchema = z.object({
   datePreset: toStr,
 });
 
-function statusTone(label?: string): "ok" | "warn" | "error" | "muted" {
-  if (!label) return "muted";
-  const s = label.toLowerCase();
+function statusTone(label?: unknown): "ok" | "warn" | "error" | "muted" {
+  if (label === null || label === undefined || label === "") return "muted";
+  const s = String(label).toLowerCase();
   if (/(error|abort|discard|fail|suspend)/.test(s)) return "error";
   if (/(complete|delivered|ok|processed|done)/.test(s)) return "ok";
   if (/(queued|pending|deferred|created|waiting|inprogress|in progress|running)/.test(s)) return "warn";
@@ -151,9 +151,9 @@ function MessagesPage() {
       (m) =>
         String(m.messageId ?? "").includes(t) ||
         String(m.sessionId ?? "").includes(t) ||
-        (m.sourceConfigName ?? "").toLowerCase().includes(t) ||
-        (m.targetConfigName ?? "").toLowerCase().includes(t) ||
-        (m.messageBodyClassName ?? "").toLowerCase().includes(t),
+        String(m.sourceConfigName ?? "").toLowerCase().includes(t) ||
+        String(m.targetConfigName ?? "").toLowerCase().includes(t) ||
+        String(m.messageBodyClassName ?? "").toLowerCase().includes(t),
     );
   }, [items, text]);
 
