@@ -717,6 +717,7 @@ export type MessageHeader = {
   messageBodyClassName?: string;
   messageBodyId?: string;
   status?: string;
+  statusName?: string;
   isError?: boolean;
   errorStatus?: string;
   type?: string;
