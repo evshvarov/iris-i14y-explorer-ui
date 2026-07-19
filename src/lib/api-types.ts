@@ -717,6 +717,7 @@ export type MessageHeader = {
   messageBodyClassName?: string;
   messageBodyId?: string;
   status?: string;
+  statusName?: string;
   isError?: boolean;
   errorStatus?: string;
   type?: string;
@@ -793,6 +794,7 @@ export type TraceStep = {
   target?: string;
   messageBodyClassName?: string;
   status?: string;
+  statusName?: string;
   isError?: boolean;
   invocation?: string;
   correspondingMessageId?: number;
