@@ -728,6 +728,7 @@ export type PayloadMetadata = {
   messageBodyId?: string;
   payloadReturned?: boolean;
   payloadInspectionEnabled?: boolean;
+  payloadMetadataEnabled?: boolean;
   payloadInspectionSupported?: boolean;
   bodyReferenceAvailable?: boolean;
   bodyClassExists?: boolean;
@@ -741,6 +742,7 @@ export type PayloadMetadata = {
 export type MessagePayloadMetadataResponse = {
   namespace?: string;
   messageId?: number;
+  productionName?: string;
   message?: MessageHeader;
   metadata?: PayloadMetadata;
   messageBodyClassName?: string;
@@ -751,6 +753,7 @@ export type MessagePayloadMetadataResponse = {
   payloadReturned?: boolean;
   runtimeMessageAnalysisEnabled?: boolean;
   payloadInspectionEnabled?: boolean;
+  payloadMetadataEnabled?: boolean;
   payloadInspectionSupported?: boolean;
   warnings?: Warning[];
   evidence?: Evidence[];
