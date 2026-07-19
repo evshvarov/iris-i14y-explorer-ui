@@ -669,6 +669,10 @@ export type CapabilitiesResponse = {
   productionControl?: boolean;
   runtimeTraceAnalysis?: boolean;
   payloadInspection?: boolean;
+  payloadPreview?: boolean;
+  productionLogs?: boolean;
+  aiProvider?: boolean;
+  aiSummary?: boolean;
   openapiVersion?: string;
 };
 
