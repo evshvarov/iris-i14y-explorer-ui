@@ -85,8 +85,11 @@ function MessagesPage() {
   const limit = search.limit ?? 50;
   const offset = search.offset ?? 0;
 
+  const startDate = search.dateFrom ? `${search.dateFrom}T00:00:00` : undefined;
+  const endDate = search.dateTo ? `${search.dateTo}T23:59:59` : undefined;
+
   const listQuery = useQuery<MessageHeaderListResponse>({
-    queryKey: ["messages", search, limit, offset],
+    queryKey: ["messages", search, limit, offset, startDate, endDate],
     queryFn: () =>
       apiFetch<MessageHeaderListResponse>(
         `/messages${toQuery({
@@ -96,6 +99,8 @@ function MessagesPage() {
           messageBodyClassName: search.messageBodyClassName,
           sessionId: search.sessionId,
           errorsOnly: search.errorsOnly,
+          startDate,
+          endDate,
           limit,
           offset,
         })}`,
@@ -104,31 +109,21 @@ function MessagesPage() {
   });
 
   const facetsQuery = useQuery<MessageFacetResponse>({
-    queryKey: ["messages-facets", search.productionName],
+    queryKey: ["messages-facets", search.productionName, startDate, endDate],
     queryFn: () =>
       apiFetch<MessageFacetResponse>(
-        `/messages/facets${toQuery({ productionName: search.productionName, limit: 500 })}`,
+        `/messages/facets${toQuery({ productionName: search.productionName, startDate, endDate, limit: 500 })}`,
       ),
     retry: 0,
   });
 
+
   const items = listQuery.data?.items ?? [];
-  const dateFiltered = useMemo(() => {
-    if (!search.dateFrom && !search.dateTo) return items;
-    const fromMs = search.dateFrom ? new Date(`${search.dateFrom}T00:00:00`).getTime() : -Infinity;
-    const toMs = search.dateTo ? new Date(`${search.dateTo}T23:59:59.999`).getTime() : Infinity;
-    return items.filter((m) => {
-      if (!m.timeCreated) return false;
-      const t = new Date(m.timeCreated).getTime();
-      if (Number.isNaN(t)) return false;
-      return t >= fromMs && t <= toMs;
-    });
-  }, [items, search.dateFrom, search.dateTo]);
 
   const filtered = useMemo(() => {
-    if (!text.trim()) return dateFiltered;
+    if (!text.trim()) return items;
     const t = text.toLowerCase();
-    return dateFiltered.filter(
+    return items.filter(
       (m) =>
         String(m.messageId ?? "").includes(t) ||
         String(m.sessionId ?? "").includes(t) ||
@@ -136,7 +131,8 @@ function MessagesPage() {
         (m.targetConfigName ?? "").toLowerCase().includes(t) ||
         (m.messageBodyClassName ?? "").toLowerCase().includes(t),
     );
-  }, [dateFiltered, text]);
+  }, [items, text]);
+
 
   const setSearchParam = (patch: Partial<typeof search>) =>
     navigate({ search: ((s: typeof search) => ({ ...s, ...patch, offset: 0 })) as never });
