@@ -235,6 +235,16 @@ function MessagesPage() {
 
         {/* List */}
         <div className="space-y-4 min-w-0">
+          <DateFilterBar
+            preset={activePreset}
+            dateFrom={search.dateFrom}
+            dateTo={search.dateTo}
+            onPreset={applyPreset}
+            onFrom={(v) => setSearchParam({ datePreset: "custom", dateFrom: v || undefined })}
+            onTo={(v) => setSearchParam({ datePreset: "custom", dateTo: v || undefined })}
+            onClear={clearDates}
+          />
+
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
