@@ -137,6 +137,39 @@ function MessageDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-md ring-1 ring-black/5 bg-card overflow-hidden">
+              {prevId ? (
+                <Link
+                  to="/messages/$id"
+                  params={{ id: prevId }}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted"
+                  title={`Previous message #${prevId} (←)`}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  <span className="font-mono">#{prevId}</span>
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1 text-xs px-2.5 py-1.5 text-muted-foreground/50 cursor-not-allowed">
+                  <ChevronLeft className="size-3.5" />
+                </span>
+              )}
+              <span className="w-px h-5 bg-black/5" />
+              {nextId ? (
+                <Link
+                  to="/messages/$id"
+                  params={{ id: nextId }}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted"
+                  title={`Next message #${nextId} (→)`}
+                >
+                  <span className="font-mono">#{nextId}</span>
+                  <ChevronRight className="size-3.5" />
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1 text-xs px-2.5 py-1.5 text-muted-foreground/50 cursor-not-allowed">
+                  <ChevronRight className="size-3.5" />
+                </span>
+              )}
+            </div>
             {productionName ? (
               <button
                 onClick={() => resend.mutate()}
