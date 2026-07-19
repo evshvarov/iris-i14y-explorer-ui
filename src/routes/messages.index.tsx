@@ -155,7 +155,25 @@ function MessagesPage() {
     ["Body", search.messageBodyClassName],
     ["Session", search.sessionId],
     search.errorsOnly ? ["Errors", "only"] : undefined,
+    search.dateFrom || search.dateTo
+      ? ["Date", `${search.dateFrom ?? "…"} → ${search.dateTo ?? "…"}`]
+      : undefined,
   ].filter(Boolean) as [string, string][];
+
+  const applyPreset = (preset: DatePreset) => {
+    if (preset === "custom") {
+      setSearchParam({ datePreset: "custom" });
+      return;
+    }
+    const r = rangeForPreset(preset);
+    setSearchParam({ datePreset: preset, dateFrom: r.dateFrom, dateTo: r.dateTo });
+  };
+
+  const clearDates = () =>
+    setSearchParam({ datePreset: undefined, dateFrom: undefined, dateTo: undefined });
+
+  const activePreset = (search.datePreset as DatePreset | undefined) ??
+    (search.dateFrom || search.dateTo ? "custom" : undefined);
 
   return (
     <>
