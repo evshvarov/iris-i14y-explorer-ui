@@ -1018,6 +1018,9 @@ function GraphView({
           ) : null}
         </MetricChips>
       ) : null}
+
+      <GraphDiagram nodes={nodes} edges={edges} productionName={productionName} />
+
       <SectionShell title="Nodes" count={nodes.length}>
         {nodes.length === 0 ? (
           <Empty>No graph nodes.</Empty>
