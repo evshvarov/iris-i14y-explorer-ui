@@ -190,9 +190,9 @@ function MessagesPage() {
         {/* Facet sidebar */}
         <aside className="space-y-6">
           <FacetGroup
-            label="Errors"
+            label="Status"
             items={[
-              { key: "all", value: undefined, count: facetsQuery.data?.totalCount },
+              { key: "all messages", value: undefined, count: facetsQuery.data?.totalCount },
               { key: "errors only", value: true, count: facetsQuery.data?.errorCount },
             ]}
             selected={search.errorsOnly}
