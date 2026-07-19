@@ -1365,9 +1365,10 @@ function AIAskPanel({
         {mutation.error ? (
           <div className="text-xs font-mono text-destructive break-all mt-3">
             {(mutation.error as Error).message}
-          </div>
-        ) : null}
       </div>
+
+      {preview ? <RAGContextPanel data={preview} onClose={() => setPreview(null)} /> : null}
+
 
       {history.length === 0 && !mutation.isPending ? (
         <p className="text-xs text-muted-foreground italic">
