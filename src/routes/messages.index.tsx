@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, AlertCircle, ArrowRight, X } from "lucide-react";
+import { Search, AlertCircle, ArrowRight, ArrowLeft, X } from "lucide-react";
 import { z } from "zod";
 
 import { apiFetch } from "@/lib/api-config";
@@ -183,6 +183,17 @@ function MessagesPage() {
                 tone: listQuery.data.errorsOnly ? "inferred" : "observed",
               }
             : undefined
+        }
+        actions={
+          search.productionName ? (
+            <Link
+              to="/productions/$name"
+              params={{ name: search.productionName }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+            >
+              <ArrowLeft className="size-3.5" /> Back to production
+            </Link>
+          ) : undefined
         }
       />
 
