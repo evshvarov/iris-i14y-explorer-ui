@@ -389,11 +389,11 @@ function MessageDetailPage() {
                         {s.isError ? (
                           <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-destructive">
                             <AlertCircle className="size-3" />
-                            {s.status}
+                            {s.statusName ?? s.status}
                           </span>
                         ) : (
                           <span className="text-[10px] font-mono uppercase text-muted-foreground bg-muted rounded px-1.5 py-0.5">
-                            {s.status ?? "ok"}
+                            {s.statusName ?? s.status ?? "ok"}
                           </span>
                         )}
                         <EvidencePopover
