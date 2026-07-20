@@ -3,6 +3,7 @@ import {
   Activity,
   Boxes,
   FileCode2,
+  Gauge,
   MessageSquareText,
   ScrollText,
   Settings2,
@@ -24,6 +25,7 @@ import {
 const core = [
   { title: "Health", url: "/health", icon: Activity },
   { title: "Productions", url: "/productions", icon: Boxes },
+  { title: "Metrics", url: "/metrics", icon: Gauge },
   { title: "API Reference", url: "/api-reference", icon: FileCode2 },
 ];
 

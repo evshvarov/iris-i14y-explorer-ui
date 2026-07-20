@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProductionsRouteImport } from './routes/productions'
+import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as HealthRouteImport } from './routes/health'
@@ -30,6 +31,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ProductionsRoute = ProductionsRouteImport.update({
   id: '/productions',
   path: '/productions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesRoute = MessagesRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/health': typeof HealthRoute
   '/logs': typeof LogsRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/metrics': typeof MetricsRoute
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/api-reference': typeof ApiReferenceRoute
   '/health': typeof HealthRoute
   '/logs': typeof LogsRoute
+  '/metrics': typeof MetricsRoute
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
   '/productions/$name': typeof ProductionsNameRouteWithChildren
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/health': typeof HealthRoute
   '/logs': typeof LogsRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/metrics': typeof MetricsRoute
   '/productions': typeof ProductionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/messages/$id': typeof MessagesIdRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/logs'
     | '/messages'
+    | '/metrics'
     | '/productions'
     | '/settings'
     | '/messages/$id'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/api-reference'
     | '/health'
     | '/logs'
+    | '/metrics'
     | '/settings'
     | '/messages/$id'
     | '/productions/$name'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/logs'
     | '/messages'
+    | '/metrics'
     | '/productions'
     | '/settings'
     | '/messages/$id'
@@ -174,6 +186,7 @@ export interface RootRouteChildren {
   HealthRoute: typeof HealthRoute
   LogsRoute: typeof LogsRoute
   MessagesRoute: typeof MessagesRouteWithChildren
+  MetricsRoute: typeof MetricsRoute
   ProductionsRoute: typeof ProductionsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
 }
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       path: '/productions'
       fullPath: '/productions'
       preLoaderRoute: typeof ProductionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messages': {
@@ -314,19 +334,10 @@ const rootRouteChildren: RootRouteChildren = {
   HealthRoute: HealthRoute,
   LogsRoute: LogsRoute,
   MessagesRoute: MessagesRouteWithChildren,
+  MetricsRoute: MetricsRoute,
   ProductionsRoute: ProductionsRouteWithChildren,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
