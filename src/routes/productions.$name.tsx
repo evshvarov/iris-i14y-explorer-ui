@@ -2140,31 +2140,50 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
             Citations
           </p>
           <ul className="space-y-1">
-            {result.citations!.map((c, i) => (
-              <li
-                key={c.chunkId ?? i}
-                className="flex items-start gap-2 text-[11px] font-mono ring-1 ring-iris-brand/20 bg-iris-brand/5 rounded px-2 py-1"
-              >
-                <span className="text-iris-brand shrink-0">[{i + 1}]</span>
-                <span className="text-iris-brand shrink-0 uppercase tracking-wider">
-                  {c.kind ?? "chunk"}
-                </span>
-                {c.title ? (
-                  <span className="text-foreground/90 truncate">{c.title}</span>
-                ) : null}
-                {c.component ? (
-                  <span className="text-muted-foreground truncate">· {c.component}</span>
-                ) : null}
-                {c.confidence ? (
-                  <span className="ml-auto shrink-0">
-                    <ConfidenceBadge confidence={c.confidence} />
+            {result.citations!.map((c, i) => {
+              const target = citationLinkProps(c, result.productionName);
+              const rowClass =
+                "flex items-center gap-2 text-[11px] font-mono ring-1 ring-iris-brand/20 bg-iris-brand/5 rounded px-2 py-1";
+              const inner = (
+                <>
+                  <span className="text-iris-brand shrink-0">[{i + 1}]</span>
+                  <span className="text-iris-brand shrink-0 uppercase tracking-wider">
+                    {c.kind ?? "chunk"}
                   </span>
-                ) : null}
-                {c.chunkId ? (
-                  <span className="text-muted-foreground/70 shrink-0 ml-1">{c.chunkId}</span>
-                ) : null}
-              </li>
-            ))}
+                  {c.title ? (
+                    <span className="text-foreground/90 truncate">{c.title}</span>
+                  ) : null}
+                  {c.component ? (
+                    <span className="text-muted-foreground truncate">· {c.component}</span>
+                  ) : null}
+                  {c.confidence ? (
+                    <span className="ml-auto shrink-0">
+                      <ConfidenceBadge confidence={c.confidence} />
+                    </span>
+                  ) : null}
+                  {c.chunkId ? (
+                    <span className="text-muted-foreground/70 shrink-0 ml-1">{c.chunkId}</span>
+                  ) : null}
+                </>
+              );
+              return (
+                <li key={c.chunkId ?? i}>
+                  {target ? (
+                    <Link
+                      to={target.to}
+                      params={target.params as never}
+                      search={target.search as never}
+                      title={target.hint}
+                      className={`${rowClass} hover:bg-iris-brand/10 hover:ring-iris-brand/40 transition-colors cursor-pointer no-underline`}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={rowClass}>{inner}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}
