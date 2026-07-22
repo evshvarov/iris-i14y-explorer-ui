@@ -2255,6 +2255,20 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
                           {c.id}
                         </span>
                       ) : null}
+                      {(() => {
+                        const t = citationLinkProps(c, result.productionName);
+                        return t ? (
+                          <Link
+                            to={t.to}
+                            params={t.params as never}
+                            search={t.search as never}
+                            title={t.hint}
+                            className="text-[10px] font-mono uppercase tracking-wider text-iris-brand hover:underline"
+                          >
+                            open →
+                          </Link>
+                        ) : null;
+                      })()}
                       {typeof c.score === "number" ? (
                         <span className="text-[10px] font-mono text-muted-foreground ml-auto">
                           score {c.score}
