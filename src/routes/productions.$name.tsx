@@ -2046,10 +2046,11 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
       </header>
 
       {result.answer ? (
-        <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">{result.answer}</p>
+        <MarkdownContent>{result.answer}</MarkdownContent>
       ) : (
         <p className="text-xs text-muted-foreground italic">No answer text returned.</p>
       )}
+
 
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono text-muted-foreground">
         {result.provider ? <span>provider: {result.provider}</span> : null}
