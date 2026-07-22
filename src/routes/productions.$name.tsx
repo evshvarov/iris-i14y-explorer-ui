@@ -1423,12 +1423,11 @@ function AISummaryPanel({ productionName, encoded }: { productionName: string; e
           </div>
 
           {result.summary ? (
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
-              {result.summary}
-            </p>
+            <MarkdownContent>{result.summary}</MarkdownContent>
           ) : (
             <p className="text-xs text-muted-foreground italic">No AI summary text returned.</p>
           )}
+
 
           {!result.generated && result.deterministicSummary ? (
             <details className="text-xs">
