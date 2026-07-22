@@ -4,6 +4,7 @@ import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, 
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
+import { MarkdownContent } from "@/components/markdown-content";
 import type {
   ComponentListResponse,
   Component,
@@ -1422,12 +1423,11 @@ function AISummaryPanel({ productionName, encoded }: { productionName: string; e
           </div>
 
           {result.summary ? (
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
-              {result.summary}
-            </p>
+            <MarkdownContent>{result.summary}</MarkdownContent>
           ) : (
             <p className="text-xs text-muted-foreground italic">No AI summary text returned.</p>
           )}
+
 
           {!result.generated && result.deterministicSummary ? (
             <details className="text-xs">
@@ -2046,10 +2046,11 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
       </header>
 
       {result.answer ? (
-        <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">{result.answer}</p>
+        <MarkdownContent>{result.answer}</MarkdownContent>
       ) : (
         <p className="text-xs text-muted-foreground italic">No answer text returned.</p>
       )}
+
 
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono text-muted-foreground">
         {result.provider ? <span>provider: {result.provider}</span> : null}
