@@ -1976,6 +1976,20 @@ function RAGChunkBrowser({
                     {c.component ? (
                       <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
                     ) : null}
+                    {(() => {
+                      const t = citationLinkProps(c, productionName);
+                      return t ? (
+                        <Link
+                          to={t.to}
+                          params={t.params as never}
+                          search={t.search as never}
+                          title={t.hint}
+                          className="text-[10px] font-mono uppercase tracking-wider text-iris-brand hover:underline"
+                        >
+                          open →
+                        </Link>
+                      ) : null;
+                    })()}
                     {c.id ? (
                       <span className="text-[10px] font-mono text-muted-foreground ml-auto">{c.id}</span>
                     ) : null}
@@ -1995,6 +2009,67 @@ function RAGChunkBrowser({
       ) : null}
     </div>
   );
+}
+
+/**
+ * Resolve a RAG citation/chunk to an in-app navigation target, if any.
+ * Handles component / message / log / session / payload kinds and falls back
+ * to component pages whenever a `component` field is present.
+ */
+function citationLinkProps(
+  c: { kind?: string; component?: string; chunkId?: string; id?: string; source?: string; title?: string },
+  productionName?: string,
+):
+  | { to: string; params?: Record<string, string>; search?: Record<string, string | number>; hint: string }
+  | null {
+  const kind = (c.kind ?? "").toLowerCase();
+  const idish = c.chunkId ?? c.id ?? "";
+  const digits = (s: string) => {
+    const m = /(\d{2,})/.exec(s);
+    return m ? m[1] : "";
+  };
+
+  // Message chunk
+  if (/message|payload|trace|session/.test(kind)) {
+    const src = `${idish} ${c.source ?? ""} ${c.title ?? ""}`;
+    const msgMatch = /(?:^|[^a-z])(?:message|msg|m)[:_\-#/]?(\d+)/i.exec(src);
+    if (msgMatch) return { to: "/messages/$id", params: { id: msgMatch[1] }, hint: "Open message" };
+    const sesMatch = /(?:^|[^a-z])(?:session|ses|s)[:_\-#/]?(\d+)/i.exec(src);
+    if (sesMatch) return { to: "/messages", search: { sessionId: sesMatch[1] }, hint: "Open session" };
+    if (/message/.test(kind)) {
+      const d = digits(idish);
+      if (d) return { to: "/messages/$id", params: { id: d }, hint: "Open message" };
+    }
+    if (/session/.test(kind)) {
+      const d = digits(idish);
+      if (d) return { to: "/messages", search: { sessionId: d }, hint: "Open session" };
+    }
+  }
+
+  // Log chunk
+  if (/log/.test(kind)) {
+    return { to: "/logs", hint: "Open logs" };
+  }
+
+  // Component / connection / rule / transformation / businessProcess / etc.
+  if (c.component && productionName) {
+    return {
+      to: "/productions/$name/components/$componentName",
+      params: { name: productionName, componentName: c.component },
+      hint: `Open ${c.component}`,
+    };
+  }
+
+  // Bare component chunk without explicit component name
+  if (/^component/.test(kind) && c.title && productionName) {
+    return {
+      to: "/productions/$name/components/$componentName",
+      params: { name: productionName, componentName: c.title },
+      hint: `Open ${c.title}`,
+    };
+  }
+
+  return null;
 }
 
 function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
@@ -2079,31 +2154,50 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
             Citations
           </p>
           <ul className="space-y-1">
-            {result.citations!.map((c, i) => (
-              <li
-                key={c.chunkId ?? i}
-                className="flex items-start gap-2 text-[11px] font-mono ring-1 ring-iris-brand/20 bg-iris-brand/5 rounded px-2 py-1"
-              >
-                <span className="text-iris-brand shrink-0">[{i + 1}]</span>
-                <span className="text-iris-brand shrink-0 uppercase tracking-wider">
-                  {c.kind ?? "chunk"}
-                </span>
-                {c.title ? (
-                  <span className="text-foreground/90 truncate">{c.title}</span>
-                ) : null}
-                {c.component ? (
-                  <span className="text-muted-foreground truncate">· {c.component}</span>
-                ) : null}
-                {c.confidence ? (
-                  <span className="ml-auto shrink-0">
-                    <ConfidenceBadge confidence={c.confidence} />
+            {result.citations!.map((c, i) => {
+              const target = citationLinkProps(c, result.productionName);
+              const rowClass =
+                "flex items-center gap-2 text-[11px] font-mono ring-1 ring-iris-brand/20 bg-iris-brand/5 rounded px-2 py-1";
+              const inner = (
+                <>
+                  <span className="text-iris-brand shrink-0">[{i + 1}]</span>
+                  <span className="text-iris-brand shrink-0 uppercase tracking-wider">
+                    {c.kind ?? "chunk"}
                   </span>
-                ) : null}
-                {c.chunkId ? (
-                  <span className="text-muted-foreground/70 shrink-0 ml-1">{c.chunkId}</span>
-                ) : null}
-              </li>
-            ))}
+                  {c.title ? (
+                    <span className="text-foreground/90 truncate">{c.title}</span>
+                  ) : null}
+                  {c.component ? (
+                    <span className="text-muted-foreground truncate">· {c.component}</span>
+                  ) : null}
+                  {c.confidence ? (
+                    <span className="ml-auto shrink-0">
+                      <ConfidenceBadge confidence={c.confidence} />
+                    </span>
+                  ) : null}
+                  {c.chunkId ? (
+                    <span className="text-muted-foreground/70 shrink-0 ml-1">{c.chunkId}</span>
+                  ) : null}
+                </>
+              );
+              return (
+                <li key={c.chunkId ?? i}>
+                  {target ? (
+                    <Link
+                      to={target.to}
+                      params={target.params as never}
+                      search={target.search as never}
+                      title={target.hint}
+                      className={`${rowClass} hover:bg-iris-brand/10 hover:ring-iris-brand/40 transition-colors cursor-pointer no-underline`}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={rowClass}>{inner}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}
@@ -2175,6 +2269,20 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
                           {c.id}
                         </span>
                       ) : null}
+                      {(() => {
+                        const t = citationLinkProps(c, result.productionName);
+                        return t ? (
+                          <Link
+                            to={t.to}
+                            params={t.params as never}
+                            search={t.search as never}
+                            title={t.hint}
+                            className="text-[10px] font-mono uppercase tracking-wider text-iris-brand hover:underline"
+                          >
+                            open →
+                          </Link>
+                        ) : null;
+                      })()}
                       {typeof c.score === "number" ? (
                         <span className="text-[10px] font-mono text-muted-foreground ml-auto">
                           score {c.score}
@@ -2293,6 +2401,20 @@ function RAGContextPanel({
                 {c.component ? (
                   <span className="text-[10px] font-mono text-muted-foreground">· {c.component}</span>
                 ) : null}
+                {(() => {
+                  const t = citationLinkProps(c, data.productionName);
+                  return t ? (
+                    <Link
+                      to={t.to}
+                      params={t.params as never}
+                      search={t.search as never}
+                      title={t.hint}
+                      className="text-[10px] font-mono uppercase tracking-wider text-iris-brand hover:underline"
+                    >
+                      open →
+                    </Link>
+                  ) : null;
+                })()}
                 {typeof c.score === "number" ? (
                   <span className="text-[10px] font-mono text-muted-foreground ml-auto">
                     score {c.score}
