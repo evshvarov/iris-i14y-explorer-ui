@@ -4,6 +4,7 @@ import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, 
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
+import { MarkdownContent } from "@/components/markdown-content";
 import type {
   ComponentListResponse,
   Component,
