@@ -2034,14 +2034,6 @@ function citationLinkProps(
 
   // Log chunk
   if (/log/.test(kind)) {
-    if (productionName) {
-      return {
-        to: "/productions/$name",
-        params: { name: productionName },
-        search: { tab: "logs" },
-        hint: "Open logs",
-      };
-    }
     return { to: "/logs", hint: "Open logs" };
   }
 
