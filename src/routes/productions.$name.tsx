@@ -1997,6 +1997,75 @@ function RAGChunkBrowser({
   );
 }
 
+/**
+ * Resolve a RAG citation/chunk to an in-app navigation target, if any.
+ * Handles component / message / log / session / payload kinds and falls back
+ * to component pages whenever a `component` field is present.
+ */
+function citationLinkProps(
+  c: { kind?: string; component?: string; chunkId?: string; id?: string; source?: string; title?: string },
+  productionName?: string,
+):
+  | { to: string; params?: Record<string, string>; search?: Record<string, string | number>; hint: string }
+  | null {
+  const kind = (c.kind ?? "").toLowerCase();
+  const idish = c.chunkId ?? c.id ?? "";
+  const digits = (s: string) => {
+    const m = /(\d{2,})/.exec(s);
+    return m ? m[1] : "";
+  };
+
+  // Message chunk
+  if (/message|payload|trace|session/.test(kind)) {
+    const src = `${idish} ${c.source ?? ""} ${c.title ?? ""}`;
+    const msgMatch = /(?:^|[^a-z])(?:message|msg|m)[:_\-#/]?(\d+)/i.exec(src);
+    if (msgMatch) return { to: "/messages/$id", params: { id: msgMatch[1] }, hint: "Open message" };
+    const sesMatch = /(?:^|[^a-z])(?:session|ses|s)[:_\-#/]?(\d+)/i.exec(src);
+    if (sesMatch) return { to: "/messages", search: { sessionId: sesMatch[1] }, hint: "Open session" };
+    if (/message/.test(kind)) {
+      const d = digits(idish);
+      if (d) return { to: "/messages/$id", params: { id: d }, hint: "Open message" };
+    }
+    if (/session/.test(kind)) {
+      const d = digits(idish);
+      if (d) return { to: "/messages", search: { sessionId: d }, hint: "Open session" };
+    }
+  }
+
+  // Log chunk
+  if (/log/.test(kind)) {
+    if (productionName) {
+      return {
+        to: "/productions/$name",
+        params: { name: productionName },
+        search: { tab: "logs" },
+        hint: "Open logs",
+      };
+    }
+    return { to: "/logs", hint: "Open logs" };
+  }
+
+  // Component / connection / rule / transformation / businessProcess / etc.
+  if (c.component && productionName) {
+    return {
+      to: "/productions/$name/components/$componentName",
+      params: { name: productionName, componentName: c.component },
+      hint: `Open ${c.component}`,
+    };
+  }
+
+  // Bare component chunk without explicit component name
+  if (/^component/.test(kind) && c.title && productionName) {
+    return {
+      to: "/productions/$name/components/$componentName",
+      params: { name: productionName, componentName: c.title },
+      hint: `Open ${c.title}`,
+    };
+  }
+
+  return null;
+}
+
 function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
   const [expanded, setExpanded] = useState(false);
   const citedIds = new Set(
