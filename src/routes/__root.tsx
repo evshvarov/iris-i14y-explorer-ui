@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -8,12 +8,14 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Sparkles } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "../components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "../components/ui/sidebar";
 import { Toaster } from "../components/ui/sonner";
+import { apiFetch, getApiConfig } from "../lib/api-config";
 
 const assetBase = import.meta.env.BASE_URL;
 
@@ -82,24 +84,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "IRIS Interoperability Production Explainer" },
+      { title: "Interoperability Aid — IRIS Production Explorer" },
       {
         name: "description",
         content:
-          "Deterministic UI for the InterSystems IRIS Interoperability Production Explainer (i14y-aid) REST API.",
+          "A developer UI for InterSystems IRIS Interoperability productions: understand components, monitor health, browse messages/logs, and ask the AI copilot.",
       },
-      { property: "og:title", content: "IRIS Interoperability Production Explainer" },
+      { property: "og:title", content: "Interoperability Aid — IRIS Production Explorer" },
       {
         property: "og:description",
         content:
-          "Deterministic UI for the InterSystems IRIS Interoperability Production Explainer (i14y-aid) REST API.",
+          "Understand, monitor and ask AI questions about IRIS Interoperability productions.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "IRIS Interoperability Production Explainer" },
-      { name: "twitter:description", content: "Deterministic UI for the InterSystems IRIS Interoperability Production Explainer (i14y-aid) REST API." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1940fde9-637c-4b2e-9db8-03abbf131c73/id-preview-b9d2138e--75feb62f-6fe4-473f-8d20-7bdcf16e4dd8.lovable.app-1784017705338.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1940fde9-637c-4b2e-9db8-03abbf131c73/id-preview-b9d2138e--75feb62f-6fe4-473f-8d20-7bdcf16e4dd8.lovable.app-1784017705338.png" },
+      { name: "twitter:title", content: "Interoperability Aid — IRIS Production Explorer" },
+      { name: "twitter:description", content: "Understand, monitor and ask AI questions about IRIS Interoperability productions." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -136,20 +136,104 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function TopBar() {
+  const { data: health } = useQuery<{ status?: string; namespace?: string }>({
+    queryKey: ["health-topbar"],
+    queryFn: () => apiFetch("/health"),
+    retry: 0,
+    refetchInterval: 30000,
+  });
+  const cfg = typeof window !== "undefined" ? getApiConfig() : { baseUrl: "" };
+  const basePath = (() => {
+    try {
+      return new URL(cfg.baseUrl).pathname || "/i14y-aid/api";
+    } catch {
+      return "/i14y-aid/api";
+    }
+  })();
+  const healthy = health && (health.status === "ok" || health.status === "healthy" || !!health.namespace);
+
+  return (
+    <header
+      className="h-[54px] shrink-0 flex items-center justify-between px-4 md:px-6 text-[color:var(--iris-navy-fg)]"
+      style={{ backgroundColor: "var(--iris-navy)" }}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <SidebarTrigger className="md:hidden text-white/80 hover:text-white" />
+        <div
+          className="size-[26px] rounded-md flex items-center justify-center text-[10px] font-mono font-semibold text-white shrink-0"
+          style={{ backgroundColor: "var(--iris-brand)" }}
+        >
+          i14
+        </div>
+        <div className="min-w-0 leading-tight">
+          <div className="text-[14px] font-semibold truncate">Interoperability Aid</div>
+          <div
+            className="text-[10.5px] font-mono truncate"
+            style={{ color: "var(--iris-navy-muted)" }}
+          >
+            IRIS Production Explainer
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 md:gap-3 shrink-0">
+        {health?.namespace ? (
+          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 ring-1 ring-white/10">
+            <span
+              className="text-[9.5px] font-mono uppercase tracking-wider"
+              style={{ color: "var(--iris-navy-muted)" }}
+            >
+              ns
+            </span>
+            <span className="text-[11px] font-mono font-medium">{health.namespace}</span>
+          </div>
+        ) : null}
+        <div
+          className="hidden md:block text-[11px] font-mono px-2 py-1 rounded-md bg-white/5 ring-1 ring-white/10"
+          style={{ color: "var(--iris-navy-muted)" }}
+        >
+          {basePath}
+        </div>
+        <div
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md"
+          style={{ backgroundColor: "rgba(46,196,120,.14)" }}
+        >
+          <span
+            className={`size-1.5 rounded-full ${healthy ? "i14y-pulse" : ""}`}
+            style={{ backgroundColor: healthy ? "var(--iris-health)" : "#c0392b" }}
+          />
+          <span className="text-[10.5px] font-mono font-medium" style={{ color: healthy ? "#8affbf" : "#ffb3ac" }}>
+            {healthy ? "API healthy" : "API down"}
+          </span>
+        </div>
+        <Link
+          to="/messages"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[7px] text-[12px] font-semibold text-white transition-colors"
+          style={{ backgroundColor: "var(--iris-brand)" }}
+        >
+          <Sparkles className="size-3.5" />
+          Copilot
+        </Link>
+      </div>
+    </header>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
       <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background text-foreground">
-          <AppSidebar />
-          <main className="flex-1 flex flex-col min-w-0">
-            <div className="md:hidden h-12 border-b flex items-center px-4">
-              <SidebarTrigger />
-            </div>
-            <Outlet />
-          </main>
+        <div className="min-h-screen flex flex-col w-full bg-background text-foreground">
+          <TopBar />
+          <div className="flex flex-1 min-h-0 w-full">
+            <AppSidebar />
+            <main className="flex-1 flex flex-col min-w-0 overflow-auto">
+              <Outlet />
+            </main>
+          </div>
         </div>
         <Toaster richColors position="top-right" />
       </SidebarProvider>
