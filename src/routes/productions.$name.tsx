@@ -532,21 +532,24 @@ function ProductionDetailContent() {
           ) : null}
 
           {activeTab === "messages" ? (
-            <div className="bg-card ring-1 ring-black/5 rounded-lg p-6 max-w-2xl">
-              <div className="size-10 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center mb-3">
-                <MessageSquareText className="size-5" />
+            <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-black/5">
+                <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                  Runtime messages · {name}
+                </div>
+                <Link
+                  to="/messages"
+                  search={{ productionName: name } as never}
+                  className="text-[11px] text-iris-brand hover:underline"
+                >
+                  Open full explorer ↗
+                </Link>
               </div>
-              <h3 className="text-sm font-semibold mb-1">Runtime messages for this production</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Open the message explorer prefiltered to <span className="font-mono text-foreground/80">{name}</span>.
-              </p>
-              <Link
-                to="/messages"
-                search={{ productionName: name } as never}
-                className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ring-1 ring-iris-brand/30 bg-iris-brand/10 text-iris-brand hover:bg-iris-brand/20 transition-colors"
-              >
-                Open in Message Explainer →
-              </Link>
+              <iframe
+                title={`Messages for ${name}`}
+                src={`/messages?productionName=${encodeURIComponent(name)}&embedded=1`}
+                className="w-full h-[calc(100vh-260px)] min-h-[520px] border-0 bg-background"
+              />
             </div>
           ) : null}
 
