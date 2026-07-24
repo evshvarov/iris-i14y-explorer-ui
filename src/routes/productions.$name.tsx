@@ -168,6 +168,30 @@ function ProductionDetailContent() {
     onError: (e: Error) => toast.error(`Stop failed: ${e.message}`),
   });
 
+  const updateMut = useMutation({
+    mutationFn: (opts: { force?: boolean } = {}) =>
+      apiFetch<ProductionActionResponse>(
+        `/productions/${encoded}/update?timeout=10${opts.force ? "&force=true" : ""}`,
+        { method: "POST" },
+      ),
+    onSuccess: (r) => {
+      toast.success(
+        `Apply changes ${r.changed ? "issued" : "no-op"} — ${r.runtime?.stateLabel ?? "updated"}`,
+      );
+      invalidateRuntime();
+    },
+    onError: (e: Error) => {
+      const msg = e.message || "";
+      if (/\b409\b/.test(msg)) {
+        toast.error("Conflict applying changes. Retry with Force?", {
+          action: { label: "Force apply", onClick: () => updateMut.mutate({ force: true }) },
+        });
+      } else {
+        toast.error(`Apply failed: ${msg}`);
+      }
+    },
+  });
+
   return (
     <>
       <PageHeader
