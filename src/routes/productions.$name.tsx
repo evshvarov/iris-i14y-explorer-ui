@@ -215,6 +215,19 @@ function ProductionDetailContent() {
               <Square className="size-3.5" /> Stop
             </button>
             <button
+              onClick={() => updateMut.mutate({})}
+              disabled={updateMut.isPending || !isRunning}
+              title="Apply pending component changes to the running production"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-iris-brand/30 bg-iris-brand/10 text-iris-brand hover:bg-iris-brand/20 transition-colors disabled:opacity-40"
+            >
+              {updateMut.isPending ? (
+                <RefreshCw className="size-3.5 animate-spin" />
+              ) : (
+                <GitPullRequestArrow className="size-3.5" />
+              )}
+              Apply changes
+            </button>
+            <button
               onClick={() => invalidateRuntime()}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
             >
