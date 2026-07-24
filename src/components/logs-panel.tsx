@@ -305,7 +305,14 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
                               {e.source}
                             </Link>
                           ) : (
-                            <span className="text-foreground/80">{e.source}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSource(e.source!)}
+                              className="text-foreground/80 hover:text-foreground underline decoration-dotted underline-offset-2"
+                              title={`Filter logs by source ${e.source}`}
+                            >
+                              {e.source}
+                            </button>
                           );
                         })()}
                       </>
