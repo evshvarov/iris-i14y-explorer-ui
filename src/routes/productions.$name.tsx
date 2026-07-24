@@ -33,7 +33,7 @@ import type {
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge, ConfidenceDot } from "@/components/confidence-badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import { SummaryBullets, MetricChip, MetricChips, EvidenceChips } from "@/components/summary-bits";
 import { LogsPanel } from "@/components/logs-panel";
 import { ProductionKPIs } from "@/components/production-kpis";
