@@ -1476,7 +1476,7 @@ function AISummaryPanel({ productionName, encoded, componentNames }: { productio
           </div>
 
           {result.summary ? (
-            <MarkdownContent>{result.summary}</MarkdownContent>
+            <MarkdownContent linkComponents={componentNames} productionName={productionName}>{result.summary}</MarkdownContent>
           ) : (
             <p className="text-xs text-muted-foreground italic">No AI summary text returned.</p>
           )}
