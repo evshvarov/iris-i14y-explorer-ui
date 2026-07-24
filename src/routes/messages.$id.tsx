@@ -282,14 +282,21 @@ function MessageDetailPage() {
               </div>
             </div>
             {explain.data.summary ? (
-              <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty mb-2">
+              <MarkdownContent
+                className="mb-2"
+                linkComponents={componentNames}
+                productionName={productionName}
+              >
                 {explain.data.summary}
-              </p>
+              </MarkdownContent>
             ) : null}
             {explain.data.explanation?.text ? (
-              <p className="text-sm text-foreground/80 whitespace-pre-wrap text-pretty">
+              <MarkdownContent
+                linkComponents={componentNames}
+                productionName={productionName}
+              >
                 {explain.data.explanation.text}
-              </p>
+              </MarkdownContent>
             ) : null}
           </section>
         ) : null}
