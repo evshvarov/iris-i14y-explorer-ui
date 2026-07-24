@@ -436,7 +436,12 @@ function MessagesPage() {
               </div>
               <ul className="divide-y">
                 {filteredByStatus.map((m) => {
-                  const tone = m.isError ? "error" : statusTone(m.status);
+                  const label =
+                    m.statusLabel ||
+                    m.statusName ||
+                    statusNameByCode.get(String(m.status ?? "")) ||
+                    m.status;
+                  const tone = m.isError ? "error" : statusTone(label);
                   return (
                     <li key={m.messageId}>
                       <Link
