@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer } from "lucide-react";
+import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer, GitPullRequestArrow } from "lucide-react";
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
@@ -168,6 +168,30 @@ function ProductionDetailContent() {
     onError: (e: Error) => toast.error(`Stop failed: ${e.message}`),
   });
 
+  const updateMut = useMutation({
+    mutationFn: (opts: { force?: boolean } = {}) =>
+      apiFetch<ProductionActionResponse>(
+        `/productions/${encoded}/update?timeout=10${opts.force ? "&force=true" : ""}`,
+        { method: "POST" },
+      ),
+    onSuccess: (r) => {
+      toast.success(
+        `Apply changes ${r.changed ? "issued" : "no-op"} — ${r.runtime?.stateLabel ?? "updated"}`,
+      );
+      invalidateRuntime();
+    },
+    onError: (e: Error) => {
+      const msg = e.message || "";
+      if (/\b409\b/.test(msg)) {
+        toast.error("Conflict applying changes. Retry with Force?", {
+          action: { label: "Force apply", onClick: () => updateMut.mutate({ force: true }) },
+        });
+      } else {
+        toast.error(`Apply failed: ${msg}`);
+      }
+    },
+  });
+
   return (
     <>
       <PageHeader
@@ -189,6 +213,19 @@ function ProductionDetailContent() {
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
             >
               <Square className="size-3.5" /> Stop
+            </button>
+            <button
+              onClick={() => updateMut.mutate({})}
+              disabled={updateMut.isPending || !isRunning}
+              title="Apply pending component changes to the running production"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-iris-brand/30 bg-iris-brand/10 text-iris-brand hover:bg-iris-brand/20 transition-colors disabled:opacity-40"
+            >
+              {updateMut.isPending ? (
+                <RefreshCw className="size-3.5 animate-spin" />
+              ) : (
+                <GitPullRequestArrow className="size-3.5" />
+              )}
+              Apply changes
             </button>
             <button
               onClick={() => invalidateRuntime()}
