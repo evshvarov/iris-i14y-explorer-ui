@@ -254,7 +254,21 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
                     {e.source ? (
                       <>
                         <span>·</span>
-                        <span className="text-foreground/80">{e.source}</span>
+                        {(() => {
+                          const prod = productionName ?? e.productionName;
+                          return prod ? (
+                            <Link
+                              to="/productions/$name/components/$componentName"
+                              params={{ name: prod, componentName: e.source }}
+                              className="text-foreground/80 hover:text-foreground underline decoration-dotted underline-offset-2"
+                              title={`Open component ${e.source}`}
+                            >
+                              {e.source}
+                            </Link>
+                          ) : (
+                            <span className="text-foreground/80">{e.source}</span>
+                          );
+                        })()}
                       </>
                     ) : null}
                     {e.sessionId ? (
@@ -272,7 +286,13 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
                     {!productionName && e.productionName ? (
                       <>
                         <span>·</span>
-                        <span className="text-foreground/80">{e.productionName}</span>
+                        <Link
+                          to="/productions/$name"
+                          params={{ name: e.productionName }}
+                          className="text-foreground/80 hover:text-foreground underline decoration-dotted underline-offset-2"
+                        >
+                          {e.productionName}
+                        </Link>
                       </>
                     ) : null}
                     {e.confidence ? (
