@@ -1,5 +1,5 @@
 import { a as Skeleton, n as apiFetch } from "./api-config-BqoIDxBb.js";
-import { t as Route } from "./productions._name-d02GVm8B.js";
+import { t as Route } from "./productions._name-Db3D9yfv.js";
 import { t as PageHeader } from "./page-header-BF0qj5eV.js";
 import { n as ConfidenceDot, t as ConfidenceBadge } from "./confidence-badge-CVsy6qNd.js";
 import { t as LogsPanel } from "./logs-panel-DS6jat18.js";
@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { Link, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, BarChart3, Bot, ClipboardList, Database, Eye, FileText, GitBranch, GitPullRequestArrow, Hammer, Layers, LayoutDashboard, Lightbulb, MessageSquareText, Play, RefreshCw, ScrollText, Search, Send, Share2, Sparkles, Square, Workflow } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bot, ClipboardList, Database, Eye, FileText, GitBranch, GitPullRequestArrow, Hammer, Layers, LayoutDashboard, Lightbulb, MessageSquareText, PanelLeftClose, PanelLeftOpen, Play, RefreshCw, ScrollText, Search, Send, Share2, Sparkles, Square, Workflow } from "lucide-react";
 import { toast } from "sonner";
 //#region src/components/production-kpis.tsx
 function ProductionKPIs({ productionName }) {
@@ -417,6 +417,19 @@ function ProductionDetailContent() {
 	const activeTab = search.tab ?? "overview";
 	const encoded = encodeURIComponent(name);
 	const qc = useQueryClient();
+	const [navCollapsed, setNavCollapsed] = useState(() => {
+		if (typeof window === "undefined") return true;
+		return window.localStorage.getItem("prod-nav-collapsed") !== "false";
+	});
+	const toggleNav = () => {
+		setNavCollapsed((v) => {
+			const next = !v;
+			try {
+				window.localStorage.setItem("prod-nav-collapsed", String(next));
+			} catch {}
+			return next;
+		});
+	};
 	const meta = useQuery({
 		queryKey: ["production", name],
 		queryFn: () => apiFetch(`/productions/${encoded}`),
@@ -560,11 +573,18 @@ function ProductionDetailContent() {
 		})
 	}), /* @__PURE__ */ jsxs("div", {
 		className: "flex gap-0 min-h-[calc(100vh-64px)]",
-		children: [/* @__PURE__ */ jsx("aside", {
-			className: "w-56 shrink-0 border-r bg-card/40 py-6 px-3 sticky top-16 self-start",
-			children: /* @__PURE__ */ jsx("nav", {
-				className: "space-y-5",
-				children: SECTION_GROUPS.map((group) => /* @__PURE__ */ jsxs("div", { children: [/* @__PURE__ */ jsx("div", {
+		children: [/* @__PURE__ */ jsxs("aside", {
+			className: `${navCollapsed ? "w-14" : "w-56"} shrink-0 border-r bg-card/40 py-4 px-2 sticky top-16 self-start transition-[width] duration-200`,
+			children: [/* @__PURE__ */ jsx("button", {
+				type: "button",
+				onClick: toggleNav,
+				title: navCollapsed ? "Expand navigation" : "Collapse navigation",
+				"aria-label": navCollapsed ? "Expand navigation" : "Collapse navigation",
+				className: "w-full flex items-center justify-center gap-2 mb-3 px-2 py-1.5 rounded-md text-[11px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+				children: navCollapsed ? /* @__PURE__ */ jsx(PanelLeftOpen, { className: "size-4" }) : /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(PanelLeftClose, { className: "size-4" }), /* @__PURE__ */ jsx("span", { children: "Collapse" })] })
+			}), /* @__PURE__ */ jsx("nav", {
+				className: "space-y-4",
+				children: SECTION_GROUPS.map((group) => /* @__PURE__ */ jsxs("div", { children: [navCollapsed ? /* @__PURE__ */ jsx("div", { className: "mx-2 mb-1.5 h-px bg-border/70" }) : /* @__PURE__ */ jsx("div", {
 					className: "text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-1.5",
 					children: group.heading
 				}), /* @__PURE__ */ jsx("ul", {
@@ -579,15 +599,17 @@ function ProductionDetailContent() {
 								search: { tab: it.id === "overview" ? void 0 : it.id },
 								replace: true
 							}),
-							className: `w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-[13px] transition-colors ${active ? "bg-iris-brand/10 text-iris-brand font-medium" : "text-foreground/75 hover:bg-muted"}`,
-							children: [/* @__PURE__ */ jsx(Icon, { className: "size-3.5 shrink-0" }), /* @__PURE__ */ jsx("span", {
+							title: navCollapsed ? `${group.heading} — ${it.label}` : void 0,
+							"aria-label": it.label,
+							className: `w-full flex items-center ${navCollapsed ? "justify-center px-0 py-2" : "gap-2 px-2 py-1.5"} rounded-md text-[13px] transition-colors ${active ? "bg-iris-brand/10 text-iris-brand font-medium" : "text-foreground/75 hover:bg-muted"}`,
+							children: [/* @__PURE__ */ jsx(Icon, { className: `${navCollapsed ? "size-4" : "size-3.5"} shrink-0` }), !navCollapsed && /* @__PURE__ */ jsx("span", {
 								className: "truncate",
 								children: it.label
 							})]
 						}) }, it.id);
 					})
 				})] }, group.heading))
-			})
+			})]
 		}), /* @__PURE__ */ jsxs("div", {
 			className: "flex-1 min-w-0 p-8 space-y-6",
 			children: [

@@ -13,7 +13,7 @@ var tsrStartManifest = () => ({ routes: {
 			"/settings"
 		],
 		preloads: [
-			"/i14y-explorer-ui/assets/index-DdBcL0ra.js",
+			"/i14y-explorer-ui/assets/index-CH3eUUzE.js",
 			"/i14y-explorer-ui/assets/jsx-runtime-n5LQ9ujS.js",
 			"/i14y-explorer-ui/assets/react-dom-CQmWuZA8.js",
 			"/i14y-explorer-ui/assets/useStore-CQo-MNEv.js",
@@ -25,15 +25,15 @@ var tsrStartManifest = () => ({ routes: {
 		scripts: [{ attrs: {
 			type: "module",
 			async: !0,
-			src: "/i14y-explorer-ui/assets/index-DdBcL0ra.js"
+			src: "/i14y-explorer-ui/assets/index-CH3eUUzE.js"
 		} }]
 	},
 	"/api-reference": {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/api-reference.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/api-reference-D-25P-8F.js",
-			"/i14y-explorer-ui/assets/chevron-down-DxY1mSMO.js",
+			"/i14y-explorer-ui/assets/api-reference-PnZEG8h2.js",
+			"/i14y-explorer-ui/assets/chevron-down-C5YW5VtA.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js"
 		]
 	},
@@ -41,8 +41,8 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/health.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/health-BBFfKLjT.js",
-			"/i14y-explorer-ui/assets/circle-check-DTZAENay.js",
+			"/i14y-explorer-ui/assets/health-DseiL5xv.js",
+			"/i14y-explorer-ui/assets/circle-check-D25VjjCb.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js"
 		]
 	},
@@ -50,8 +50,8 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/logs.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/logs-KUh02WLA.js",
-			"/i14y-explorer-ui/assets/logs-panel-BM3LBaqa.js",
+			"/i14y-explorer-ui/assets/logs-D84doovD.js",
+			"/i14y-explorer-ui/assets/logs-panel-D29B_tIb.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js"
 		]
 	},
@@ -64,14 +64,14 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/metrics.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/metrics-ftf5rf_y.js",
-			"/i14y-explorer-ui/assets/useMutation-BJmHQxBp.js",
-			"/i14y-explorer-ui/assets/check-D3vXashM.js",
-			"/i14y-explorer-ui/assets/chevron-down-DxY1mSMO.js",
-			"/i14y-explorer-ui/assets/circle-check-DTZAENay.js",
-			"/i14y-explorer-ui/assets/refresh-cw-lSbngWTx.js",
-			"/i14y-explorer-ui/assets/search-BhoeZbBF.js",
-			"/i14y-explorer-ui/assets/triangle-alert-MQO3YSOE.js",
+			"/i14y-explorer-ui/assets/metrics-CobNjN0C.js",
+			"/i14y-explorer-ui/assets/useMutation-CMxsZGGU.js",
+			"/i14y-explorer-ui/assets/check-BQ5keaKH.js",
+			"/i14y-explorer-ui/assets/chevron-down-C5YW5VtA.js",
+			"/i14y-explorer-ui/assets/circle-check-D25VjjCb.js",
+			"/i14y-explorer-ui/assets/refresh-cw-BFc2jFgA.js",
+			"/i14y-explorer-ui/assets/search-BubbO7f1.js",
+			"/i14y-explorer-ui/assets/triangle-alert-cqBdjuNH.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js",
 			"/i14y-explorer-ui/assets/summary-bits-BoWvPXWN.js",
 			"/i14y-explorer-ui/assets/dist-BEIkfjr6.js"
@@ -86,22 +86,22 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/settings.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/settings-MGq0JvLi.js",
-			"/i14y-explorer-ui/assets/useMutation-BJmHQxBp.js",
+			"/i14y-explorer-ui/assets/settings-hmnekOMw.js",
+			"/i14y-explorer-ui/assets/useMutation-CMxsZGGU.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js",
-			"/i14y-explorer-ui/assets/switch-DNnyGTD3.js"
+			"/i14y-explorer-ui/assets/switch-SQwQAyyi.js"
 		]
 	},
 	"/messages/$id": {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/messages.$id.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/messages._id-FWPIwb7o.js",
-			"/i14y-explorer-ui/assets/useMutation-BJmHQxBp.js",
-			"/i14y-explorer-ui/assets/arrow-left-BFDBi9GY.js",
-			"/i14y-explorer-ui/assets/check-D3vXashM.js",
-			"/i14y-explorer-ui/assets/circle-alert-CGfy484s.js",
-			"/i14y-explorer-ui/assets/markdown-content-BWJncqzG.js",
+			"/i14y-explorer-ui/assets/messages._id-RyeALrt_.js",
+			"/i14y-explorer-ui/assets/useMutation-CMxsZGGU.js",
+			"/i14y-explorer-ui/assets/arrow-left-B_iVEEnc.js",
+			"/i14y-explorer-ui/assets/check-BQ5keaKH.js",
+			"/i14y-explorer-ui/assets/circle-alert-Ca9ho8l-.js",
+			"/i14y-explorer-ui/assets/markdown-content-B1fgkApl.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js",
 			"/i14y-explorer-ui/assets/confidence-badge-BTIDK_9K.js",
 			"/i14y-explorer-ui/assets/summary-bits-BoWvPXWN.js"
@@ -111,14 +111,14 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/productions.$name.tsx",
 		children: ["/productions/$name/components/$componentName"],
 		preloads: [
-			"/i14y-explorer-ui/assets/productions._name-C2wYHd18.js",
-			"/i14y-explorer-ui/assets/useMutation-BJmHQxBp.js",
-			"/i14y-explorer-ui/assets/logs-panel-BM3LBaqa.js",
-			"/i14y-explorer-ui/assets/arrow-left-BFDBi9GY.js",
-			"/i14y-explorer-ui/assets/refresh-cw-lSbngWTx.js",
-			"/i14y-explorer-ui/assets/search-BhoeZbBF.js",
-			"/i14y-explorer-ui/assets/markdown-content-BWJncqzG.js",
-			"/i14y-explorer-ui/assets/triangle-alert-MQO3YSOE.js",
+			"/i14y-explorer-ui/assets/productions._name-uhvcQF38.js",
+			"/i14y-explorer-ui/assets/useMutation-CMxsZGGU.js",
+			"/i14y-explorer-ui/assets/logs-panel-D29B_tIb.js",
+			"/i14y-explorer-ui/assets/arrow-left-B_iVEEnc.js",
+			"/i14y-explorer-ui/assets/refresh-cw-BFc2jFgA.js",
+			"/i14y-explorer-ui/assets/search-BubbO7f1.js",
+			"/i14y-explorer-ui/assets/markdown-content-B1fgkApl.js",
+			"/i14y-explorer-ui/assets/triangle-alert-cqBdjuNH.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js",
 			"/i14y-explorer-ui/assets/confidence-badge-BTIDK_9K.js",
 			"/i14y-explorer-ui/assets/summary-bits-BoWvPXWN.js"
@@ -128,11 +128,11 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/messages.index.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/messages.index-zBeJeSwB.js",
-			"/i14y-explorer-ui/assets/arrow-left-BFDBi9GY.js",
-			"/i14y-explorer-ui/assets/arrow-right-BJ18lRrq.js",
-			"/i14y-explorer-ui/assets/circle-alert-CGfy484s.js",
-			"/i14y-explorer-ui/assets/search-BhoeZbBF.js",
+			"/i14y-explorer-ui/assets/messages.index-QFAkVTW7.js",
+			"/i14y-explorer-ui/assets/arrow-left-B_iVEEnc.js",
+			"/i14y-explorer-ui/assets/arrow-right-0dF9Eq4K.js",
+			"/i14y-explorer-ui/assets/circle-alert-Ca9ho8l-.js",
+			"/i14y-explorer-ui/assets/search-BubbO7f1.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js",
 			"/i14y-explorer-ui/assets/confidence-badge-BTIDK_9K.js"
 		]
@@ -141,10 +141,10 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/productions.index.tsx",
 		children: void 0,
 		preloads: [
-			"/i14y-explorer-ui/assets/productions.index-BfbbdyFr.js",
-			"/i14y-explorer-ui/assets/arrow-right-BJ18lRrq.js",
-			"/i14y-explorer-ui/assets/search-BhoeZbBF.js",
-			"/i14y-explorer-ui/assets/triangle-alert-MQO3YSOE.js",
+			"/i14y-explorer-ui/assets/productions.index-BfIwba2T.js",
+			"/i14y-explorer-ui/assets/arrow-right-0dF9Eq4K.js",
+			"/i14y-explorer-ui/assets/search-BubbO7f1.js",
+			"/i14y-explorer-ui/assets/triangle-alert-cqBdjuNH.js",
 			"/i14y-explorer-ui/assets/page-header-Cj7D-Vf7.js",
 			"/i14y-explorer-ui/assets/summary-bits-BoWvPXWN.js"
 		]
@@ -152,7 +152,7 @@ var tsrStartManifest = () => ({ routes: {
 	"/productions/$name/components/$componentName": {
 		filePath: "/Users/eshvarov/Github/iris-i14y-explorer-ui/src/routes/productions.$name.components.$componentName.tsx",
 		children: void 0,
-		preloads: ["/i14y-explorer-ui/assets/productions._name.components._componentName-BkRhRkXK.js", "/i14y-explorer-ui/assets/switch-DNnyGTD3.js"]
+		preloads: ["/i14y-explorer-ui/assets/productions._name.components._componentName-CUwlnbzC.js", "/i14y-explorer-ui/assets/switch-SQwQAyyi.js"]
 	}
 } });
 //#endregion

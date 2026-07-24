@@ -1,6 +1,6 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 //#region src/routes/productions.$name.tsx
-var $$splitComponentImporter = () => import("./productions._name-K3BWh_Ub.js");
+var $$splitComponentImporter = () => import("./productions._name-CC7FnSw4.js");
 var PROD_TABS = [
 	"overview",
 	"summary",
