@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
+import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
 import type { ComponentDetailResponse } from "@/lib/api-types";
@@ -13,6 +14,7 @@ import {
   MetricChips,
   EvidenceChips,
 } from "@/components/summary-bits";
+import { EditComponentDialog } from "@/components/edit-component-dialog";
 
 export const Route = createFileRoute(
   "/productions/$name/components/$componentName",
