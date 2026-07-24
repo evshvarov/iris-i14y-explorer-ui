@@ -271,7 +271,18 @@ function ProductionDetailContent() {
           </MetricChips>
         ) : null}
 
-        <Tabs defaultValue="overview">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) =>
+            navigate({
+              to: "/productions/$name",
+              params: { name },
+              search: { tab: v === "overview" ? undefined : (v as ProdTab) },
+              replace: true,
+            })
+          }
+        >
+
           <TabsList>
             <TabsTrigger value="overview">Schematic</TabsTrigger>
             <TabsTrigger value="graph">Graph</TabsTrigger>
