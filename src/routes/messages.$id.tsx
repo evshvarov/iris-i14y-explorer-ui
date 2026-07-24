@@ -357,9 +357,9 @@ function MessageDetailPage() {
                   />
 
                 </div>
-                <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+                <MarkdownContent linkComponents={componentNames} productionName={productionName}>
                   {explanation.text}
-                </p>
+                </MarkdownContent>
               </section>
             ) : null}
 
