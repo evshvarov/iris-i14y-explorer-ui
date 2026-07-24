@@ -450,9 +450,14 @@ function MessageDetailPage() {
                         </div>
                       </div>
                       {s.explanation ? (
-                        <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
-                          {s.explanation}
-                        </p>
+                        <div className="mt-3">
+                          <MarkdownContent
+                            linkComponents={componentNames}
+                            productionName={productionName}
+                          >
+                            {s.explanation}
+                          </MarkdownContent>
+                        </div>
                       ) : null}
                     </li>
                   ))}
