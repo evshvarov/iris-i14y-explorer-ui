@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer } from "lucide-react";
 import { useState } from "react";
@@ -58,6 +58,12 @@ function categorize(c: Component): "service" | "process" | "operation" | "unknow
 }
 
 function ProductionDetailPage() {
+  const childMatches = useChildMatches();
+  if (childMatches.length > 0) return <Outlet />;
+  return <ProductionDetailContent />;
+}
+
+function ProductionDetailContent() {
   const { name } = Route.useParams();
   const encoded = encodeURIComponent(name);
   const qc = useQueryClient();
