@@ -85,8 +85,12 @@ function ProductionDetailPage() {
 
 function ProductionDetailContent() {
   const { name } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const activeTab: ProdTab = search.tab ?? "overview";
   const encoded = encodeURIComponent(name);
   const qc = useQueryClient();
+
 
   const meta = useQuery<ProductionDetailResponse>({
     queryKey: ["production", name],
