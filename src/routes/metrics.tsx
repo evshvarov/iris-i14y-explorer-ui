@@ -186,6 +186,27 @@ function MetricsPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => enableMutation.mutate()}
+              disabled={enableMutation.isPending}
+              className="h-8"
+              title={
+                namespace.trim()
+                  ? `POST /monitor/metrics/interop/enable?namespace=${namespace.trim()}`
+                  : "POST /monitor/metrics/interop/enable"
+              }
+            >
+              {enableMutation.isSuccess ? (
+                <CheckCircle2 className="size-3.5 mr-1.5 text-brand" />
+              ) : (
+                <Zap
+                  className={`size-3.5 mr-1.5 ${enableMutation.isPending ? "animate-pulse" : ""}`}
+                />
+              )}
+              {enableMutation.isPending ? "Enabling…" : "Enable metrics"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={refetch}
               disabled={anyLoading}
               className="h-8"
@@ -195,6 +216,7 @@ function MetricsPage() {
               />
               Refresh
             </Button>
+
           </div>
         }
       />
