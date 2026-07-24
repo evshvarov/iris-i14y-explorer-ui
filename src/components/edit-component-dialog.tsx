@@ -23,15 +23,34 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
-type Row = { key: string; value: string };
+type SettingTarget = "Host" | "Adapter";
+type Row = { key: string; value: string; target: SettingTarget };
+
+function normalizeValue(v: unknown): { value: string; target?: SettingTarget } {
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    const obj = v as Record<string, unknown>;
+    if ("value" in obj || "target" in obj) {
+      const t = typeof obj.target === "string" ? String(obj.target) : undefined;
+      const target: SettingTarget | undefined =
+        t && /adapter/i.test(t) ? "Adapter" : t ? "Host" : undefined;
+      return {
+        value: obj.value == null ? "" : typeof obj.value === "object" ? JSON.stringify(obj.value) : String(obj.value),
+        target,
+      };
+    }
+    return { value: JSON.stringify(v) };
+  }
+  return { value: v == null ? "" : String(v) };
+}
 
 function componentToRows(c?: Component): Row[] {
-  const s = c?.settings ?? {};
-  return Object.entries(s).map(([k, v]) => ({
-    key: k,
-    value: typeof v === "object" ? JSON.stringify(v) : String(v ?? ""),
-  }));
+  const s = (c?.settings ?? {}) as Record<string, unknown>;
+  return Object.entries(s).map(([k, v]) => {
+    const n = normalizeValue(v);
+    return { key: k, value: n.value, target: n.target ?? "Host" };
+  });
 }
+
 
 export function EditComponentDialog({
   open,
@@ -77,27 +96,36 @@ export function EditComponentDialog({
       if ((category ?? "") !== (initial?.category ?? "")) body.category = category;
       if ((comment ?? "") !== (initial?.comment ?? "")) body.comment = comment;
 
-      // diff settings
-      const originalSettings = initial?.settings ?? {};
+      // diff settings + build settingTargets
+      const originalSettings = (initial?.settings ?? {}) as Record<string, unknown>;
       const nextSettings: Record<string, string> = {};
+      const nextTargets: Record<string, string> = {};
       const seen = new Set<string>();
       for (const r of rows) {
         const k = r.key.trim();
         if (!k) continue;
         seen.add(k);
-        const origVal =
-          k in originalSettings
-            ? typeof originalSettings[k] === "object"
-              ? JSON.stringify(originalSettings[k])
-              : String(originalSettings[k] ?? "")
-            : undefined;
-        if (origVal !== r.value) nextSettings[k] = r.value;
+        const orig = k in originalSettings ? normalizeValue(originalSettings[k]) : undefined;
+        const origVal = orig?.value;
+        const origTarget = orig?.target ?? "Host";
+        if (origVal !== r.value || origTarget !== r.target) {
+          nextSettings[k] = r.value;
+          nextTargets[k] = r.target;
+        }
       }
       // deletions -> empty string signals removal per common convention
       for (const k of Object.keys(originalSettings)) {
-        if (!seen.has(k)) nextSettings[k] = "";
+        if (!seen.has(k)) {
+          nextSettings[k] = "";
+          const orig = normalizeValue(originalSettings[k]);
+          nextTargets[k] = orig.target ?? "Host";
+        }
       }
-      if (Object.keys(nextSettings).length > 0) body.settings = nextSettings;
+      if (Object.keys(nextSettings).length > 0) {
+        body.settings = nextSettings;
+        body.settingTargets = nextTargets;
+      }
+
 
       if (Object.keys(body).length === 0) {
         throw new Error("No changes to save");
@@ -113,9 +141,14 @@ export function EditComponentDialog({
     onSuccess: (res) => {
       const attrs = res.updatedAttributes?.length ?? 0;
       const sets = res.updatedSettings?.length ?? 0;
+      const rt = res.runtimeUpdatedSettings?.length ?? 0;
+      const bits = [
+        attrs ? `${attrs} attribute(s)` : null,
+        sets ? `${sets} setting(s)` : null,
+        rt ? `${rt} live-applied` : null,
+      ].filter(Boolean);
       toast.success(
-        `Updated ${componentName}` +
-          (attrs || sets ? ` — ${attrs} attribute(s), ${sets} setting(s)` : ""),
+        `Updated ${componentName}` + (bits.length ? ` — ${bits.join(", ")}` : ""),
       );
       qc.invalidateQueries({ queryKey: ["component", productionName, componentName] });
       qc.invalidateQueries({ queryKey: ["production", productionName] });
@@ -124,6 +157,7 @@ export function EditComponentDialog({
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -218,7 +252,7 @@ export function EditComponentDialog({
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => setRows((r) => [...r, { key: "", value: "" }])}
+                onClick={() => setRows((r) => [...r, { key: "", value: "", target: "Host" }])}
                 className="h-7 gap-1.5 text-[12px] font-semibold text-iris-brand bg-iris-brand/10 hover:bg-iris-brand/20 ring-1 ring-iris-brand/20"
               >
                 <Plus className="size-3.5" /> Add parameter
@@ -226,9 +260,10 @@ export function EditComponentDialog({
             </div>
 
             <div className="ring-1 ring-black/5 rounded-lg overflow-hidden bg-card">
-              <div className="grid grid-cols-[1fr_1.6fr_2.5rem] bg-muted/50 border-b">
+              <div className="grid grid-cols-[1fr_1.2fr_6.5rem_2.5rem] bg-muted/50 border-b">
                 <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Key</div>
                 <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Value</div>
+                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Target</div>
                 <div />
               </div>
               {rows.length === 0 ? (
@@ -238,7 +273,7 @@ export function EditComponentDialog({
               ) : (
                 <div className="divide-y">
                   {rows.map((r, i) => (
-                    <div key={i} className="group grid grid-cols-[1fr_1.6fr_2.5rem] items-center">
+                    <div key={i} className="group grid grid-cols-[1fr_1.2fr_6.5rem_2.5rem] items-center">
                       <input
                         value={r.key}
                         onChange={(e) =>
@@ -255,6 +290,21 @@ export function EditComponentDialog({
                         placeholder="value"
                         className="px-4 py-3 text-[13px] font-mono text-iris-brand bg-transparent outline-none focus:bg-muted/40 truncate border-l"
                       />
+                      <select
+                        value={r.target}
+                        onChange={(e) =>
+                          setRows((rs) =>
+                            rs.map((x, ix) =>
+                              ix === i ? { ...x, target: e.target.value as SettingTarget } : x,
+                            ),
+                          )
+                        }
+                        className="mx-2 my-2 px-2 py-1.5 text-[11px] font-mono uppercase tracking-wider text-iris-navy bg-muted/40 rounded ring-1 ring-black/5 outline-none focus:ring-iris-brand"
+                        aria-label="Setting target"
+                      >
+                        <option value="Host">Host</option>
+                        <option value="Adapter">Adapter</option>
+                      </select>
                       <button
                         type="button"
                         onClick={() => setRows((rs) => rs.filter((_, ix) => ix !== i))}
@@ -269,8 +319,9 @@ export function EditComponentDialog({
               )}
             </div>
             <p className="text-[11px] text-muted-foreground italic px-1">
-              Removed rows are sent as empty values to clear the override on the server.
+              Target chooses which layer receives the setting — <span className="font-mono not-italic">Host</span> for the business host, <span className="font-mono not-italic">Adapter</span> for its inbound/outbound adapter. Removed rows are sent as empty values to clear the override on the server. If the production is running, applicable settings are pushed live.
             </p>
+
           </div>
         </div>
 

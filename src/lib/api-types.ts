@@ -1066,16 +1066,20 @@ export type ComponentSettingsUpdateRequest = {
   category?: string;
   comment?: string;
   settings?: Record<string, string>;
+  /** Optional map of setting name to target, for example "Adapter" or "Host". */
+  settingTargets?: Record<string, string>;
 };
 
 export type ComponentAttributeUpdate = {
   name?: string;
+  target?: string;
   oldValue?: string;
   value?: string;
 };
 
 export type ComponentSettingUpdate = {
   name?: string;
+  target?: string;
   oldValue?: string;
   value?: string;
 };
@@ -1088,6 +1092,10 @@ export type ComponentSettingsUpdateResponse = {
   settings?: Record<string, unknown>;
   updatedAttributes?: ComponentAttributeUpdate[];
   updatedSettings?: ComponentSettingUpdate[];
+  /** Subset of updatedSettings that were pushed into the running production. */
+  runtimeUpdatedSettings?: ComponentSettingUpdate[];
+  metrics?: Record<string, unknown>;
   warnings?: Warning[];
   evidence?: Evidence[];
 };
+
