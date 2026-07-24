@@ -243,6 +243,7 @@ function MessagesPage() {
 
   return (
     <>
+      {search.embedded ? null : (
       <PageHeader
         crumbs={[{ label: search.productionName ? "Production" : "Namespace" }]}
         title={search.productionName ? `Messages · ${search.productionName}` : "Message Explainer"}
@@ -266,6 +267,7 @@ function MessagesPage() {
           ) : undefined
         }
       />
+      )}
 
       <div className="p-8 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
         {/* Facet sidebar */}
