@@ -3,7 +3,7 @@
   <Document name="esh-i14y-explorer-ui.ZPM">
     <Module>
       <Name>esh-i14y-explorer-ui</Name>
-      <Version>0.1.5</Version>
+      <Version>0.1.6</Version>
       <Description>Frontend UI for the i14y-aid InterSystems IRIS Interoperability Production Explainer API</Description>
       <Keywords>IRIS,Interoperability,Frontend,React,TanStack,Lovable</Keywords>
       <Packaging>module</Packaging>
@@ -19,6 +19,10 @@
         CookiePath="/i14y-explorer-ui"
       />
       <SourcesRoot>src</SourcesRoot>
+      <AfterInstallMessage>
+&#13;IRIS i14y Explorer UI is installed.
+&#13;Open the UI at: https://your-iris-server/i14y-explorer-ui/index.html
+      </AfterInstallMessage>
     </Module>
   </Document>
 </Export>
