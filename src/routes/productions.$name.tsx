@@ -287,13 +287,28 @@ function ProductionDetailContent() {
       />
 
       <div className="flex gap-0 min-h-[calc(100vh-64px)]">
-        <aside className="w-56 shrink-0 border-r bg-card/40 py-6 px-3 sticky top-16 self-start">
-          <nav className="space-y-5">
+        <aside
+          className={`${navCollapsed ? "w-14" : "w-56"} shrink-0 border-r bg-card/40 py-4 px-2 sticky top-16 self-start transition-[width] duration-200`}
+        >
+          <button
+            type="button"
+            onClick={toggleNav}
+            title={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+            className="w-full flex items-center justify-center gap-2 mb-3 px-2 py-1.5 rounded-md text-[11px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            {navCollapsed ? <PanelLeftOpen className="size-4" /> : (<><PanelLeftClose className="size-4" /><span>Collapse</span></>)}
+          </button>
+          <nav className="space-y-4">
             {SECTION_GROUPS.map((group) => (
               <div key={group.heading}>
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-1.5">
-                  {group.heading}
-                </div>
+                {navCollapsed ? (
+                  <div className="mx-2 mb-1.5 h-px bg-border/70" />
+                ) : (
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-1.5">
+                    {group.heading}
+                  </div>
+                )}
                 <ul className="space-y-0.5">
                   {group.items.map((it) => {
                     const active = activeTab === it.id;
@@ -309,14 +324,16 @@ function ProductionDetailContent() {
                               replace: true,
                             })
                           }
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-[13px] transition-colors ${
+                          title={navCollapsed ? `${group.heading} — ${it.label}` : undefined}
+                          aria-label={it.label}
+                          className={`w-full flex items-center ${navCollapsed ? "justify-center px-0 py-2" : "gap-2 px-2 py-1.5"} rounded-md text-[13px] transition-colors ${
                             active
                               ? "bg-iris-brand/10 text-iris-brand font-medium"
                               : "text-foreground/75 hover:bg-muted"
                           }`}
                         >
-                          <Icon className="size-3.5 shrink-0" />
-                          <span className="truncate">{it.label}</span>
+                          <Icon className={`${navCollapsed ? "size-4" : "size-3.5"} shrink-0`} />
+                          {!navCollapsed && <span className="truncate">{it.label}</span>}
                         </button>
                       </li>
                     );
@@ -326,6 +343,7 @@ function ProductionDetailContent() {
             ))}
           </nav>
         </aside>
+
 
         <div className="flex-1 min-w-0 p-8 space-y-6">
           {activeTab === "overview" ? (
