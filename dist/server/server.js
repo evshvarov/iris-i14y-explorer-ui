@@ -47,7 +47,7 @@ function renderErrorPage() {
       <p>Something went wrong on our end. You can try refreshing or head back home.</p>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
+        <a class="secondary" href="./index.html">Go home</a>
       </div>
     </div>
   </body>
@@ -57,7 +57,7 @@ function renderErrorPage() {
 //#region src/server.ts
 var serverEntryPromise;
 async function getServerEntry() {
-	if (!serverEntryPromise) serverEntryPromise = import("./assets/server-CxXZQQF8.js").then((m) => m.default ?? m);
+	if (!serverEntryPromise) serverEntryPromise = import("./assets/server-Cu3ZkFxE.js").then((m) => m.default ?? m);
 	return serverEntryPromise;
 }
 async function normalizeCatastrophicSsrResponse(response) {

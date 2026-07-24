@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, XCircle } from "lucide-react";
 
@@ -199,9 +199,9 @@ function ErrorPanel({ error }: { error: Error }) {
       </p>
       <p className="text-xs text-muted-foreground mt-3">
         Check the base URL and credentials in{" "}
-        <a href="/settings" className="underline">
+        <Link to="/settings" className="underline">
           Settings
-        </a>
+        </Link>
         .
       </p>
     </div>
