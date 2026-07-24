@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AlertCircle, RefreshCw, Search, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 import { apiFetch } from "@/lib/api-config";
 import type { ProductionLogListResponse } from "@/lib/api-types";
