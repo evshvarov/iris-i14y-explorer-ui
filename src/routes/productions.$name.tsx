@@ -2105,6 +2105,7 @@ function citationLinkProps(
     return {
       to: "/productions/$name/components/$componentName",
       params: { name: productionName, componentName: c.component },
+      search: { fromTab: "ask" },
       hint: `Open ${c.component}`,
     };
   }
@@ -2114,9 +2115,11 @@ function citationLinkProps(
     return {
       to: "/productions/$name/components/$componentName",
       params: { name: productionName, componentName: c.title },
+      search: { fromTab: "ask" },
       hint: `Open ${c.title}`,
     };
   }
+
 
   return null;
 }
