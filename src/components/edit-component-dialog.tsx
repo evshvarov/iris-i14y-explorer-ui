@@ -23,15 +23,34 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
-type Row = { key: string; value: string };
+type SettingTarget = "Host" | "Adapter";
+type Row = { key: string; value: string; target: SettingTarget };
+
+function normalizeValue(v: unknown): { value: string; target?: SettingTarget } {
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    const obj = v as Record<string, unknown>;
+    if ("value" in obj || "target" in obj) {
+      const t = typeof obj.target === "string" ? String(obj.target) : undefined;
+      const target: SettingTarget | undefined =
+        t && /adapter/i.test(t) ? "Adapter" : t ? "Host" : undefined;
+      return {
+        value: obj.value == null ? "" : typeof obj.value === "object" ? JSON.stringify(obj.value) : String(obj.value),
+        target,
+      };
+    }
+    return { value: JSON.stringify(v) };
+  }
+  return { value: v == null ? "" : String(v) };
+}
 
 function componentToRows(c?: Component): Row[] {
-  const s = c?.settings ?? {};
-  return Object.entries(s).map(([k, v]) => ({
-    key: k,
-    value: typeof v === "object" ? JSON.stringify(v) : String(v ?? ""),
-  }));
+  const s = (c?.settings ?? {}) as Record<string, unknown>;
+  return Object.entries(s).map(([k, v]) => {
+    const n = normalizeValue(v);
+    return { key: k, value: n.value, target: n.target ?? "Host" };
+  });
 }
+
 
 export function EditComponentDialog({
   open,
