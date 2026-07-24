@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { RefreshCw, Search, AlertTriangle } from "lucide-react";
+import { RefreshCw, Search, AlertTriangle, Zap, CheckCircle2 } from "lucide-react";
+
 
 import { apiFetch } from "@/lib/api-config";
 import { PageHeader } from "@/components/page-header";
@@ -108,6 +109,27 @@ function MetricsPage() {
     retry: 0,
   });
 
+  const enableMutation = useMutation<
+    { enabled?: boolean; namespace?: string; message?: string } & Record<string, unknown>,
+    Error,
+    void
+  >({
+    mutationFn: async () => {
+      const params = new URLSearchParams();
+      if (namespace.trim()) params.set("namespace", namespace.trim());
+      const qs = params.toString();
+      return apiFetch(
+        `/monitor/metrics/interop/enable${qs ? `?${qs}` : ""}`,
+        { method: "POST" },
+      );
+    },
+    onSuccess: () => {
+      metrics.refetch();
+      range.refetch();
+      volume.refetch();
+    },
+  });
+
   const anyLoading =
     range.isFetching || volume.isFetching || metrics.isFetching;
 
@@ -116,6 +138,7 @@ function MetricsPage() {
     volume.refetch();
     metrics.refetch();
   };
+
 
   const filteredMetrics = useMemo(() => {
     const samples = metrics.data?.samples ?? [];
@@ -163,6 +186,27 @@ function MetricsPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => enableMutation.mutate()}
+              disabled={enableMutation.isPending}
+              className="h-8"
+              title={
+                namespace.trim()
+                  ? `POST /monitor/metrics/interop/enable?namespace=${namespace.trim()}`
+                  : "POST /monitor/metrics/interop/enable"
+              }
+            >
+              {enableMutation.isSuccess ? (
+                <CheckCircle2 className="size-3.5 mr-1.5 text-brand" />
+              ) : (
+                <Zap
+                  className={`size-3.5 mr-1.5 ${enableMutation.isPending ? "animate-pulse" : ""}`}
+                />
+              )}
+              {enableMutation.isPending ? "Enabling…" : "Enable metrics"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={refetch}
               disabled={anyLoading}
               className="h-8"
@@ -172,6 +216,7 @@ function MetricsPage() {
               />
               Refresh
             </Button>
+
           </div>
         }
       />
@@ -195,6 +240,35 @@ function MetricsPage() {
             </ul>
           </div>
         ) : null}
+
+        {enableMutation.isSuccess ? (
+          <div className="rounded-lg border border-brand/30 bg-brand/5 p-4 flex items-start gap-3">
+            <CheckCircle2 className="size-4 text-brand mt-0.5" />
+            <div className="flex-1 text-xs font-mono">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-brand mb-1">
+                Metrics enable requested
+              </div>
+              <pre className="whitespace-pre-wrap break-all text-muted-foreground">
+                {JSON.stringify(enableMutation.data, null, 2)}
+              </pre>
+            </div>
+          </div>
+        ) : null}
+
+        {enableMutation.isError ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <AlertTriangle className="size-4 text-destructive mt-0.5" />
+            <div className="flex-1 text-xs font-mono">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-destructive mb-1">
+                Enable failed
+              </div>
+              <div className="text-muted-foreground break-all">
+                {enableMutation.error?.message}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
 
         {/* Interop range */}
         <Section
