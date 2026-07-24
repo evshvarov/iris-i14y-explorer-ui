@@ -231,8 +231,8 @@ function MessageDetailPage() {
             <Meta label="Type" value={m.type ?? "—"} />
             <Meta label="Body class" value={m.messageBodyClassName ?? "—"} mono />
             <Meta label="Created" value={m.timeCreated ?? "—"} mono />
-            <Meta label="Source" value={m.sourceConfigName ?? "—"} mono />
-            <Meta label="Target" value={m.targetConfigName ?? "—"} mono />
+            <MetaLink label="Source" name={m.sourceConfigName} productionName={productionName} />
+            <MetaLink label="Target" name={m.targetConfigName} productionName={productionName} />
             <Meta label="Invocation" value={m.invocation ?? "—"} />
             <Meta label="Corresponds to" value={m.correspondingMessageId ? `#${m.correspondingMessageId}` : "—"} mono />
           </section>
