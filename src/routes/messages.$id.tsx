@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
-import type { MessageHeaderListResponse } from "@/lib/api-types";
+import type { MessageHeaderListResponse, ComponentListResponse } from "@/lib/api-types";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
+import { MarkdownContent } from "@/components/markdown-content";
 
 export const Route = createFileRoute("/messages/$id")({
   head: ({ params }) => ({ meta: [{ title: `Message #${params.id} — IRIS Explainer` }] }),
