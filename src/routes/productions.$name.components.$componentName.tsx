@@ -33,8 +33,10 @@ export const Route = createFileRoute(
 
 function ComponentDetailPage() {
   const { name, componentName } = Route.useParams();
+  const { fromTab } = Route.useSearch();
   const url = `/productions/${encodeURIComponent(name)}/components/${encodeURIComponent(componentName)}`;
   const [editOpen, setEditOpen] = useState(false);
+
 
   const q = useQuery<ComponentDetailResponse>({
     queryKey: ["component", name, componentName],
