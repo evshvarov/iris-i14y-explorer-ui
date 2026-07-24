@@ -274,143 +274,176 @@ function ProductionDetailContent() {
         }
       />
 
-      <div className="p-8 space-y-8">
-        <ProductionKPIs productionName={name} />
-
-
-        <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <MetaCard label="Namespace" value={meta.data?.namespace ?? "—"} mono />
-          <MetaCard label="Components" value={comps.isLoading ? "…" : `${components.length}`} />
-          <MetaCard label="Enabled / Disabled" value={comps.isLoading ? "…" : `${enabled} / ${disabled}`} />
-          <MetaCard label="Current?" value={runtime?.isCurrent ? "Yes" : "No"} />
-          <MetaCard accent label="Provenance">
-            <div className="flex gap-1.5 mt-1">
-              <ConfidenceDot confidence="confirmed" title="Confirmed" />
-              <ConfidenceDot confidence="observed" title="Observed" />
-              <ConfidenceDot confidence="inferred" title="Inferred" />
-              <ConfidenceDot confidence="unknown" title="Unknown" />
-            </div>
-          </MetaCard>
-        </section>
-
-
-        {meta.data?.description ? (
-          <p className="text-sm text-muted-foreground max-w-3xl">{meta.data.description}</p>
-        ) : null}
-
-        {summary.data?.summary ? (
-          <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 max-w-4xl">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                Deterministic summary
-              </h2>
-              <ConfidenceBadge confidence={summary.data.confidence} />
-            </div>
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
-              {summary.data.summary}
-            </p>
-          </section>
-        ) : null}
-
-        <AISummaryPanel
-          productionName={name}
-          encoded={encoded}
-          componentNames={components.map((c) => c.name ?? c.className ?? "").filter(Boolean) as string[]}
-        />
-
-
-        <SummaryBullets bullets={analysis.data?.summaryBullets} />
-
-        {analysis.data?.metrics ? (
-          <MetricChips>
-            <MetricChip label="Services" value={analysis.data.metrics.serviceCount ?? 0} tone="observed" />
-            <MetricChip label="Processes" value={analysis.data.metrics.processCount ?? 0} tone="brand" />
-            <MetricChip label="Operations" value={analysis.data.metrics.operationCount ?? 0} tone="inferred" />
-            <MetricChip label="Connections" value={analysis.data.metrics.connectionCount ?? 0} />
-            {(analysis.data.metrics.routingRuleConnectionCount ?? 0) > 0 ? (
-              <MetricChip label="Rule conns" value={analysis.data.metrics.routingRuleConnectionCount!} />
-            ) : null}
-            {(analysis.data.metrics.bplCallConnectionCount ?? 0) > 0 ? (
-              <MetricChip label="BPL conns" value={analysis.data.metrics.bplCallConnectionCount!} />
-            ) : null}
-            <MetricChip label="Ext systems" value={analysis.data.metrics.externalSystemCount ?? 0} />
-            <MetricChip label="Rules" value={analysis.data.metrics.ruleCount ?? 0} />
-            <MetricChip label="Transforms" value={analysis.data.metrics.transformationCount ?? 0} />
-            <MetricChip label="BPL" value={analysis.data.metrics.businessProcessCount ?? 0} />
-            {(analysis.data.metrics.warningCount ?? 0) > 0 ? (
-              <MetricChip label="Warnings" value={analysis.data.metrics.warningCount!} tone="error" />
-            ) : null}
-          </MetricChips>
-        ) : null}
-
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) =>
-            navigate({
-              to: "/productions/$name",
-              params: { name },
-              search: { tab: v === "overview" ? undefined : (v as ProdTab) },
-              replace: true,
-            })
-          }
-        >
-
-          <TabsList>
-            <TabsTrigger value="overview">Schematic</TabsTrigger>
-            <TabsTrigger value="graph">Graph</TabsTrigger>
-            <TabsTrigger value="analysis">Analysis</TabsTrigger>
-            <TabsTrigger value="rules">Rules & Transforms</TabsTrigger>
-            <TabsTrigger value="bpl">Processes</TabsTrigger>
-            <TabsTrigger value="explanations">Explanations</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="logs">Logs</TabsTrigger>
-            <TabsTrigger value="ask">Ask AI</TabsTrigger>
-          </TabsList>
-
-
-
-          <TabsContent value="overview" className="pt-6">
-            {comps.error ? <ErrorPanel error={comps.error as Error} label="components" /> : null}
-            <section className="relative">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12 relative">
-                <div className="hidden lg:block absolute top-32 left-[30%] right-[65%] h-px bg-border -z-10" />
-                <div className="hidden lg:block absolute top-32 left-[63%] right-[32%] h-px bg-border -z-10" />
-                <Column label="Business Services" loading={comps.isLoading} items={services} accentBorder="border-status-observed" />
-                <Column label="Business Processes" loading={comps.isLoading} items={processes} accentBorder="border-iris-brand" featured />
-                <Column label="Business Operations" loading={comps.isLoading} items={operations} accentBorder="border-status-inferred" />
-              </div>
-              {unknowns.length > 0 ? (
-                <div className="mt-8">
-                  <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-                    Unclassified
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {unknowns.map((c) => <ComponentCard key={c.name} component={c} />)}
-                  </div>
+      <div className="flex gap-0 min-h-[calc(100vh-64px)]">
+        <aside className="w-56 shrink-0 border-r bg-card/40 py-6 px-3 sticky top-16 self-start">
+          <nav className="space-y-5">
+            {SECTION_GROUPS.map((group) => (
+              <div key={group.heading}>
+                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-1.5">
+                  {group.heading}
                 </div>
-              ) : null}
-            </section>
-          </TabsContent>
+                <ul className="space-y-0.5">
+                  {group.items.map((it) => {
+                    const active = activeTab === it.id;
+                    const Icon = it.icon;
+                    return (
+                      <li key={it.id}>
+                        <button
+                          onClick={() =>
+                            navigate({
+                              to: "/productions/$name",
+                              params: { name },
+                              search: { tab: it.id === "overview" ? undefined : it.id },
+                              replace: true,
+                            })
+                          }
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-[13px] transition-colors ${
+                            active
+                              ? "bg-iris-brand/10 text-iris-brand font-medium"
+                              : "text-foreground/75 hover:bg-muted"
+                          }`}
+                        >
+                          <Icon className="size-3.5 shrink-0" />
+                          <span className="truncate">{it.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </aside>
 
-          <TabsContent value="graph" className="pt-6 space-y-6">
-            {graph.isLoading ? (
+        <div className="flex-1 min-w-0 p-8 space-y-6">
+          {activeTab === "overview" ? (
+            <ProductionKPIs productionName={name} />
+          ) : null}
+
+          {activeTab === "summary" ? (
+            <div className="space-y-6">
+              <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <MetaCard label="Namespace" value={meta.data?.namespace ?? "—"} mono />
+                <MetaCard label="Components" value={comps.isLoading ? "…" : `${components.length}`} />
+                <MetaCard label="Enabled / Disabled" value={comps.isLoading ? "…" : `${enabled} / ${disabled}`} />
+                <MetaCard label="Current?" value={runtime?.isCurrent ? "Yes" : "No"} />
+                <MetaCard accent label="Provenance">
+                  <div className="flex gap-1.5 mt-1">
+                    <ConfidenceDot confidence="confirmed" title="Confirmed" />
+                    <ConfidenceDot confidence="observed" title="Observed" />
+                    <ConfidenceDot confidence="inferred" title="Inferred" />
+                    <ConfidenceDot confidence="unknown" title="Unknown" />
+                  </div>
+                </MetaCard>
+              </section>
+
+              {meta.data?.description ? (
+                <p className="text-sm text-muted-foreground max-w-3xl">{meta.data.description}</p>
+              ) : null}
+
+              {summary.data?.summary ? (
+                <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 max-w-4xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                      Deterministic summary
+                    </h2>
+                    <ConfidenceBadge confidence={summary.data.confidence} />
+                  </div>
+                  <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+                    {summary.data.summary}
+                  </p>
+                </section>
+              ) : null}
+
+              <AISummaryPanel
+                productionName={name}
+                encoded={encoded}
+                componentNames={components.map((c) => c.name ?? c.className ?? "").filter(Boolean) as string[]}
+              />
+
+              <SummaryBullets bullets={analysis.data?.summaryBullets} />
+
+              {analysis.data?.metrics ? (
+                <MetricChips>
+                  <MetricChip label="Services" value={analysis.data.metrics.serviceCount ?? 0} tone="observed" />
+                  <MetricChip label="Processes" value={analysis.data.metrics.processCount ?? 0} tone="brand" />
+                  <MetricChip label="Operations" value={analysis.data.metrics.operationCount ?? 0} tone="inferred" />
+                  <MetricChip label="Connections" value={analysis.data.metrics.connectionCount ?? 0} />
+                  {(analysis.data.metrics.routingRuleConnectionCount ?? 0) > 0 ? (
+                    <MetricChip label="Rule conns" value={analysis.data.metrics.routingRuleConnectionCount!} />
+                  ) : null}
+                  {(analysis.data.metrics.bplCallConnectionCount ?? 0) > 0 ? (
+                    <MetricChip label="BPL conns" value={analysis.data.metrics.bplCallConnectionCount!} />
+                  ) : null}
+                  <MetricChip label="Ext systems" value={analysis.data.metrics.externalSystemCount ?? 0} />
+                  <MetricChip label="Rules" value={analysis.data.metrics.ruleCount ?? 0} />
+                  <MetricChip label="Transforms" value={analysis.data.metrics.transformationCount ?? 0} />
+                  <MetricChip label="BPL" value={analysis.data.metrics.businessProcessCount ?? 0} />
+                  {(analysis.data.metrics.warningCount ?? 0) > 0 ? (
+                    <MetricChip label="Warnings" value={analysis.data.metrics.warningCount!} tone="error" />
+                  ) : null}
+                </MetricChips>
+              ) : null}
+
+              {analysis.data?.warnings && analysis.data.warnings.length > 0 ? (
+                <section>
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                    Warnings
+                  </h3>
+                  <ul className="space-y-1">
+                    {analysis.data.warnings.map((w, i) => (
+                      <li key={i} className="text-[11px] font-mono text-status-inferred">
+                        [{w.code}] {w.message}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </div>
+          ) : null}
+
+          {activeTab === "schematic" ? (
+            <>
+              {comps.error ? <ErrorPanel error={comps.error as Error} label="components" /> : null}
+              <section className="relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12 relative">
+                  <div className="hidden lg:block absolute top-32 left-[30%] right-[65%] h-px bg-border -z-10" />
+                  <div className="hidden lg:block absolute top-32 left-[63%] right-[32%] h-px bg-border -z-10" />
+                  <Column label="Business Services" loading={comps.isLoading} items={services} accentBorder="border-status-observed" />
+                  <Column label="Business Processes" loading={comps.isLoading} items={processes} accentBorder="border-iris-brand" featured />
+                  <Column label="Business Operations" loading={comps.isLoading} items={operations} accentBorder="border-status-inferred" />
+                </div>
+                {unknowns.length > 0 ? (
+                  <div className="mt-8">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+                      Unclassified
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {unknowns.map((c) => <ComponentCard key={c.name} component={c} />)}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            </>
+          ) : null}
+
+          {activeTab === "graph" ? (
+            graph.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : graph.error ? (
               <ErrorPanel error={graph.error as Error} label="graph" />
             ) : (
               <GraphView data={graph.data} productionName={name} />
-            )}
-          </TabsContent>
+            )
+          ) : null}
 
-
-
-          <TabsContent value="analysis" className="pt-6 space-y-8">
-            {analysis.isLoading ? (
+          {activeTab === "analysis" ? (
+            analysis.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : analysis.error ? (
               <ErrorPanel error={analysis.error as Error} label="analysis" />
             ) : (
-              <>
+              <div className="space-y-8">
                 <CoveragePanel coverage={analysis.data?.analysisCoverage} />
                 <ConnectionsSection
                   connections={analysis.data?.connections ?? []}
@@ -428,15 +461,15 @@ function ProductionDetailContent() {
                   types={analysis.data?.messageTypes ?? []}
                   explanations={analysis.data?.messageTypeExplanations ?? []}
                 />
-              </>
-            )}
-          </TabsContent>
+              </div>
+            )
+          ) : null}
 
-          <TabsContent value="rules" className="pt-6 space-y-8">
-            {analysis.isLoading ? (
+          {activeTab === "rules" ? (
+            analysis.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : (
-              <>
+              <div className="space-y-8">
                 <RulesSection
                   rules={analysis.data?.rules ?? []}
                   explanations={analysis.data?.ruleExplanations ?? []}
@@ -445,30 +478,30 @@ function ProductionDetailContent() {
                   transforms={analysis.data?.transformations ?? []}
                   explanations={analysis.data?.transformationExplanations ?? []}
                 />
-              </>
-            )}
-          </TabsContent>
+              </div>
+            )
+          ) : null}
 
-          <TabsContent value="bpl" className="pt-6">
-            {analysis.isLoading ? (
+          {activeTab === "bpl" ? (
+            analysis.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : (
               <ProcessesSection
                 processes={analysis.data?.businessProcesses ?? []}
                 explanations={analysis.data?.businessProcessExplanations ?? []}
               />
-            )}
-          </TabsContent>
+            )
+          ) : null}
 
-          <TabsContent value="explanations" className="pt-6">
-            {analysis.isLoading ? (
+          {activeTab === "explanations" ? (
+            analysis.isLoading ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : (
               <ExplanationsSection explanations={analysis.data?.componentExplanations ?? []} />
-            )}
-          </TabsContent>
+            )
+          ) : null}
 
-          <TabsContent value="messages" className="pt-6">
+          {activeTab === "messages" ? (
             <div className="bg-card ring-1 ring-black/5 rounded-lg p-6 max-w-2xl">
               <div className="size-10 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center mb-3">
                 <MessageSquareText className="size-5" />
@@ -485,37 +518,20 @@ function ProductionDetailContent() {
                 Open in Message Explainer →
               </Link>
             </div>
-          </TabsContent>
+          ) : null}
 
-          <TabsContent value="logs" className="pt-6">
-            <LogsPanel productionName={name} />
-          </TabsContent>
+          {activeTab === "logs" ? <LogsPanel productionName={name} /> : null}
 
-          <TabsContent value="ask" className="pt-6">
+          {activeTab === "ask" ? (
             <AIAskPanel
               productionName={name}
               encoded={encoded}
               componentNames={components.map((c) => c.name ?? c.className ?? "").filter(Boolean) as string[]}
             />
-          </TabsContent>
-        </Tabs>
-
-
-        {analysis.data?.warnings && analysis.data.warnings.length > 0 ? (
-          <section>
-            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-              Warnings
-            </h3>
-            <ul className="space-y-1">
-              {analysis.data.warnings.map((w, i) => (
-                <li key={i} className="text-[11px] font-mono text-status-inferred">
-                  [{w.code}] {w.message}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+          ) : null}
+        </div>
       </div>
+
     </>
   );
 }
