@@ -120,6 +120,23 @@ function MessageDetailPage() {
     },
   });
 
+  const componentsQuery = useQuery<ComponentListResponse>({
+    queryKey: ["production-components", productionName],
+    queryFn: () =>
+      apiFetch<ComponentListResponse>(
+        `/productions/${encodeURIComponent(productionName!)}/components`,
+      ),
+    enabled: !!productionName,
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+  const componentNames = useMemo(() => {
+    const items = componentsQuery.data?.items ?? componentsQuery.data?.components ?? [];
+    return items
+      .map((c) => (c as { name?: string }).name)
+      .filter((n): n is string => !!n);
+  }, [componentsQuery.data]);
+
 
   const m = detail.data?.message;
   const overview = trace.data?.traceOverview;
