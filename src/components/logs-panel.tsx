@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AlertCircle, RefreshCw, Search, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { apiFetch } from "@/lib/api-config";
-import type { ProductionLogListResponse } from "@/lib/api-types";
+import type { ProductionLogListResponse, ProductionListResponse, ComponentListResponse } from "@/lib/api-types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { ConfidenceBadge } from "@/components/confidence-badge";
