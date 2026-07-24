@@ -141,9 +141,14 @@ export function EditComponentDialog({
     onSuccess: (res) => {
       const attrs = res.updatedAttributes?.length ?? 0;
       const sets = res.updatedSettings?.length ?? 0;
+      const rt = res.runtimeUpdatedSettings?.length ?? 0;
+      const bits = [
+        attrs ? `${attrs} attribute(s)` : null,
+        sets ? `${sets} setting(s)` : null,
+        rt ? `${rt} live-applied` : null,
+      ].filter(Boolean);
       toast.success(
-        `Updated ${componentName}` +
-          (attrs || sets ? ` — ${attrs} attribute(s), ${sets} setting(s)` : ""),
+        `Updated ${componentName}` + (bits.length ? ` — ${bits.join(", ")}` : ""),
       );
       qc.invalidateQueries({ queryKey: ["component", productionName, componentName] });
       qc.invalidateQueries({ queryKey: ["production", productionName] });
@@ -152,6 +157,7 @@ export function EditComponentDialog({
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
