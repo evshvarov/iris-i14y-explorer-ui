@@ -19,6 +19,9 @@ import { EditComponentDialog } from "@/components/edit-component-dialog";
 export const Route = createFileRoute(
   "/productions/$name/components/$componentName",
 )({
+  validateSearch: (s: Record<string, unknown>) => ({
+    fromTab: typeof s.fromTab === "string" ? s.fromTab : undefined,
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `${params.componentName} — ${params.name} — IRIS Explainer` },
@@ -27,10 +30,13 @@ export const Route = createFileRoute(
   component: ComponentDetailPage,
 });
 
+
 function ComponentDetailPage() {
   const { name, componentName } = Route.useParams();
+  const { fromTab } = Route.useSearch();
   const url = `/productions/${encodeURIComponent(name)}/components/${encodeURIComponent(componentName)}`;
   const [editOpen, setEditOpen] = useState(false);
+
 
   const q = useQuery<ComponentDetailResponse>({
     queryKey: ["component", name, componentName],
@@ -72,10 +78,12 @@ function ComponentDetailPage() {
             <Link
               to="/productions/$name"
               params={{ name }}
+              search={{ tab: fromTab && fromTab !== "overview" ? fromTab : undefined }}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
             >
               <ArrowLeft className="size-3.5" /> Production
             </Link>
+
           </div>
         }
       />

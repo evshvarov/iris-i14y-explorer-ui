@@ -40,12 +40,30 @@ import { ProductionKPIs } from "@/components/production-kpis";
 import { toast } from "sonner";
 
 
+const PROD_TABS = [
+  "overview",
+  "graph",
+  "analysis",
+  "rules",
+  "bpl",
+  "explanations",
+  "messages",
+  "logs",
+  "ask",
+] as const;
+type ProdTab = (typeof PROD_TABS)[number];
+
 export const Route = createFileRoute("/productions/$name")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const t = typeof s.tab === "string" ? (s.tab as ProdTab) : undefined;
+    return { tab: t && PROD_TABS.includes(t) ? t : undefined };
+  },
   head: ({ params }) => ({
     meta: [{ title: `${params.name} — IRIS Explainer` }],
   }),
   component: ProductionDetailPage,
 });
+
 
 function categorize(c: Component): "service" | "process" | "operation" | "unknown" {
   const raw = ((c.category ?? c.type) ?? "").toLowerCase();
@@ -67,8 +85,12 @@ function ProductionDetailPage() {
 
 function ProductionDetailContent() {
   const { name } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const activeTab: ProdTab = search.tab ?? "overview";
   const encoded = encodeURIComponent(name);
   const qc = useQueryClient();
+
 
   const meta = useQuery<ProductionDetailResponse>({
     queryKey: ["production", name],
@@ -249,7 +271,18 @@ function ProductionDetailContent() {
           </MetricChips>
         ) : null}
 
-        <Tabs defaultValue="overview">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) =>
+            navigate({
+              to: "/productions/$name",
+              params: { name },
+              search: { tab: v === "overview" ? undefined : (v as ProdTab) },
+              replace: true,
+            })
+          }
+        >
+
           <TabsList>
             <TabsTrigger value="overview">Schematic</TabsTrigger>
             <TabsTrigger value="graph">Graph</TabsTrigger>
@@ -1047,8 +1080,10 @@ function GraphView({
                   name: productionName,
                   componentName: n.label ?? n.id ?? "",
                 }}
+                search={{ fromTab: "overview" }}
                 className="bg-card ring-1 ring-black/5 rounded-lg p-3 hover:ring-iris-brand/40 transition-all block"
               >
+
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-[9px] font-mono uppercase text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {n.type ?? "node"}
@@ -1312,8 +1347,10 @@ function GraphDiagram({
                   navigate({
                     to: "/productions/$name/components/$componentName",
                     params: { name: productionName, componentName: n.label ?? n.id ?? "" },
+                    search: { fromTab: "graph" },
                   })
                 }
+
               >
                 <rect
                   width={nodeW}
@@ -2068,6 +2105,7 @@ function citationLinkProps(
     return {
       to: "/productions/$name/components/$componentName",
       params: { name: productionName, componentName: c.component },
+      search: { fromTab: "ask" },
       hint: `Open ${c.component}`,
     };
   }
@@ -2077,9 +2115,11 @@ function citationLinkProps(
     return {
       to: "/productions/$name/components/$componentName",
       params: { name: productionName, componentName: c.title },
+      search: { fromTab: "ask" },
       hint: `Open ${c.title}`,
     };
   }
+
 
   return null;
 }
