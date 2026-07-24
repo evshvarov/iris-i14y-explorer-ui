@@ -241,6 +241,35 @@ function MetricsPage() {
           </div>
         ) : null}
 
+        {enableMutation.isSuccess ? (
+          <div className="rounded-lg border border-brand/30 bg-brand/5 p-4 flex items-start gap-3">
+            <CheckCircle2 className="size-4 text-brand mt-0.5" />
+            <div className="flex-1 text-xs font-mono">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-brand mb-1">
+                Metrics enable requested
+              </div>
+              <pre className="whitespace-pre-wrap break-all text-muted-foreground">
+                {JSON.stringify(enableMutation.data, null, 2)}
+              </pre>
+            </div>
+          </div>
+        ) : null}
+
+        {enableMutation.isError ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <AlertTriangle className="size-4 text-destructive mt-0.5" />
+            <div className="flex-1 text-xs font-mono">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-destructive mb-1">
+                Enable failed
+              </div>
+              <div className="text-muted-foreground break-all">
+                {enableMutation.error?.message}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+
         {/* Interop range */}
         <Section
           title="Interop range"
