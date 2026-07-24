@@ -96,27 +96,36 @@ export function EditComponentDialog({
       if ((category ?? "") !== (initial?.category ?? "")) body.category = category;
       if ((comment ?? "") !== (initial?.comment ?? "")) body.comment = comment;
 
-      // diff settings
-      const originalSettings = initial?.settings ?? {};
+      // diff settings + build settingTargets
+      const originalSettings = (initial?.settings ?? {}) as Record<string, unknown>;
       const nextSettings: Record<string, string> = {};
+      const nextTargets: Record<string, string> = {};
       const seen = new Set<string>();
       for (const r of rows) {
         const k = r.key.trim();
         if (!k) continue;
         seen.add(k);
-        const origVal =
-          k in originalSettings
-            ? typeof originalSettings[k] === "object"
-              ? JSON.stringify(originalSettings[k])
-              : String(originalSettings[k] ?? "")
-            : undefined;
-        if (origVal !== r.value) nextSettings[k] = r.value;
+        const orig = k in originalSettings ? normalizeValue(originalSettings[k]) : undefined;
+        const origVal = orig?.value;
+        const origTarget = orig?.target ?? "Host";
+        if (origVal !== r.value || origTarget !== r.target) {
+          nextSettings[k] = r.value;
+          nextTargets[k] = r.target;
+        }
       }
       // deletions -> empty string signals removal per common convention
       for (const k of Object.keys(originalSettings)) {
-        if (!seen.has(k)) nextSettings[k] = "";
+        if (!seen.has(k)) {
+          nextSettings[k] = "";
+          const orig = normalizeValue(originalSettings[k]);
+          nextTargets[k] = orig.target ?? "Host";
+        }
       }
-      if (Object.keys(nextSettings).length > 0) body.settings = nextSettings;
+      if (Object.keys(nextSettings).length > 0) {
+        body.settings = nextSettings;
+        body.settingTargets = nextTargets;
+      }
+
 
       if (Object.keys(body).length === 0) {
         throw new Error("No changes to save");
