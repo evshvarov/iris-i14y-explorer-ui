@@ -109,6 +109,27 @@ function MetricsPage() {
     retry: 0,
   });
 
+  const enableMutation = useMutation<
+    { enabled?: boolean; namespace?: string; message?: string } & Record<string, unknown>,
+    Error,
+    void
+  >({
+    mutationFn: async () => {
+      const params = new URLSearchParams();
+      if (namespace.trim()) params.set("namespace", namespace.trim());
+      const qs = params.toString();
+      return apiFetch(
+        `/monitor/metrics/interop/enable${qs ? `?${qs}` : ""}`,
+        { method: "POST" },
+      );
+    },
+    onSuccess: () => {
+      metrics.refetch();
+      range.refetch();
+      volume.refetch();
+    },
+  });
+
   const anyLoading =
     range.isFetching || volume.isFetching || metrics.isFetching;
 
@@ -117,6 +138,7 @@ function MetricsPage() {
     volume.refetch();
     metrics.refetch();
   };
+
 
   const filteredMetrics = useMemo(() => {
     const samples = metrics.data?.samples ?? [];
