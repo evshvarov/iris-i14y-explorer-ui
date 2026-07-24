@@ -1409,7 +1409,7 @@ function truncate(s: string, n: number) {
 
 
 
-function AISummaryPanel({ productionName, encoded }: { productionName: string; encoded: string }) {
+function AISummaryPanel({ productionName, encoded, componentNames }: { productionName: string; encoded: string; componentNames: string[] }) {
   const [result, setResult] = useState<ProductionAISummaryResponse | null>(null);
   const mutation = useMutation({
     mutationFn: () =>
