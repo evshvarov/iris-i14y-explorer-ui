@@ -78,10 +78,12 @@ function ComponentDetailPage() {
             <Link
               to="/productions/$name"
               params={{ name }}
+              search={{ tab: fromTab && fromTab !== "overview" ? fromTab : undefined }}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
             >
               <ArrowLeft className="size-3.5" /> Production
             </Link>
+
           </div>
         }
       />
