@@ -185,6 +185,11 @@ function ProductionDetailContent() {
       />
 
       <div className="p-8 space-y-8">
+        <ProductionKPIs
+          productionName={name}
+          namespace={meta.data?.namespace}
+        />
+
         <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <MetaCard label="Namespace" value={meta.data?.namespace ?? "—"} mono />
           <MetaCard label="Components" value={comps.isLoading ? "…" : `${components.length}`} />
@@ -199,6 +204,7 @@ function ProductionDetailContent() {
             </div>
           </MetaCard>
         </section>
+
 
         {meta.data?.description ? (
           <p className="text-sm text-muted-foreground max-w-3xl">{meta.data.description}</p>
