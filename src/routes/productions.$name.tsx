@@ -1347,8 +1347,10 @@ function GraphDiagram({
                   navigate({
                     to: "/productions/$name/components/$componentName",
                     params: { name: productionName, componentName: n.label ?? n.id ?? "" },
+                    search: { fromTab: "graph" },
                   })
                 }
+
               >
                 <rect
                   width={nodeW}
