@@ -19,6 +19,9 @@ import { EditComponentDialog } from "@/components/edit-component-dialog";
 export const Route = createFileRoute(
   "/productions/$name/components/$componentName",
 )({
+  validateSearch: (s: Record<string, unknown>) => ({
+    fromTab: typeof s.fromTab === "string" ? s.fromTab : undefined,
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `${params.componentName} — ${params.name} — IRIS Explainer` },
@@ -26,6 +29,7 @@ export const Route = createFileRoute(
   }),
   component: ComponentDetailPage,
 });
+
 
 function ComponentDetailPage() {
   const { name, componentName } = Route.useParams();
