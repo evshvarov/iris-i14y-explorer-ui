@@ -1698,7 +1698,7 @@ function AIAskPanel({
 
       <div className="space-y-4">
         {history.map((r, idx) => (
-          <AIAskResult key={idx} result={r} />
+          <AIAskResult key={idx} result={r} componentNames={componentNames} />
         ))}
       </div>
     </section>
