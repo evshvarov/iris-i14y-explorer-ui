@@ -1080,8 +1080,10 @@ function GraphView({
                   name: productionName,
                   componentName: n.label ?? n.id ?? "",
                 }}
+                search={{ fromTab: "overview" }}
                 className="bg-card ring-1 ring-black/5 rounded-lg p-3 hover:ring-iris-brand/40 transition-all block"
               >
+
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-[9px] font-mono uppercase text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {n.type ?? "node"}
