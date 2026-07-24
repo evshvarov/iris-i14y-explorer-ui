@@ -290,13 +290,17 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
                       <>
                         <span>·</span>
                         {(() => {
-                          const prod = productionName ?? e.productionName;
+                          const prod =
+                            productionName ??
+                            e.productionName ??
+                            responseProductionName ??
+                            sourceToProduction.get(e.source!);
                           return prod ? (
                             <Link
                               to="/productions/$name/components/$componentName"
-                              params={{ name: prod, componentName: e.source }}
+                              params={{ name: prod, componentName: e.source! }}
                               className="text-foreground/80 hover:text-foreground underline decoration-dotted underline-offset-2"
-                              title={`Open component ${e.source}`}
+                              title={`Open component ${e.source} in ${prod}`}
                             >
                               {e.source}
                             </Link>
