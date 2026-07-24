@@ -252,7 +252,7 @@ export function EditComponentDialog({
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => setRows((r) => [...r, { key: "", value: "" }])}
+                onClick={() => setRows((r) => [...r, { key: "", value: "", target: "Host" }])}
                 className="h-7 gap-1.5 text-[12px] font-semibold text-iris-brand bg-iris-brand/10 hover:bg-iris-brand/20 ring-1 ring-iris-brand/20"
               >
                 <Plus className="size-3.5" /> Add parameter
@@ -260,9 +260,10 @@ export function EditComponentDialog({
             </div>
 
             <div className="ring-1 ring-black/5 rounded-lg overflow-hidden bg-card">
-              <div className="grid grid-cols-[1fr_1.6fr_2.5rem] bg-muted/50 border-b">
+              <div className="grid grid-cols-[1fr_1.2fr_6.5rem_2.5rem] bg-muted/50 border-b">
                 <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Key</div>
                 <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Value</div>
+                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Target</div>
                 <div />
               </div>
               {rows.length === 0 ? (
@@ -272,7 +273,7 @@ export function EditComponentDialog({
               ) : (
                 <div className="divide-y">
                   {rows.map((r, i) => (
-                    <div key={i} className="group grid grid-cols-[1fr_1.6fr_2.5rem] items-center">
+                    <div key={i} className="group grid grid-cols-[1fr_1.2fr_6.5rem_2.5rem] items-center">
                       <input
                         value={r.key}
                         onChange={(e) =>
@@ -289,6 +290,21 @@ export function EditComponentDialog({
                         placeholder="value"
                         className="px-4 py-3 text-[13px] font-mono text-iris-brand bg-transparent outline-none focus:bg-muted/40 truncate border-l"
                       />
+                      <select
+                        value={r.target}
+                        onChange={(e) =>
+                          setRows((rs) =>
+                            rs.map((x, ix) =>
+                              ix === i ? { ...x, target: e.target.value as SettingTarget } : x,
+                            ),
+                          )
+                        }
+                        className="mx-2 my-2 px-2 py-1.5 text-[11px] font-mono uppercase tracking-wider text-iris-navy bg-muted/40 rounded ring-1 ring-black/5 outline-none focus:ring-iris-brand"
+                        aria-label="Setting target"
+                      >
+                        <option value="Host">Host</option>
+                        <option value="Adapter">Adapter</option>
+                      </select>
                       <button
                         type="button"
                         onClick={() => setRows((rs) => rs.filter((_, ix) => ix !== i))}
@@ -303,8 +319,9 @@ export function EditComponentDialog({
               )}
             </div>
             <p className="text-[11px] text-muted-foreground italic px-1">
-              Removed rows are sent as empty values to clear the override on the server.
+              Target chooses which layer receives the setting — <span className="font-mono not-italic">Host</span> for the business host, <span className="font-mono not-italic">Adapter</span> for its inbound/outbound adapter. Removed rows are sent as empty values to clear the override on the server. If the production is running, applicable settings are pushed live.
             </p>
+
           </div>
         </div>
 
