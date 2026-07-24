@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
+import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
 import type { ComponentDetailResponse } from "@/lib/api-types";
@@ -13,6 +14,7 @@ import {
   MetricChips,
   EvidenceChips,
 } from "@/components/summary-bits";
+import { EditComponentDialog } from "@/components/edit-component-dialog";
 
 export const Route = createFileRoute(
   "/productions/$name/components/$componentName",
@@ -28,6 +30,7 @@ export const Route = createFileRoute(
 function ComponentDetailPage() {
   const { name, componentName } = Route.useParams();
   const url = `/productions/${encodeURIComponent(name)}/components/${encodeURIComponent(componentName)}`;
+  const [editOpen, setEditOpen] = useState(false);
 
   const q = useQuery<ComponentDetailResponse>({
     queryKey: ["component", name, componentName],
@@ -57,14 +60,32 @@ function ComponentDetailPage() {
             : undefined
         }
         actions={
-          <Link
-            to="/productions/$name"
-            params={{ name }}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
-          >
-            <ArrowLeft className="size-3.5" /> Production
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              disabled={!c}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-iris-brand/30 bg-iris-brand/10 text-iris-brand hover:bg-iris-brand/20 disabled:opacity-50"
+            >
+              <Pencil className="size-3.5" /> Edit
+            </button>
+            <Link
+              to="/productions/$name"
+              params={{ name }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+            >
+              <ArrowLeft className="size-3.5" /> Production
+            </Link>
+          </div>
         }
+      />
+
+      <EditComponentDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        productionName={name}
+        componentName={componentName}
+        component={c}
       />
 
       <div className="p-8 space-y-8">

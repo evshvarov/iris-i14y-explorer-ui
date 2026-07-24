@@ -1059,3 +1059,35 @@ export type ComponentDetailResponse = {
   evidence?: Evidence[];
   confidence?: Confidence;
 };
+
+export type ComponentSettingsUpdateRequest = {
+  enabled?: boolean;
+  poolSize?: number;
+  category?: string;
+  comment?: string;
+  settings?: Record<string, string>;
+};
+
+export type ComponentAttributeUpdate = {
+  name?: string;
+  oldValue?: string;
+  value?: string;
+};
+
+export type ComponentSettingUpdate = {
+  name?: string;
+  oldValue?: string;
+  value?: string;
+};
+
+export type ComponentSettingsUpdateResponse = {
+  namespace?: string;
+  productionName?: string;
+  componentName?: string;
+  component?: Component;
+  settings?: Record<string, unknown>;
+  updatedAttributes?: ComponentAttributeUpdate[];
+  updatedSettings?: ComponentSettingUpdate[];
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
