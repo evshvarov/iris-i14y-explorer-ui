@@ -244,7 +244,11 @@ function ProductionDetailContent() {
           </section>
         ) : null}
 
-        <AISummaryPanel productionName={name} encoded={encoded} />
+        <AISummaryPanel
+          productionName={name}
+          encoded={encoded}
+          componentNames={components.map((c) => c.name ?? c.className ?? "").filter(Boolean) as string[]}
+        />
 
 
         <SummaryBullets bullets={analysis.data?.summaryBullets} />
