@@ -533,6 +533,41 @@ function Meta({ label, value, mono }: { label: string; value: string; mono?: boo
       </div>
     </div>
   );
+
+function MetaLink({
+  label,
+  name,
+  productionName,
+}: {
+  label: string;
+  name?: string;
+  productionName?: string;
+}) {
+  return (
+    <div className="p-3 bg-card ring-1 ring-black/5 rounded-lg">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+        {label}
+      </div>
+      <div className="text-xs font-mono truncate" title={name ?? "—"}>
+        {name ? (
+          productionName ? (
+            <Link
+              to="/productions/$name/components/$componentName"
+              params={{ name: productionName, componentName: name }}
+              className="underline-offset-2 hover:underline hover:text-iris-brand"
+              title={`Open component ${name}`}
+            >
+              {name}
+            </Link>
+          ) : (
+            name
+          )
+        ) : (
+          "—"
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ErrorPanel({ error, label }: { error: Error; label: string }) {
