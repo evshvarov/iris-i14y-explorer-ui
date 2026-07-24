@@ -2177,7 +2177,7 @@ function AIAskResult({ result, componentNames }: { result: ProductionAIAskRespon
       </header>
 
       {result.answer ? (
-        <MarkdownContent>{result.answer}</MarkdownContent>
+        <MarkdownContent linkComponents={componentNames} productionName={result.productionName}>{result.answer}</MarkdownContent>
       ) : (
         <p className="text-xs text-muted-foreground italic">No answer text returned.</p>
       )}
