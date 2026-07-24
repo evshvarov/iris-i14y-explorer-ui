@@ -40,12 +40,30 @@ import { ProductionKPIs } from "@/components/production-kpis";
 import { toast } from "sonner";
 
 
+const PROD_TABS = [
+  "overview",
+  "graph",
+  "analysis",
+  "rules",
+  "bpl",
+  "explanations",
+  "messages",
+  "logs",
+  "ask",
+] as const;
+type ProdTab = (typeof PROD_TABS)[number];
+
 export const Route = createFileRoute("/productions/$name")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const t = typeof s.tab === "string" ? (s.tab as ProdTab) : undefined;
+    return { tab: t && PROD_TABS.includes(t) ? t : undefined };
+  },
   head: ({ params }) => ({
     meta: [{ title: `${params.name} — IRIS Explainer` }],
   }),
   component: ProductionDetailPage,
 });
+
 
 function categorize(c: Component): "service" | "process" | "operation" | "unknown" {
   const raw = ((c.category ?? c.type) ?? "").toLowerCase();
