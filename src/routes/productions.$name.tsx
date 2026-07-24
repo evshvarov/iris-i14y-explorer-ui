@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer, GitPullRequestArrow } from "lucide-react";
+import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer, GitPullRequestArrow, LayoutDashboard, FileText, Workflow, Share2, ClipboardList, GitBranch, Lightbulb, ScrollText, Bot } from "lucide-react";
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
