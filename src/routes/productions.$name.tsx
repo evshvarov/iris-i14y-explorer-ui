@@ -2128,7 +2128,7 @@ function citationLinkProps(
   return null;
 }
 
-function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
+function AIAskResult({ result, componentNames }: { result: ProductionAIAskResponse; componentNames?: string[] }) {
   const [expanded, setExpanded] = useState(false);
   const citedIds = new Set(
     (result.citations ?? []).map((c) => c.chunkId).filter(Boolean) as string[],
