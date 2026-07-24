@@ -244,7 +244,11 @@ function ProductionDetailContent() {
           </section>
         ) : null}
 
-        <AISummaryPanel productionName={name} encoded={encoded} />
+        <AISummaryPanel
+          productionName={name}
+          encoded={encoded}
+          componentNames={components.map((c) => c.name ?? c.className ?? "").filter(Boolean) as string[]}
+        />
 
 
         <SummaryBullets bullets={analysis.data?.summaryBullets} />
@@ -1405,7 +1409,7 @@ function truncate(s: string, n: number) {
 
 
 
-function AISummaryPanel({ productionName, encoded }: { productionName: string; encoded: string }) {
+function AISummaryPanel({ productionName, encoded, componentNames }: { productionName: string; encoded: string; componentNames: string[] }) {
   const [result, setResult] = useState<ProductionAISummaryResponse | null>(null);
   const mutation = useMutation({
     mutationFn: () =>
@@ -1472,7 +1476,7 @@ function AISummaryPanel({ productionName, encoded }: { productionName: string; e
           </div>
 
           {result.summary ? (
-            <MarkdownContent>{result.summary}</MarkdownContent>
+            <MarkdownContent linkComponents={componentNames} productionName={productionName}>{result.summary}</MarkdownContent>
           ) : (
             <p className="text-xs text-muted-foreground italic">No AI summary text returned.</p>
           )}
@@ -1694,7 +1698,7 @@ function AIAskPanel({
 
       <div className="space-y-4">
         {history.map((r, idx) => (
-          <AIAskResult key={idx} result={r} />
+          <AIAskResult key={idx} result={r} componentNames={componentNames} />
         ))}
       </div>
     </section>
@@ -2124,7 +2128,7 @@ function citationLinkProps(
   return null;
 }
 
-function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
+function AIAskResult({ result, componentNames }: { result: ProductionAIAskResponse; componentNames?: string[] }) {
   const [expanded, setExpanded] = useState(false);
   const citedIds = new Set(
     (result.citations ?? []).map((c) => c.chunkId).filter(Boolean) as string[],
@@ -2173,7 +2177,7 @@ function AIAskResult({ result }: { result: ProductionAIAskResponse }) {
       </header>
 
       {result.answer ? (
-        <MarkdownContent>{result.answer}</MarkdownContent>
+        <MarkdownContent linkComponents={componentNames} productionName={result.productionName}>{result.answer}</MarkdownContent>
       ) : (
         <p className="text-xs text-muted-foreground italic">No answer text returned.</p>
       )}

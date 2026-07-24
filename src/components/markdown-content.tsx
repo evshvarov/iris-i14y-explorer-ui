@@ -1,14 +1,73 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+
+/**
+ * Escape a string for use in a RegExp.
+ */
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Auto-link known component names inside a markdown string.
+ * Skips fenced code blocks, inline code, and existing markdown links.
+ */
+function linkifyComponentNames(
+  md: string,
+  names: readonly string[],
+  productionName: string,
+): string {
+  if (!md || !productionName || !names?.length) return md;
+  const unique = Array.from(new Set(names.filter(Boolean))).sort(
+    (a, b) => b.length - a.length,
+  );
+  if (!unique.length) return md;
+  const pattern = new RegExp(
+    `(?<![\\w./-])(${unique.map(escapeRegex).join("|")})(?![\\w./-])`,
+    "g",
+  );
+  const encodedProd = encodeURIComponent(productionName);
+
+  // Split by fenced code blocks; keep them intact.
+  const parts = md.split(/(```[\s\S]*?```)/g);
+  return parts
+    .map((part) => {
+      if (part.startsWith("```")) return part;
+      // Split by inline code and existing markdown links; leave them intact.
+      const sub = part.split(/(`[^`]*`|\[[^\]]*\]\([^)]*\))/g);
+      return sub
+        .map((seg) => {
+          if (!seg) return seg;
+          if (seg.startsWith("`") || seg.startsWith("[")) return seg;
+          return seg.replace(pattern, (name) => {
+            const href = `/productions/${encodedProd}/components/${encodeURIComponent(name)}?fromTab=ask`;
+            return `[${name}](${href})`;
+          });
+        })
+        .join("");
+    })
+    .join("");
+}
 
 export function MarkdownContent({
   children,
   className,
+  linkComponents,
+  productionName,
 }: {
   children: string;
   className?: string;
+  /** When provided together with productionName, occurrences of these names are auto-linked. */
+  linkComponents?: readonly string[];
+  productionName?: string;
 }) {
+  const content =
+    linkComponents && productionName
+      ? linkifyComponentNames(children, linkComponents, productionName)
+      : children;
+
   return (
     <div
       className={cn(
@@ -32,7 +91,32 @@ export function MarkdownContent({
         className,
       )}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a({ href, children, ...props }) {
+            if (typeof href === "string" && href.startsWith("/")) {
+              return (
+                <Link to={href} {...(props as Record<string, unknown>)}>
+                  {children}
+                </Link>
+              );
+            }
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+              >
+                {children}
+              </a>
+            );
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
