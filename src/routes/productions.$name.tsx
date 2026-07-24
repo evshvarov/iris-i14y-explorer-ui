@@ -42,6 +42,8 @@ import { toast } from "sonner";
 
 const PROD_TABS = [
   "overview",
+  "summary",
+  "schematic",
   "graph",
   "analysis",
   "rules",
@@ -52,6 +54,35 @@ const PROD_TABS = [
   "ask",
 ] as const;
 type ProdTab = (typeof PROD_TABS)[number];
+
+const SECTION_GROUPS: { heading: string; items: { id: ProdTab; label: string; icon: typeof LayoutDashboard }[] }[] = [
+  {
+    heading: "Runtime",
+    items: [
+      { id: "overview", label: "Overview", icon: LayoutDashboard },
+      { id: "messages", label: "Messages", icon: MessageSquareText },
+      { id: "logs", label: "Logs", icon: ScrollText },
+    ],
+  },
+  {
+    heading: "Design",
+    items: [
+      { id: "summary", label: "Summary", icon: FileText },
+      { id: "schematic", label: "Schematic", icon: Workflow },
+      { id: "graph", label: "Graph", icon: Share2 },
+    ],
+  },
+  {
+    heading: "Analysis",
+    items: [
+      { id: "analysis", label: "Analysis", icon: ClipboardList },
+      { id: "rules", label: "Rules & Transforms", icon: GitBranch },
+      { id: "bpl", label: "Processes", icon: Workflow },
+      { id: "explanations", label: "Explanations", icon: Lightbulb },
+      { id: "ask", label: "Ask AI", icon: Bot },
+    ],
+  },
+];
 
 export const Route = createFileRoute("/productions/$name")({
   validateSearch: (s: Record<string, unknown>) => {
