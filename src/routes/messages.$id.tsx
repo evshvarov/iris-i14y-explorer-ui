@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
-import type { MessageHeaderListResponse } from "@/lib/api-types";
+import type { MessageHeaderListResponse, ComponentListResponse } from "@/lib/api-types";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
+import { MarkdownContent } from "@/components/markdown-content";
 
 export const Route = createFileRoute("/messages/$id")({
   head: ({ params }) => ({ meta: [{ title: `Message #${params.id} — IRIS Explainer` }] }),
@@ -119,6 +120,23 @@ function MessageDetailPage() {
     },
   });
 
+  const componentsQuery = useQuery<ComponentListResponse>({
+    queryKey: ["production-components", productionName],
+    queryFn: () =>
+      apiFetch<ComponentListResponse>(
+        `/productions/${encodeURIComponent(productionName!)}/components`,
+      ),
+    enabled: !!productionName,
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+  const componentNames = useMemo(() => {
+    const items = componentsQuery.data?.items ?? componentsQuery.data?.components ?? [];
+    return items
+      .map((c) => (c as { name?: string }).name)
+      .filter((n): n is string => !!n);
+  }, [componentsQuery.data]);
+
 
   const m = detail.data?.message;
   const overview = trace.data?.traceOverview;
@@ -213,8 +231,8 @@ function MessageDetailPage() {
             <Meta label="Type" value={m.type ?? "—"} />
             <Meta label="Body class" value={m.messageBodyClassName ?? "—"} mono />
             <Meta label="Created" value={m.timeCreated ?? "—"} mono />
-            <Meta label="Source" value={m.sourceConfigName ?? "—"} mono />
-            <Meta label="Target" value={m.targetConfigName ?? "—"} mono />
+            <MetaLink label="Source" name={m.sourceConfigName} productionName={productionName} />
+            <MetaLink label="Target" name={m.targetConfigName} productionName={productionName} />
             <Meta label="Invocation" value={m.invocation ?? "—"} />
             <Meta label="Corresponds to" value={m.correspondingMessageId ? `#${m.correspondingMessageId}` : "—"} mono />
           </section>
@@ -264,14 +282,21 @@ function MessageDetailPage() {
               </div>
             </div>
             {explain.data.summary ? (
-              <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty mb-2">
+              <MarkdownContent
+                className="mb-2"
+                linkComponents={componentNames}
+                productionName={productionName}
+              >
                 {explain.data.summary}
-              </p>
+              </MarkdownContent>
             ) : null}
             {explain.data.explanation?.text ? (
-              <p className="text-sm text-foreground/80 whitespace-pre-wrap text-pretty">
+              <MarkdownContent
+                linkComponents={componentNames}
+                productionName={productionName}
+              >
                 {explain.data.explanation.text}
-              </p>
+              </MarkdownContent>
             ) : null}
           </section>
         ) : null}
@@ -296,9 +321,9 @@ function MessageDetailPage() {
                   />
 
                 </div>
-                <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+                <MarkdownContent linkComponents={componentNames} productionName={productionName}>
                   {trace.data.summary}
-                </p>
+                </MarkdownContent>
               </section>
             ) : null}
 
@@ -332,9 +357,9 @@ function MessageDetailPage() {
                   />
 
                 </div>
-                <p className="text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
+                <MarkdownContent linkComponents={componentNames} productionName={productionName}>
                   {explanation.text}
-                </p>
+                </MarkdownContent>
               </section>
             ) : null}
 
@@ -425,9 +450,14 @@ function MessageDetailPage() {
                         </div>
                       </div>
                       {s.explanation ? (
-                        <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap text-pretty">
-                          {s.explanation}
-                        </p>
+                        <div className="mt-3">
+                          <MarkdownContent
+                            linkComponents={componentNames}
+                            productionName={productionName}
+                          >
+                            {s.explanation}
+                          </MarkdownContent>
+                        </div>
                       ) : null}
                     </li>
                   ))}
@@ -512,6 +542,43 @@ function Meta({ label, value, mono }: { label: string; value: string; mono?: boo
       </div>
       <div className={`text-xs truncate ${mono ? "font-mono" : ""}`} title={value}>
         {value}
+      </div>
+    </div>
+  );
+}
+
+
+function MetaLink({
+  label,
+  name,
+  productionName,
+}: {
+  label: string;
+  name?: string;
+  productionName?: string;
+}) {
+  return (
+    <div className="p-3 bg-card ring-1 ring-black/5 rounded-lg">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+        {label}
+      </div>
+      <div className="text-xs font-mono truncate" title={name ?? "—"}>
+        {name ? (
+          productionName ? (
+            <Link
+              to="/productions/$name/components/$componentName"
+              params={{ name: productionName, componentName: name }}
+              className="underline-offset-2 hover:underline hover:text-iris-brand"
+              title={`Open component ${name}`}
+            >
+              {name}
+            </Link>
+          ) : (
+            name
+          )
+        ) : (
+          "—"
+        )}
       </div>
     </div>
   );
