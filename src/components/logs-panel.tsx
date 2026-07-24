@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AlertCircle, RefreshCw, Search, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { apiFetch } from "@/lib/api-config";
-import type { ProductionLogListResponse } from "@/lib/api-types";
+import type { ProductionLogListResponse, ProductionListResponse, ComponentListResponse } from "@/lib/api-types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { ConfidenceBadge } from "@/components/confidence-badge";
@@ -82,6 +82,41 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
     if (code && name) typeNameByCode.set(code, name);
   }
   const metrics = query.data?.metrics;
+  const responseProductionName = query.data?.productionName;
+
+  // Build a source → production lookup for logs where entries don't carry productionName.
+  // Only enabled when we don't already know the production (namespace-level logs view).
+  const enableLookup = !productionName && !responseProductionName;
+  const productionsQuery = useQuery<ProductionListResponse>({
+    queryKey: ["productions", "for-log-links"],
+    queryFn: () => apiFetch<ProductionListResponse>("/productions"),
+    enabled: enableLookup,
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+  const productionNames = (productionsQuery.data?.items ?? []).map((p) => p.name);
+  const componentQueries = useQueries({
+    queries: productionNames.map((name) => ({
+      queryKey: ["production-components", name],
+      queryFn: () =>
+        apiFetch<ComponentListResponse>(`/productions/${encodeURIComponent(name)}/components`),
+      enabled: enableLookup,
+      staleTime: 5 * 60 * 1000,
+      retry: 0,
+    })),
+  });
+  const sourceToProduction = useMemo(() => {
+    const map = new Map<string, string>();
+    componentQueries.forEach((q, i) => {
+      const prod = productionNames[i];
+      const items = q.data?.items ?? q.data?.components ?? [];
+      for (const c of items) {
+        const cname = (c as { name?: string }).name;
+        if (cname && !map.has(cname)) map.set(cname, prod);
+      }
+    });
+    return map;
+  }, [componentQueries, productionNames]);
 
   const filters = useMemo(
     () => [type, source, contains].filter((v) => v && v.length > 0),
@@ -255,13 +290,17 @@ export function LogsPanel({ productionName, title }: LogsPanelProps) {
                       <>
                         <span>·</span>
                         {(() => {
-                          const prod = productionName ?? e.productionName;
+                          const prod =
+                            productionName ??
+                            e.productionName ??
+                            responseProductionName ??
+                            sourceToProduction.get(e.source!);
                           return prod ? (
                             <Link
                               to="/productions/$name/components/$componentName"
-                              params={{ name: prod, componentName: e.source }}
+                              params={{ name: prod, componentName: e.source! }}
                               className="text-foreground/80 hover:text-foreground underline decoration-dotted underline-offset-2"
-                              title={`Open component ${e.source}`}
+                              title={`Open component ${e.source} in ${prod}`}
                             >
                               {e.source}
                             </Link>
