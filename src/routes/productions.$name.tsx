@@ -121,6 +121,18 @@ function ProductionDetailContent() {
   const activeTab: ProdTab = search.tab ?? "overview";
   const encoded = encodeURIComponent(name);
   const qc = useQueryClient();
+  const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("prod-nav-collapsed") !== "false";
+  });
+  const toggleNav = () => {
+    setNavCollapsed((v) => {
+      const next = !v;
+      try { window.localStorage.setItem("prod-nav-collapsed", String(next)); } catch { /* noop */ }
+      return next;
+    });
+  };
+
 
 
   const meta = useQuery<ProductionDetailResponse>({
