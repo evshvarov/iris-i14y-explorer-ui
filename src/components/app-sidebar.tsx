@@ -54,7 +54,7 @@ export function AppSidebar() {
   })();
 
   return (
-    <Sidebar className="border-r hidden md:flex">
+    <Sidebar collapsible="offcanvas" className="border-r">
       <SidebarContent className="py-3">
         <SidebarGroup>
           <SidebarGroupLabel className="text-[10.5px] font-semibold uppercase tracking-[0.7px] px-3 text-[color:var(--muted-foreground)]">

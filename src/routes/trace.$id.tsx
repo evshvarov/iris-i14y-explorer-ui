@@ -13,6 +13,8 @@ import type {
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+
 
 export const Route = createFileRoute("/trace/$id")({
   head: ({ params }) => ({
@@ -133,63 +135,70 @@ function TracePage() {
             No steps in this session.
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-4">
-            {/* LEFT: Session swim lanes */}
-            <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-black/5 bg-muted/40">
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Session {sessionId ?? "—"} · {steps.length} items
-                </div>
-                {productionName ? (
-                  <div className="text-[10px] font-mono text-muted-foreground truncate">
-                    {productionName}
-                  </div>
-                ) : null}
-              </div>
-              <SwimLanes
-                lanes={lanes}
-                steps={steps}
-                selectedId={String(selectedId)}
-                onSelect={(mid) => setSelectedId(String(mid))}
-              />
-            </section>
+          <ResizablePanelGroup
+            orientation="horizontal"
+            className="min-h-[500px] rounded-lg"
+          >
 
-            {/* RIGHT: message contents */}
-            <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden flex flex-col min-h-[500px]">
-              <div className="flex items-center gap-1 px-2 py-1 border-b border-black/5 bg-muted/40">
-                {(["header", "body", "contents"] as Tab[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`text-[11px] font-medium px-3 py-1.5 rounded ${
-                      tab === t
-                        ? "bg-card ring-1 ring-black/5 text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
-                ))}
-                <div className="ml-auto flex items-center gap-2">
-                  {selectedStep ? (
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      #{selectedStep.messageId} · seq {selectedStep.sequence ?? "—"}
-                    </span>
+            <ResizablePanel defaultSize={48} minSize={25}>
+              <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden h-full flex flex-col">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-black/5 bg-muted/40">
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Session {sessionId ?? "—"} · {steps.length} items
+                  </div>
+                  {productionName ? (
+                    <div className="text-[10px] font-mono text-muted-foreground truncate">
+                      {productionName}
+                    </div>
                   ) : null}
-                  <Link
-                    to="/messages/$id"
-                    params={{ id: String(selectedId) }}
-                    className="text-[10px] font-mono text-iris-brand hover:underline"
-                  >
-                    open detail →
-                  </Link>
                 </div>
-              </div>
-              <div className="flex-1 overflow-auto">
-                <MessageContentPanel messageId={String(selectedId)} tab={tab} step={selectedStep} />
-              </div>
-            </section>
-          </div>
+                <SwimLanes
+                  lanes={lanes}
+                  steps={steps}
+                  selectedId={String(selectedId)}
+                  onSelect={(mid) => setSelectedId(String(mid))}
+                />
+              </section>
+            </ResizablePanel>
+            <ResizableHandle withHandle className="mx-1 bg-transparent" />
+            <ResizablePanel defaultSize={52} minSize={25}>
+              <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden flex flex-col h-full">
+                <div className="flex items-center gap-1 px-2 py-1 border-b border-black/5 bg-muted/40">
+                  {(["header", "body", "contents"] as Tab[]).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTab(t)}
+                      className={`text-[11px] font-medium px-3 py-1.5 rounded ${
+                        tab === t
+                          ? "bg-card ring-1 ring-black/5 text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </button>
+                  ))}
+                  <div className="ml-auto flex items-center gap-2">
+                    {selectedStep ? (
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        #{selectedStep.messageId} · seq {selectedStep.sequence ?? "—"}
+                      </span>
+                    ) : null}
+                    <Link
+                      to="/messages/$id"
+                      params={{ id: String(selectedId) }}
+                      className="text-[10px] font-mono text-iris-brand hover:underline"
+                    >
+                      open detail →
+                    </Link>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-auto">
+                  <MessageContentPanel messageId={String(selectedId)} tab={tab} step={selectedStep} />
+                </div>
+              </section>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+
         )}
       </div>
     </>
