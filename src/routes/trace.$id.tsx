@@ -269,7 +269,7 @@ function TracePage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-auto">
-                  <MessageContentPanel messageId={String(selectedId)} tab={tab} step={selectedStep} />
+                  <MessageContentPanel messageId={String(selectedId)} productionName={productionName} tab={tab} step={selectedStep} />
                 </div>
               </section>
             </ResizablePanel>
