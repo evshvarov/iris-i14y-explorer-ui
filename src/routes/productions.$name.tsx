@@ -316,14 +316,19 @@ function ProductionDetailContent() {
                     return (
                       <li key={it.id}>
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            if (it.id === "messages") {
+                              navigate({ to: "/messages", search: { productionName: name } as never });
+                              return;
+                            }
                             navigate({
                               to: "/productions/$name",
                               params: { name },
                               search: { tab: it.id === "overview" ? undefined : it.id },
                               replace: true,
-                            })
-                          }
+                            });
+                          }}
+
                           title={navCollapsed ? `${group.heading} — ${it.label}` : undefined}
                           aria-label={it.label}
                           className={`w-full flex items-center ${navCollapsed ? "justify-center px-0 py-2" : "gap-2 px-2 py-1.5"} rounded-md text-[13px] transition-colors ${
