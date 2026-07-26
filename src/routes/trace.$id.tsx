@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -9,6 +9,8 @@ import type {
   MessagePayloadMetadataResponse,
   MessagePayloadPreviewResponse,
   MessageDetailResponse,
+  MessageFacetResponse,
+  MessageHeaderListResponse,
   TraceStep,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
@@ -44,6 +46,57 @@ function TracePage() {
   const steps = trace.data?.steps ?? [];
   const sessionId = trace.data?.sessionId;
   const productionName = trace.data?.productionName;
+
+  // Fetch session list for this production to enable prev/next session navigation
+  const facets = useQuery<MessageFacetResponse>({
+    queryKey: ["messages-facets", productionName, "trace-nav"],
+    queryFn: () =>
+      apiFetch<MessageFacetResponse>(
+        `/messages/facets?productionName=${encodeURIComponent(productionName!)}&limit=500`,
+      ),
+    enabled: !!productionName,
+    retry: 0,
+  });
+
+  const { prevSessionId, nextSessionId } = useMemo(() => {
+    const ids = (facets.data?.sessionIds ?? [])
+      .map((s) => String(s))
+      .filter(Boolean);
+    // sort numerically descending (newest first) so "Next" = older session
+    const sorted = [...new Set(ids)].sort((a, b) => Number(b) - Number(a));
+    const cur = String(sessionId ?? "");
+    const i = sorted.indexOf(cur);
+    if (i === -1) return { prevSessionId: undefined, nextSessionId: undefined };
+    return {
+      prevSessionId: i > 0 ? sorted[i - 1] : undefined,
+      nextSessionId: i < sorted.length - 1 ? sorted[i + 1] : undefined,
+    };
+  }, [facets.data?.sessionIds, sessionId]);
+
+  const prevSessionFirstMsg = useQuery<MessageHeaderListResponse>({
+    queryKey: ["session-first-msg", productionName, prevSessionId],
+    queryFn: () =>
+      apiFetch<MessageHeaderListResponse>(
+        `/messages?productionName=${encodeURIComponent(productionName!)}&sessionId=${encodeURIComponent(prevSessionId!)}&limit=1`,
+      ),
+    enabled: !!productionName && !!prevSessionId,
+    retry: 0,
+  });
+  const nextSessionFirstMsg = useQuery<MessageHeaderListResponse>({
+    queryKey: ["session-first-msg", productionName, nextSessionId],
+    queryFn: () =>
+      apiFetch<MessageHeaderListResponse>(
+        `/messages?productionName=${encodeURIComponent(productionName!)}&sessionId=${encodeURIComponent(nextSessionId!)}&limit=1`,
+      ),
+    enabled: !!productionName && !!nextSessionId,
+    retry: 0,
+  });
+
+  const goSession = (list?: MessageHeaderListResponse) => {
+    const mid = list?.items?.[0]?.messageId;
+    if (mid != null) navigate({ to: "/trace/$id", params: { id: String(mid) } });
+  };
+
 
   // Build swim lanes based on step.source & step.target participants
   const lanes = useMemo(() => {
@@ -83,6 +136,27 @@ function TracePage() {
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-md ring-1 ring-black/5 bg-card overflow-hidden">
               <button
+                onClick={() => goSession(prevSessionFirstMsg.data)}
+                disabled={!prevSessionId || !prevSessionFirstMsg.data?.items?.length}
+                className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                title={prevSessionId ? `Session #${prevSessionId}` : "No newer session"}
+              >
+                <SkipBack className="size-3.5" />
+                Prev session
+              </button>
+              <span className="w-px h-5 bg-black/5" />
+              <button
+                onClick={() => goSession(nextSessionFirstMsg.data)}
+                disabled={!nextSessionId || !nextSessionFirstMsg.data?.items?.length}
+                className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                title={nextSessionId ? `Session #${nextSessionId}` : "No older session"}
+              >
+                Next session
+                <SkipForward className="size-3.5" />
+              </button>
+            </div>
+            <div className="flex items-center rounded-md ring-1 ring-black/5 bg-card overflow-hidden">
+              <button
                 onClick={() => prevSelId && setSelectedId(prevSelId)}
                 disabled={!prevSelId}
                 className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
@@ -102,6 +176,7 @@ function TracePage() {
                 <ChevronRight className="size-3.5" />
               </button>
             </div>
+
             <Link
               to="/messages/$id"
               params={{ id }}
