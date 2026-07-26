@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer, GitPullRequestArrow, LayoutDashboard, FileText, Workflow, Share2, ClipboardList, GitBranch, Lightbulb, ScrollText, Bot, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { apiFetch } from "@/lib/api-config";
 import { MarkdownContent } from "@/components/markdown-content";
@@ -113,6 +113,15 @@ function ProductionDetailPage() {
   if (childMatches.length > 0) return <Outlet />;
   return <ProductionDetailContent />;
 }
+
+function MessagesTabRedirect({ name }: { name: string }) {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate({ to: "/messages", search: { productionName: name } as never, replace: true });
+  }, [name, navigate]);
+  return null;
+}
+
 
 function ProductionDetailContent() {
   const { name } = Route.useParams();
@@ -316,14 +325,19 @@ function ProductionDetailContent() {
                     return (
                       <li key={it.id}>
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            if (it.id === "messages") {
+                              navigate({ to: "/messages", search: { productionName: name } as never });
+                              return;
+                            }
                             navigate({
                               to: "/productions/$name",
                               params: { name },
                               search: { tab: it.id === "overview" ? undefined : it.id },
                               replace: true,
-                            })
-                          }
+                            });
+                          }}
+
                           title={navCollapsed ? `${group.heading} — ${it.label}` : undefined}
                           aria-label={it.label}
                           className={`w-full flex items-center ${navCollapsed ? "justify-center px-0 py-2" : "gap-2 px-2 py-1.5"} rounded-md text-[13px] transition-colors ${
@@ -532,26 +546,9 @@ function ProductionDetailContent() {
           ) : null}
 
           {activeTab === "messages" ? (
-            <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-black/5">
-                <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
-                  Runtime messages · {name}
-                </div>
-                <Link
-                  to="/messages"
-                  search={{ productionName: name } as never}
-                  className="text-[11px] text-iris-brand hover:underline"
-                >
-                  Open full explorer ↗
-                </Link>
-              </div>
-              <iframe
-                title={`Messages for ${name}`}
-                src={`/messages?productionName=${encodeURIComponent(name)}&embedded=1`}
-                className="w-full h-[calc(100vh-260px)] min-h-[520px] border-0 bg-background"
-              />
-            </div>
+            <MessagesTabRedirect name={name} />
           ) : null}
+
 
           {activeTab === "logs" ? <LogsPanel productionName={name} /> : null}
 
