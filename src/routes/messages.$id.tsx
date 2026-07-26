@@ -881,3 +881,102 @@ function ResendResultPanel({ data }: { data: MessageResendResponse }) {
   );
 }
 
+function RawPayloadPanel({
+  messageId,
+  productionName,
+}: {
+  messageId: string;
+  productionName?: string;
+}) {
+  const [format, setFormat] = useState<"xml" | "json">("xml");
+  const [copied, setCopied] = useState(false);
+  const raw = useQuery<MessagePayloadRawResponse>({
+    queryKey: ["message", messageId, "payload", "raw", format, productionName ?? ""],
+    queryFn: () => {
+      const base = productionName
+        ? `/productions/${encodeURIComponent(productionName)}/messages/${encodeURIComponent(messageId)}/payload/raw`
+        : `/messages/${encodeURIComponent(messageId)}/payload/raw`;
+      return apiFetch<MessagePayloadRawResponse>(`${base}?format=${format}`);
+    },
+    retry: 0,
+  });
+
+  const data = raw.data;
+  const body =
+    data?.bodyText ??
+    (data?.bodyJson !== undefined ? JSON.stringify(data.bodyJson, null, 2) : undefined);
+
+  const copy = async () => {
+    if (!body) return;
+    await navigator.clipboard.writeText(body);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-black/5 bg-muted/40">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+            Payload body
+          </h2>
+          {data?.resolvedMessageBodyClassName || data?.messageBodyClassName ? (
+            <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[360px]">
+              · {data.resolvedMessageBodyClassName || data.messageBodyClassName}
+            </span>
+          ) : null}
+          {data?.redacted ? (
+            <span className="text-[10px] font-mono text-amber-600">· redacted</span>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-1">
+          {(["xml", "json"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFormat(f)}
+              className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                format === f
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {f.toUpperCase()}
+            </button>
+          ))}
+          {body ? (
+            <button
+              onClick={copy}
+              className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground hover:text-foreground"
+            >
+              {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+              {copied ? "Copied" : "Copy"}
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {raw.isLoading ? (
+        <Skeleton className="m-4 h-40" />
+      ) : body ? (
+        <pre className="p-4 text-[11px] font-mono whitespace-pre-wrap break-words overflow-auto max-h-[560px]">
+{body}
+        </pre>
+      ) : data?.restricted ? (
+        <div className="p-4 text-[11px] font-mono text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 text-destructive">
+            <AlertCircle className="size-3.5" />
+            {data.restrictionReason || "PAYLOAD_BODY_RESTRICTED"}
+          </span>
+        </div>
+      ) : raw.error ? (
+        <div className="p-4 text-[11px] font-mono text-destructive">
+          {(raw.error as Error).message}
+        </div>
+      ) : (
+        <div className="p-4 text-[11px] font-mono text-muted-foreground">
+          No body returned for this message.
+        </div>
+      )}
+    </section>
+  );
+}
+
