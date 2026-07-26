@@ -150,7 +150,18 @@ function MessageDetailPage() {
         title={`#${id}`}
         status={
           m
-            ? { label: m.statusLabel ?? m.statusName ?? m.status ?? "unknown", tone: m.isError ? "inferred" : "confirmed" }
+            ? (() => {
+                const label = m.statusLabel ?? m.statusName ?? m.status ?? "unknown";
+                const up = String(label).toUpperCase();
+                const tone: "error" | "confirmed" | "inferred" | "observed" | "unknown" = m.isError || up === "ERROR" || up === "DISCARDED"
+                  ? "error"
+                  : up === "COMPLETED" || up === "OK"
+                    ? "confirmed"
+                    : up === "QUEUED" || up === "DELIVERED" || up === "SUSPENDED" || up === "PENDING"
+                      ? "inferred"
+                      : "observed";
+                return { label: String(label), tone };
+              })()
             : undefined
         }
         actions={
