@@ -21,6 +21,7 @@ import { ConfidenceBadge } from "@/components/confidence-badge";
 import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
 import { MarkdownContent } from "@/components/markdown-content";
+import { JsonView } from "@/components/json-view";
 
 export const Route = createFileRoute("/messages/$id")({
   head: ({ params }) => ({ meta: [{ title: `Message #${params.id} — IRIS Explainer` }] }),
@@ -957,9 +958,15 @@ function RawPayloadPanel({
       {raw.isLoading ? (
         <Skeleton className="m-4 h-40" />
       ) : body ? (
-        <pre className="p-4 text-[11px] font-mono whitespace-pre-wrap break-words overflow-auto max-h-[560px]">
+        <div className="p-4 overflow-auto max-h-[560px]">
+          {format === "json" ? (
+            <JsonView text={body} value={data?.bodyJson} />
+          ) : (
+            <pre className="text-[11px] font-mono whitespace-pre-wrap break-words">
 {body}
-        </pre>
+            </pre>
+          )}
+        </div>
       ) : data?.restricted ? (
         <div className="p-4 text-[11px] font-mono text-muted-foreground">
           <span className="inline-flex items-center gap-1.5 text-destructive">
