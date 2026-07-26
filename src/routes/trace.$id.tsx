@@ -535,27 +535,85 @@ function MessageContentPanel({
     );
   }
 
-  // contents
-  if (preview.isLoading) return <Skeleton className="m-3 h-60" />;
-  const data = preview.data;
-  if (!data) return <Empty label="No preview available." />;
-  if (data.restricted && (!data.fields || data.fields.length === 0)) {
+  // contents — prefer raw body from /payload/raw; fall back to preview fields
+  const rawData = raw.data;
+  const rawBody =
+    rawData?.bodyText ??
+    (rawData?.bodyJson !== undefined ? JSON.stringify(rawData.bodyJson, null, 2) : undefined);
+  const rawReady = !raw.isLoading && rawData && (rawBody || rawData.bodyContentReturned);
+
+  const FormatToggle = (
+    <div className="flex items-center gap-1">
+      {(["xml", "json"] as const).map((f) => (
+        <button
+          key={f}
+          onClick={() => setRawFormat(f)}
+          className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+            rawFormat === f
+              ? "bg-foreground text-background"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {f.toUpperCase()}
+        </button>
+      ))}
+      {rawBody ? (
+        <button
+          onClick={() => navigator.clipboard.writeText(rawBody)}
+          className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground hover:text-foreground"
+        >
+          Copy
+        </button>
+      ) : null}
+    </div>
+  );
+
+  if (raw.isLoading && preview.isLoading) return <Skeleton className="m-3 h-60" />;
+
+  if (rawReady && rawBody) {
+    const actualFormat = rawData?.format || rawFormat;
     return (
-      <div className="p-4 text-[11px] text-muted-foreground">
-        <div className="inline-flex items-center gap-1.5 text-destructive font-mono">
-          <AlertCircle className="size-3.5" />
-          {data.restrictionReason || "PAYLOAD_PREVIEW_REQUIRED"}
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-black/5 bg-muted/30">
+          <div className="text-[10px] font-mono text-muted-foreground truncate">
+            {rawData?.resolvedMessageBodyClassName || rawData?.messageBodyClassName || "—"}
+            {rawData?.redacted ? <span className="ml-2 text-amber-600">· redacted</span> : null}
+            <span className="ml-2">· {actualFormat}</span>
+          </div>
+          {FormatToggle}
         </div>
-        <p className="mt-2">
-          The backend only exposes redacted metadata/preview. Raw XML/JSON contents like the legacy
-          Visual Trace requires a new endpoint (e.g. <code>/messages/&#123;id&#125;/payload/raw</code>).
+        <pre className="flex-1 overflow-auto bg-muted/20 p-3 text-[11px] font-mono whitespace-pre-wrap break-words">
+{rawBody}
+        </pre>
+      </div>
+    );
+  }
+
+  // Raw not available — fall back to preview / restriction messaging
+  const data = preview.data;
+  const rawRestriction = rawData?.restricted ? rawData?.restrictionReason : undefined;
+  if (!data && !rawData) return <Empty label="No content available." />;
+  if ((rawData && !rawBody) || (data?.restricted && (!data.fields || data.fields.length === 0))) {
+    return (
+      <div className="p-4 text-[11px] text-muted-foreground space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-1.5 text-destructive font-mono">
+            <AlertCircle className="size-3.5" />
+            {rawRestriction || data?.restrictionReason || "PAYLOAD_CONTENT_UNAVAILABLE"}
+          </div>
+          {FormatToggle}
+        </div>
+        <p>
+          Raw payload body is not returned for this message. This can happen when the body class is
+          not persisted, or when payload inspection is disabled in Settings.
         </p>
       </div>
     );
   }
   return (
     <div className="p-3 space-y-3">
-      {data.fields && data.fields.length ? (
+      <div className="flex justify-end">{FormatToggle}</div>
+      {data?.fields && data.fields.length ? (
         <div className="rounded overflow-hidden ring-1 ring-black/5">
           <table className="w-full text-[11px] font-mono">
             <thead className="bg-muted/50">
@@ -585,17 +643,10 @@ function MessageContentPanel({
       ) : (
         <Empty label="No fields returned." />
       )}
-      <details className="text-[10.5px] font-mono">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-          Raw JSON
-        </summary>
-        <pre className="bg-muted/40 rounded p-2 overflow-auto max-h-[380px] mt-2">
-{JSON.stringify(data, null, 2)}
-        </pre>
-      </details>
     </div>
   );
 }
+
 
 function Kv({ k, v }: { k: string; v?: string | null }) {
   return (
