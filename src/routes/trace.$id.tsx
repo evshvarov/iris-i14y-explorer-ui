@@ -427,13 +427,16 @@ function shortName(cls?: string) {
 
 function MessageContentPanel({
   messageId,
+  productionName,
   tab,
   step,
 }: {
   messageId: string;
+  productionName?: string;
   tab: Tab;
   step?: TraceStep;
 }) {
+  const [rawFormat, setRawFormat] = useState<"xml" | "json">("xml");
   const detail = useQuery<MessageDetailResponse>({
     queryKey: ["message", messageId],
     queryFn: () => apiFetch<MessageDetailResponse>(`/messages/${encodeURIComponent(messageId)}`),
@@ -452,7 +455,20 @@ function MessageContentPanel({
         `/messages/${encodeURIComponent(messageId)}/payload/preview`,
       ),
     retry: 0,
+    enabled: tab === "contents",
   });
+  const raw = useQuery<MessagePayloadRawResponse>({
+    queryKey: ["message", messageId, "payload", "raw", rawFormat, productionName ?? ""],
+    queryFn: () => {
+      const base = productionName
+        ? `/productions/${encodeURIComponent(productionName)}/messages/${encodeURIComponent(messageId)}/payload/raw`
+        : `/messages/${encodeURIComponent(messageId)}/payload/raw`;
+      return apiFetch<MessagePayloadRawResponse>(`${base}?format=${rawFormat}`);
+    },
+    retry: 0,
+    enabled: tab === "contents",
+  });
+
 
   if (tab === "header") {
     const m = detail.data?.message ?? step;
