@@ -994,6 +994,32 @@ export type MessagePayloadPreviewResponse = {
   evidence?: Evidence[];
 };
 
+export type MessagePayloadRawResponse = {
+  namespace?: string;
+  messageId?: number;
+  productionName?: string;
+  message?: MessageHeader;
+  metadata?: PayloadMetadata;
+  messageBodyClassName?: string;
+  resolvedMessageBodyClassName?: string;
+  messageBodyId?: string;
+  bodyReferenceAvailable?: boolean;
+  payloadReturned?: boolean;
+  bodyContentReturned?: boolean;
+  runtimeMessageAnalysisEnabled?: boolean;
+  payloadInspectionEnabled?: boolean;
+  payloadInspectionSupported?: boolean;
+  format?: string;
+  requestedFormat?: string;
+  redacted?: boolean;
+  bodyText?: string;
+  bodyJson?: unknown;
+  restricted?: boolean;
+  restrictionReason?: string;
+  warnings?: Warning[];
+  evidence?: Evidence[];
+};
+
 export type MessageSessionSummaryResponse = {
   namespace?: string;
   productionName?: string;
