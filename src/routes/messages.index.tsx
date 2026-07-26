@@ -28,7 +28,7 @@ const searchSchema = z.object({
   dateFrom: toStr,
   dateTo: toStr,
   datePreset: toStr,
-  embedded: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true" || v === "1").optional(),
+  embedded: z.union([z.boolean(), z.string(), z.number()]).transform((v) => v === true || v === "true" || v === "1" || v === 1).optional(),
 });
 
 function statusTone(label?: unknown): "ok" | "warn" | "error" | "muted" {
