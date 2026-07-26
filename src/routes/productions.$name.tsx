@@ -114,6 +114,15 @@ function ProductionDetailPage() {
   return <ProductionDetailContent />;
 }
 
+function MessagesTabRedirect({ name }: { name: string }) {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate({ to: "/messages", search: { productionName: name } as never, replace: true });
+  }, [name, navigate]);
+  return null;
+}
+
+
 function ProductionDetailContent() {
   const { name } = Route.useParams();
   const search = Route.useSearch();
