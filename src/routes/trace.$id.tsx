@@ -136,6 +136,27 @@ function TracePage() {
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-md ring-1 ring-black/5 bg-card overflow-hidden">
               <button
+                onClick={() => goSession(prevSessionFirstMsg.data)}
+                disabled={!prevSessionId || !prevSessionFirstMsg.data?.items?.length}
+                className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                title={prevSessionId ? `Session #${prevSessionId}` : "No newer session"}
+              >
+                <SkipBack className="size-3.5" />
+                Prev session
+              </button>
+              <span className="w-px h-5 bg-black/5" />
+              <button
+                onClick={() => goSession(nextSessionFirstMsg.data)}
+                disabled={!nextSessionId || !nextSessionFirstMsg.data?.items?.length}
+                className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+                title={nextSessionId ? `Session #${nextSessionId}` : "No older session"}
+              >
+                Next session
+                <SkipForward className="size-3.5" />
+              </button>
+            </div>
+            <div className="flex items-center rounded-md ring-1 ring-black/5 bg-card overflow-hidden">
+              <button
                 onClick={() => prevSelId && setSelectedId(prevSelId)}
                 disabled={!prevSelId}
                 className="flex items-center gap-1 text-xs px-2.5 py-1.5 hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
@@ -155,6 +176,7 @@ function TracePage() {
                 <ChevronRight className="size-3.5" />
               </button>
             </div>
+
             <Link
               to="/messages/$id"
               params={{ id }}
