@@ -47,6 +47,57 @@ function TracePage() {
   const sessionId = trace.data?.sessionId;
   const productionName = trace.data?.productionName;
 
+  // Fetch session list for this production to enable prev/next session navigation
+  const facets = useQuery<MessageFacetResponse>({
+    queryKey: ["messages-facets", productionName, "trace-nav"],
+    queryFn: () =>
+      apiFetch<MessageFacetResponse>(
+        `/messages/facets?productionName=${encodeURIComponent(productionName!)}&limit=500`,
+      ),
+    enabled: !!productionName,
+    retry: 0,
+  });
+
+  const { prevSessionId, nextSessionId } = useMemo(() => {
+    const ids = (facets.data?.sessionIds ?? [])
+      .map((s) => String(s))
+      .filter(Boolean);
+    // sort numerically descending (newest first) so "Next" = older session
+    const sorted = [...new Set(ids)].sort((a, b) => Number(b) - Number(a));
+    const cur = String(sessionId ?? "");
+    const i = sorted.indexOf(cur);
+    if (i === -1) return { prevSessionId: undefined, nextSessionId: undefined };
+    return {
+      prevSessionId: i > 0 ? sorted[i - 1] : undefined,
+      nextSessionId: i < sorted.length - 1 ? sorted[i + 1] : undefined,
+    };
+  }, [facets.data?.sessionIds, sessionId]);
+
+  const prevSessionFirstMsg = useQuery<MessageHeaderListResponse>({
+    queryKey: ["session-first-msg", productionName, prevSessionId],
+    queryFn: () =>
+      apiFetch<MessageHeaderListResponse>(
+        `/messages?productionName=${encodeURIComponent(productionName!)}&sessionId=${encodeURIComponent(prevSessionId!)}&limit=1`,
+      ),
+    enabled: !!productionName && !!prevSessionId,
+    retry: 0,
+  });
+  const nextSessionFirstMsg = useQuery<MessageHeaderListResponse>({
+    queryKey: ["session-first-msg", productionName, nextSessionId],
+    queryFn: () =>
+      apiFetch<MessageHeaderListResponse>(
+        `/messages?productionName=${encodeURIComponent(productionName!)}&sessionId=${encodeURIComponent(nextSessionId!)}&limit=1`,
+      ),
+    enabled: !!productionName && !!nextSessionId,
+    retry: 0,
+  });
+
+  const goSession = (list?: MessageHeaderListResponse) => {
+    const mid = list?.items?.[0]?.messageId;
+    if (mid != null) navigate({ to: "/trace/$id", params: { id: String(mid) } });
+  };
+
+
   // Build swim lanes based on step.source & step.target participants
   const lanes = useMemo(() => {
     const order: string[] = [];
