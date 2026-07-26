@@ -537,26 +537,9 @@ function ProductionDetailContent() {
           ) : null}
 
           {activeTab === "messages" ? (
-            <div className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-black/5">
-                <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
-                  Runtime messages · {name}
-                </div>
-                <Link
-                  to="/messages"
-                  search={{ productionName: name } as never}
-                  className="text-[11px] text-iris-brand hover:underline"
-                >
-                  Open full explorer ↗
-                </Link>
-              </div>
-              <iframe
-                title={`Messages for ${name}`}
-                src={`/messages?productionName=${encodeURIComponent(name)}&embedded=1`}
-                className="w-full h-[calc(100vh-260px)] min-h-[520px] border-0 bg-background"
-              />
-            </div>
+            <MessagesTabRedirect name={name} />
           ) : null}
+
 
           {activeTab === "logs" ? <LogsPanel productionName={name} /> : null}
 
