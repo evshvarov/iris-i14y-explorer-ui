@@ -437,7 +437,7 @@ function MessageContentPanel({
   tab: Tab;
   step?: TraceStep;
 }) {
-  const [rawFormat, setRawFormat] = useState<"xml" | "json">("xml");
+  const [rawFormat, setRawFormat] = useState<"xml" | "json">("json");
   const detail = useQuery<MessageDetailResponse>({
     queryKey: ["message", messageId],
     queryFn: () => apiFetch<MessageDetailResponse>(`/messages/${encodeURIComponent(messageId)}`),
