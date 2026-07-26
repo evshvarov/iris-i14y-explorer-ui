@@ -136,10 +136,10 @@ function TracePage() {
           </div>
         ) : (
           <ResizablePanelGroup
-            direction="horizontal"
+            orientation="horizontal"
             className="min-h-[500px] rounded-lg"
-            autoSaveId="trace-split"
           >
+
             <ResizablePanel defaultSize={48} minSize={25}>
               <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden h-full flex flex-col">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-black/5 bg-muted/40">
