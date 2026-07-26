@@ -269,6 +269,9 @@ function MessageDetailPage() {
         {/* Payload scalar preview */}
         {preview.data ? <PayloadPreviewPanel data={preview.data} /> : null}
 
+        {/* Raw payload body (XML/JSON) */}
+        <RawPayloadPanel messageId={id} productionName={productionName} />
+
         {/* Resend result */}
         {resend.data ? <ResendResultPanel data={resend.data} /> : null}
         {resend.error ? (
