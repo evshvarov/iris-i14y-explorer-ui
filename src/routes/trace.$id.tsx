@@ -17,6 +17,7 @@ import type {
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { JsonView } from "@/components/json-view";
 
 
 export const Route = createFileRoute("/trace/$id")({
@@ -582,9 +583,15 @@ function MessageContentPanel({
           </div>
           {FormatToggle}
         </div>
-        <pre className="flex-1 overflow-auto bg-muted/20 p-3 text-[11px] font-mono whitespace-pre-wrap break-words">
+        <div className="flex-1 overflow-auto bg-muted/20 p-3">
+          {actualFormat === "json" ? (
+            <JsonView text={rawBody} value={rawData?.bodyJson} />
+          ) : (
+            <pre className="text-[11px] font-mono whitespace-pre-wrap break-words">
 {rawBody}
-        </pre>
+            </pre>
+          )}
+        </div>
       </div>
     );
   }
