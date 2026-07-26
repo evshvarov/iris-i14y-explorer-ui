@@ -199,6 +199,15 @@ function MessageDetailPage() {
                 </span>
               )}
             </div>
+            <Link
+              to="/trace/$id"
+              params={{ id }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+              title="Open visual trace for this session"
+            >
+              <GitBranch className="size-3.5" />
+              Visual trace
+            </Link>
             {productionName ? (
               <button
                 onClick={() => resend.mutate()}
