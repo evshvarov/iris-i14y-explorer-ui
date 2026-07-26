@@ -10,6 +10,7 @@ import type {
   MessageTraceResponse,
   MessagePayloadMetadataResponse,
   MessagePayloadPreviewResponse,
+  MessagePayloadRawResponse,
   MessageExplanationResponse,
   MessageSessionSummaryResponse,
   MessageResendResponse,
