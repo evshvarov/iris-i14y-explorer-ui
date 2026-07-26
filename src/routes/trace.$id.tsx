@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { JsonView } from "@/components/json-view";
+import { XmlView } from "@/components/xml-view";
 
 
 export const Route = createFileRoute("/trace/$id")({
@@ -587,9 +588,7 @@ function MessageContentPanel({
           {actualFormat === "json" ? (
             <JsonView text={rawBody} value={rawData?.bodyJson} />
           ) : (
-            <pre className="text-[11px] font-mono whitespace-pre-wrap break-words">
-{rawBody}
-            </pre>
+            <XmlView text={rawBody ?? ""} />
           )}
         </div>
       </div>

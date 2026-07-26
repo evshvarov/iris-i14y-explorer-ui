@@ -22,6 +22,7 @@ import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
 import { MarkdownContent } from "@/components/markdown-content";
 import { JsonView } from "@/components/json-view";
+import { XmlView } from "@/components/xml-view";
 
 export const Route = createFileRoute("/messages/$id")({
   head: ({ params }) => ({ meta: [{ title: `Message #${params.id} — IRIS Explainer` }] }),
@@ -962,9 +963,7 @@ function RawPayloadPanel({
           {format === "json" ? (
             <JsonView text={body} value={data?.bodyJson} />
           ) : (
-            <pre className="text-[11px] font-mono whitespace-pre-wrap break-words">
-{body}
-            </pre>
+            <XmlView text={body} />
           )}
         </div>
       ) : data?.restricted ? (
