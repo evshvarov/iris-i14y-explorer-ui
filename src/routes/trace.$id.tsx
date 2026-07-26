@@ -13,6 +13,8 @@ import type {
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+
 
 export const Route = createFileRoute("/trace/$id")({
   head: ({ params }) => ({
