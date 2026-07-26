@@ -21,6 +21,7 @@ import { ConfidenceBadge } from "@/components/confidence-badge";
 import { EvidencePopover } from "@/components/evidence-popover";
 import { EvidenceChips, MetricChip, MetricChips } from "@/components/summary-bits";
 import { MarkdownContent } from "@/components/markdown-content";
+import { JsonView } from "@/components/json-view";
 
 export const Route = createFileRoute("/messages/$id")({
   head: ({ params }) => ({ meta: [{ title: `Message #${params.id} — IRIS Explainer` }] }),
