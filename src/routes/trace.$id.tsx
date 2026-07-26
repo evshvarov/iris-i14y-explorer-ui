@@ -8,6 +8,7 @@ import type {
   MessageTraceResponse,
   MessagePayloadMetadataResponse,
   MessagePayloadPreviewResponse,
+  MessagePayloadRawResponse,
   MessageDetailResponse,
   MessageFacetResponse,
   MessageHeaderListResponse,
