@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -9,6 +9,8 @@ import type {
   MessagePayloadMetadataResponse,
   MessagePayloadPreviewResponse,
   MessageDetailResponse,
+  MessageFacetResponse,
+  MessageHeaderListResponse,
   TraceStep,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
