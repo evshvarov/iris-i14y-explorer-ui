@@ -159,7 +159,7 @@ function TopBar() {
       style={{ backgroundColor: "var(--iris-navy)" }}
     >
       <div className="flex items-center gap-3 min-w-0">
-        <SidebarTrigger className="md:hidden text-white/80 hover:text-white" />
+        <SidebarTrigger className="text-white/80 hover:text-white hover:bg-white/10" />
         <div
           className="size-[26px] rounded-md flex items-center justify-center text-[10px] font-mono font-semibold text-white shrink-0"
           style={{ backgroundColor: "var(--iris-brand)" }}
