@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
+import { ArrowLeft, AlertCircle, Lock, Send, EyeOff, ChevronLeft, ChevronRight, Copy, Check, GitBranch } from "lucide-react";
 import type { MessageHeaderListResponse, ComponentListResponse } from "@/lib/api-types";
 
 import { apiFetch } from "@/lib/api-config";
@@ -199,6 +199,15 @@ function MessageDetailPage() {
                 </span>
               )}
             </div>
+            <Link
+              to="/trace/$id"
+              params={{ id }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted"
+              title="Open visual trace for this session"
+            >
+              <GitBranch className="size-3.5" />
+              Visual trace
+            </Link>
             {productionName ? (
               <button
                 onClick={() => resend.mutate()}
