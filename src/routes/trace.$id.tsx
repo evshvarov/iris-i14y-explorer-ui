@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward, Sparkles, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, AlertCircle, SkipBack, SkipForward, Sparkles, RefreshCw } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
