@@ -38,6 +38,7 @@ function TracePage() {
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string>(id);
   const [tab, setTab] = useState<Tab>("contents");
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   useEffect(() => {
     setSelectedId(id);
