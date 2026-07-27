@@ -218,14 +218,28 @@ function TracePage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <TraceSummarySection trace={trace.data} />
-            {productionName ? (
-              <TraceAISummary
-                productionName={productionName}
-                sessionId={sessionId}
-                messageId={id}
-                trace={trace.data}
-              />
+            <div>
+              <button
+                type="button"
+                onClick={() => setSummaryOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-md ring-1 ring-black/10 bg-card hover:bg-muted px-2.5 py-1 text-[11px] font-semibold text-foreground/80"
+              >
+                {summaryOpen ? <ChevronDown className="size-3.5" /> : <ChevronRightIcon className="size-3.5" />}
+                {summaryOpen ? "Hide trace summary" : "Show trace summary"}
+              </button>
+            </div>
+            {summaryOpen ? (
+              <>
+                <TraceSummarySection trace={trace.data} />
+                {productionName ? (
+                  <TraceAISummary
+                    productionName={productionName}
+                    sessionId={sessionId}
+                    messageId={id}
+                    trace={trace.data}
+                  />
+                ) : null}
+              </>
             ) : null}
             <ResizablePanelGroup
               orientation="horizontal"
