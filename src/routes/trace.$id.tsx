@@ -224,7 +224,7 @@ function TracePage() {
                 onClick={() => setSummaryOpen((v) => !v)}
                 className="inline-flex items-center gap-1.5 rounded-md ring-1 ring-black/10 bg-card hover:bg-muted px-2.5 py-1 text-[11px] font-semibold text-foreground/80"
               >
-                {summaryOpen ? <ChevronDown className="size-3.5" /> : <ChevronRightIcon className="size-3.5" />}
+                {summaryOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 {summaryOpen ? "Hide trace summary" : "Show trace summary"}
               </button>
             </div>
