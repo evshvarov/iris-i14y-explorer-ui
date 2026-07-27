@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward, Sparkles, RefreshCw } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -12,6 +12,7 @@ import type {
   MessageDetailResponse,
   MessageFacetResponse,
   MessageHeaderListResponse,
+  ProductionAIAskResponse,
   TraceStep,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
@@ -19,6 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { JsonView } from "@/components/json-view";
 import { XmlView } from "@/components/xml-view";
+import { MarkdownContent } from "@/components/markdown-content";
+import { EvidencePopover } from "@/components/evidence-popover";
 
 
 export const Route = createFileRoute("/trace/$id")({
@@ -213,70 +216,80 @@ function TracePage() {
             No steps in this session.
           </div>
         ) : (
-          <ResizablePanelGroup
-            orientation="horizontal"
-            className="min-h-[500px] rounded-lg"
-          >
+          <div className="space-y-4">
+            <TraceSummarySection trace={trace.data} />
+            {productionName ? (
+              <TraceAISummary
+                productionName={productionName}
+                sessionId={sessionId}
+                messageId={id}
+                trace={trace.data}
+              />
+            ) : null}
+            <ResizablePanelGroup
+              orientation="horizontal"
+              className="min-h-[500px] rounded-lg"
+            >
 
-            <ResizablePanel defaultSize={48} minSize={25}>
-              <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-black/5 bg-muted/40">
-                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                    Session {sessionId ?? "—"} · {steps.length} items
-                  </div>
-                  {productionName ? (
-                    <div className="text-[10px] font-mono text-muted-foreground truncate">
-                      {productionName}
+              <ResizablePanel defaultSize={48} minSize={25}>
+                <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden h-full flex flex-col">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-black/5 bg-muted/40">
+                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                      Session {sessionId ?? "—"} · {steps.length} items
                     </div>
-                  ) : null}
-                </div>
-                <SwimLanes
-                  lanes={lanes}
-                  steps={steps}
-                  selectedId={String(selectedId)}
-                  onSelect={(mid) => setSelectedId(String(mid))}
-                />
-              </section>
-            </ResizablePanel>
-            <ResizableHandle withHandle className="mx-1 bg-transparent" />
-            <ResizablePanel defaultSize={52} minSize={25}>
-              <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden flex flex-col h-full">
-                <div className="flex items-center gap-1 px-2 py-1 border-b border-black/5 bg-muted/40">
-                  {(["header", "body", "contents"] as Tab[]).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTab(t)}
-                      className={`text-[11px] font-medium px-3 py-1.5 rounded ${
-                        tab === t
-                          ? "bg-card ring-1 ring-black/5 text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </button>
-                  ))}
-                  <div className="ml-auto flex items-center gap-2">
-                    {selectedStep ? (
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        #{selectedStep.messageId} · seq {selectedStep.sequence ?? "—"}
-                      </span>
+                    {productionName ? (
+                      <div className="text-[10px] font-mono text-muted-foreground truncate">
+                        {productionName}
+                      </div>
                     ) : null}
-                    <Link
-                      to="/messages/$id"
-                      params={{ id: String(selectedId) }}
-                      className="text-[10px] font-mono text-iris-brand hover:underline"
-                    >
-                      open detail →
-                    </Link>
                   </div>
-                </div>
-                <div className="flex-1 overflow-auto">
-                  <MessageContentPanel messageId={String(selectedId)} productionName={productionName} tab={tab} step={selectedStep} />
-                </div>
-              </section>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-
+                  <SwimLanes
+                    lanes={lanes}
+                    steps={steps}
+                    selectedId={String(selectedId)}
+                    onSelect={(mid) => setSelectedId(String(mid))}
+                  />
+                </section>
+              </ResizablePanel>
+              <ResizableHandle withHandle className="mx-1 bg-transparent" />
+              <ResizablePanel defaultSize={52} minSize={25}>
+                <section className="bg-card ring-1 ring-black/5 rounded-lg overflow-hidden flex flex-col h-full">
+                  <div className="flex items-center gap-1 px-2 py-1 border-b border-black/5 bg-muted/40">
+                    {(["header", "body", "contents"] as Tab[]).map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setTab(t)}
+                        className={`text-[11px] font-medium px-3 py-1.5 rounded ${
+                          tab === t
+                            ? "bg-card ring-1 ring-black/5 text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                      </button>
+                    ))}
+                    <div className="ml-auto flex items-center gap-2">
+                      {selectedStep ? (
+                        <span className="text-[10px] font-mono text-muted-foreground">
+                          #{selectedStep.messageId} · seq {selectedStep.sequence ?? "—"}
+                        </span>
+                      ) : null}
+                      <Link
+                        to="/messages/$id"
+                        params={{ id: String(selectedId) }}
+                        className="text-[10px] font-mono text-iris-brand hover:underline"
+                      >
+                        open detail →
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    <MessageContentPanel messageId={String(selectedId)} productionName={productionName} tab={tab} step={selectedStep} />
+                  </div>
+                </section>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
         )}
       </div>
     </>
@@ -670,3 +683,185 @@ function Empty({ label }: { label: string }) {
     </div>
   );
 }
+
+function TraceSummarySection({ trace }: { trace?: MessageTraceResponse }) {
+  if (!trace) return null;
+  const overview = trace.traceOverview;
+  const explanation = trace.traceExplanation;
+  const steps = trace.steps ?? [];
+  const hasAny =
+    trace.summary || overview || explanation?.text || (trace.warnings?.length ?? 0) > 0;
+  if (!hasAny) return null;
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          Trace summary
+        </h2>
+        <EvidencePopover
+          confidence={trace.confidence}
+          evidence={trace.evidence}
+          label="trace summary"
+        />
+      </div>
+      {trace.summary ? (
+        <MarkdownContent>{trace.summary}</MarkdownContent>
+      ) : null}
+      {overview ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+          <SummaryMeta label="Steps" value={String(overview.stepCount ?? steps.length)} />
+          <SummaryMeta label="Errors" value={String(overview.errorCount ?? 0)} />
+          <SummaryMeta label="Origin" value={overview.origin ?? "—"} mono />
+          <SummaryMeta label="Final target" value={overview.finalTarget ?? "—"} mono />
+          <SummaryMeta label="First seen" value={overview.firstSeen ?? "—"} mono />
+          <SummaryMeta label="Last seen" value={overview.lastSeen ?? "—"} mono />
+          <SummaryMeta label="Path" value={overview.path ?? "—"} mono />
+          <SummaryMeta
+            label="Participants"
+            value={overview.participants?.join(", ") || "—"}
+            mono
+          />
+        </div>
+      ) : null}
+      {explanation?.text ? (
+        <div className="border-l-2 border-iris-brand pl-3">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              Deterministic explanation
+            </h3>
+            <EvidencePopover
+              confidence={explanation.confidence}
+              evidence={explanation.evidence}
+              label="trace explanation"
+            />
+          </div>
+          <MarkdownContent>{explanation.text}</MarkdownContent>
+        </div>
+      ) : null}
+      {trace.warnings && trace.warnings.length > 0 ? (
+        <ul className="space-y-1">
+          {trace.warnings.map((w, i) => (
+            <li key={i} className="text-[11px] font-mono text-status-inferred">
+              [{w.code}] {w.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+function SummaryMeta({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="bg-muted/40 rounded p-2">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
+      <div className={`mt-0.5 truncate ${mono ? "font-mono text-[11px]" : "text-[12px]"}`} title={value}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function TraceAISummary({
+  productionName,
+  sessionId,
+  messageId,
+  trace,
+}: {
+  productionName: string;
+  sessionId?: number | string;
+  messageId: string;
+  trace?: MessageTraceResponse;
+}) {
+  const [result, setResult] = useState<ProductionAIAskResponse | null>(null);
+  const encoded = encodeURIComponent(productionName);
+
+  const defaultQuestion = useMemo(() => {
+    const sid = sessionId ?? "?";
+    const steps = trace?.steps?.length ?? trace?.traceOverview?.stepCount ?? 0;
+    const errs = trace?.traceOverview?.errorCount ?? 0;
+    const parts = trace?.traceOverview?.participants?.join(", ") ?? "";
+    return `Summarize session #${sid} (message #${messageId}) in this production: what happened across the ${steps} step(s), which components participated${parts ? ` (${parts})` : ""}, any errors (${errs}), and the likely intent. Keep it concise.`;
+  }, [sessionId, messageId, trace]);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      apiFetch<ProductionAIAskResponse>(`/productions/${encoded}/ai/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: defaultQuestion, maxChunks: 8 }),
+      }),
+    onSuccess: (r) => setResult(r),
+  });
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="size-7 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center shrink-0">
+            <Sparkles className="size-3.5" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-[12px] font-semibold">AI summary</h2>
+            <p className="text-[10.5px] text-muted-foreground truncate">
+              Ask the production RAG to summarize this session.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {result ? (
+            <button
+              onClick={() => setResult(null)}
+              className="text-[11px] font-mono text-muted-foreground hover:text-foreground rounded ring-1 ring-black/10 px-2 py-1"
+            >
+              Clear
+            </button>
+          ) : null}
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md bg-iris-brand text-white px-3 py-1.5 hover:bg-iris-brand/90 disabled:opacity-50"
+          >
+            {mutation.isPending ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            {mutation.isPending ? "Generating…" : result ? "Regenerate" : "Generate AI summary"}
+          </button>
+        </div>
+      </div>
+
+      {mutation.error ? (
+        <div className="text-[11px] font-mono text-destructive mt-3">
+          {(mutation.error as Error).message}
+        </div>
+      ) : null}
+
+      {result ? (
+        <div className="mt-4 space-y-2 border-t border-black/5 pt-3">
+          {result.warnings?.length ? (
+            <div className="text-[11px] font-mono text-status-inferred">
+              {result.warnings.map((w, i) => (
+                <div key={i}>[{w.code}] {w.message}</div>
+              ))}
+            </div>
+          ) : null}
+          {result.answer ? (
+            <MarkdownContent>{result.answer}</MarkdownContent>
+          ) : (
+            <div className="text-[11px] text-muted-foreground italic">No answer returned.</div>
+          )}
+          <div className="text-[10px] font-mono text-muted-foreground pt-1">
+            {result.generated ? "AI-generated" : "Deterministic fallback"}
+            {result.model ? ` · ${result.model}` : ""}
+            {typeof result.chunkCount === "number" ? ` · ${result.chunkCount} chunks` : ""}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+

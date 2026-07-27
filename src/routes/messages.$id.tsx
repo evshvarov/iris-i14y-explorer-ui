@@ -142,9 +142,6 @@ function MessageDetailPage() {
 
 
   const m = detail.data?.message;
-  const overview = trace.data?.traceOverview;
-  const explanation = trace.data?.traceExplanation;
-  const steps = trace.data?.steps ?? [];
 
   return (
     <>
@@ -285,7 +282,6 @@ function MessageDetailPage() {
 
 
 
-
         {/* Standalone deterministic explanation */}
         {explain.data?.explanation?.text || explain.data?.summary ? (
           <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 border-l-2 border-iris-brand">
@@ -304,7 +300,6 @@ function MessageDetailPage() {
                   evidence={explain.data.evidence ?? explain.data.explanation?.evidence}
                   label="message explanation"
                 />
-
               </div>
             </div>
             {explain.data.summary ? (
@@ -327,188 +322,17 @@ function MessageDetailPage() {
           </section>
         ) : null}
 
-        {/* Summary + trace explanation */}
-        {trace.isLoading ? (
-          <Skeleton className="h-32 rounded-lg" />
-        ) : trace.error ? (
-          <ErrorPanel error={trace.error as Error} label="trace" />
-        ) : (
-          <>
-            {trace.data?.summary ? (
-              <section className="bg-card ring-1 ring-black/5 rounded-lg p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                    Trace summary
-                  </h2>
-                  <EvidencePopover
-                    confidence={trace.data.confidence}
-                    evidence={trace.data.evidence}
-                    label="trace summary"
-                  />
-
-                </div>
-                <MarkdownContent linkComponents={componentNames} productionName={productionName}>
-                  {trace.data.summary}
-                </MarkdownContent>
-              </section>
-            ) : null}
-
-            {overview ? (
-              <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Meta label="Steps" value={String(overview.stepCount ?? steps.length)} />
-                <Meta label="Errors" value={String(overview.errorCount ?? 0)} />
-                <Meta label="Origin" value={overview.origin ?? "—"} mono />
-                <Meta label="Final target" value={overview.finalTarget ?? "—"} mono />
-                <Meta label="First seen" value={overview.firstSeen ?? "—"} mono />
-                <Meta label="Last seen" value={overview.lastSeen ?? "—"} mono />
-                <Meta label="Path" value={overview.path ?? "—"} mono />
-                <Meta
-                  label="Participants"
-                  value={overview.participants?.join(", ") || "—"}
-                  mono
-                />
-              </section>
-            ) : null}
-
-            {explanation?.text ? (
-              <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 border-l-2 border-iris-brand">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                    Deterministic explanation
-                  </h2>
-                  <EvidencePopover
-                    confidence={explanation.confidence}
-                    evidence={explanation.evidence}
-                    label="trace explanation"
-                  />
-
-                </div>
-                <MarkdownContent linkComponents={componentNames} productionName={productionName}>
-                  {explanation.text}
-                </MarkdownContent>
-              </section>
-            ) : null}
-
-            {/* Step timeline */}
-            <section>
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Steps ({steps.length})
-                </h2>
-                {trace.data?.metrics ? (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <MetricChips>
-                      <MetricChip
-                        label="Steps"
-                        value={trace.data.metrics.stepCount ?? steps.length}
-                        tone="brand"
-                      />
-                      {(trace.data.metrics.warningCount ?? 0) > 0 ? (
-                        <MetricChip
-                          label="Warnings"
-                          value={trace.data.metrics.warningCount!}
-                          tone="error"
-                        />
-                      ) : null}
-                    </MetricChips>
-                    <EvidenceChips m={trace.data.metrics} />
-                  </div>
-                ) : null}
-              </div>
-              {steps.length === 0 ? (
-                <div className="text-[11px] text-muted-foreground font-mono border border-dashed rounded-lg p-4">
-                  No trace steps reconstructed.
-                </div>
-              ) : (
-                <ol className="space-y-3">
-                  {steps.map((s, i) => (
-                    <li
-                      key={i}
-                      className={`bg-card ring-1 ring-black/5 rounded-lg p-4 relative ${
-                        s.isError ? "border-l-2 border-destructive" : "border-l-2 border-status-observed"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-[10px] font-mono bg-muted rounded px-1.5 py-0.5 text-muted-foreground uppercase">
-                          #{s.sequence ?? i + 1}
-                        </span>
-                        <span className="text-[11px] font-mono truncate flex-1 flex items-center gap-1.5">
-                          <ComponentLink name={s.source} productionName={productionName} />
-                          <span className="text-muted-foreground">→</span>
-                          <ComponentLink name={s.target} productionName={productionName} />
-                        </span>
-                        {s.isError ? (
-                          <span className="flex items-center gap-1 text-[10px] font-mono uppercase text-destructive">
-                            <AlertCircle className="size-3" />
-                            {s.statusLabel ?? s.statusName ?? s.status}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-mono uppercase text-muted-foreground bg-muted rounded px-1.5 py-0.5">
-                            {s.statusLabel ?? s.statusName ?? s.status ?? "ok"}
-                          </span>
-                        )}
-                        <EvidencePopover
-                          confidence={s.confidence}
-                          evidence={s.evidence}
-                          label={`step #${s.sequence ?? i + 1}`}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px] font-mono text-muted-foreground">
-                        <div>
-                          {s.messageId ? (
-                            <Link
-                              to="/messages/$id"
-                              params={{ id: String(s.messageId) }}
-                              className="hover:text-foreground underline-offset-2 hover:underline"
-                            >
-                              msg #{s.messageId}
-                            </Link>
-                          ) : (
-                            <>msg —</>
-                          )}
-                        </div>
-                        <div>{s.invocation ?? "—"}</div>
-                        <div className="truncate col-span-2">
-                          <BodyClassLink
-                            className={s.messageBodyClassName}
-                            productionName={productionName}
-                          />
-                        </div>
-                      </div>
-                      {s.explanation ? (
-                        <div className="mt-3">
-                          <MarkdownContent
-                            linkComponents={componentNames}
-                            productionName={productionName}
-                          >
-                            {s.explanation}
-                          </MarkdownContent>
-                        </div>
-                      ) : null}
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-
-
-
-            {trace.data?.warnings && trace.data.warnings.length > 0 ? (
-              <section>
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
-                  Warnings
-                </h3>
-                <ul className="space-y-1">
-                  {trace.data.warnings.map((w, i) => (
-                    <li key={i} className="text-[11px] font-mono text-status-inferred">
-                      [{w.code}] {w.message}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-          </>
-        )}
+        <div className="text-[11px] text-muted-foreground border border-dashed rounded-lg p-3">
+          Looking for the trace timeline, participants, and step-by-step explanation? Open the{" "}
+          <Link
+            to="/trace/$id"
+            params={{ id }}
+            className="text-iris-brand hover:underline font-medium"
+          >
+            Visual trace
+          </Link>{" "}
+          for this session.
+        </div>
       </div>
     </>
   );
