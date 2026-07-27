@@ -683,3 +683,185 @@ function Empty({ label }: { label: string }) {
     </div>
   );
 }
+
+function TraceSummarySection({ trace }: { trace?: MessageTraceResponse }) {
+  if (!trace) return null;
+  const overview = trace.traceOverview;
+  const explanation = trace.traceExplanation;
+  const steps = trace.steps ?? [];
+  const hasAny =
+    trace.summary || overview || explanation?.text || (trace.warnings?.length ?? 0) > 0;
+  if (!hasAny) return null;
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          Trace summary
+        </h2>
+        <EvidencePopover
+          confidence={trace.confidence}
+          evidence={trace.evidence}
+          label="trace summary"
+        />
+      </div>
+      {trace.summary ? (
+        <MarkdownContent>{trace.summary}</MarkdownContent>
+      ) : null}
+      {overview ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+          <SummaryMeta label="Steps" value={String(overview.stepCount ?? steps.length)} />
+          <SummaryMeta label="Errors" value={String(overview.errorCount ?? 0)} />
+          <SummaryMeta label="Origin" value={overview.origin ?? "—"} mono />
+          <SummaryMeta label="Final target" value={overview.finalTarget ?? "—"} mono />
+          <SummaryMeta label="First seen" value={overview.firstSeen ?? "—"} mono />
+          <SummaryMeta label="Last seen" value={overview.lastSeen ?? "—"} mono />
+          <SummaryMeta label="Path" value={overview.path ?? "—"} mono />
+          <SummaryMeta
+            label="Participants"
+            value={overview.participants?.join(", ") || "—"}
+            mono
+          />
+        </div>
+      ) : null}
+      {explanation?.text ? (
+        <div className="border-l-2 border-iris-brand pl-3">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              Deterministic explanation
+            </h3>
+            <EvidencePopover
+              confidence={explanation.confidence}
+              evidence={explanation.evidence}
+              label="trace explanation"
+            />
+          </div>
+          <MarkdownContent>{explanation.text}</MarkdownContent>
+        </div>
+      ) : null}
+      {trace.warnings && trace.warnings.length > 0 ? (
+        <ul className="space-y-1">
+          {trace.warnings.map((w, i) => (
+            <li key={i} className="text-[11px] font-mono text-status-inferred">
+              [{w.code}] {w.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+function SummaryMeta({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="bg-muted/40 rounded p-2">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
+      <div className={`mt-0.5 truncate ${mono ? "font-mono text-[11px]" : "text-[12px]"}`} title={value}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function TraceAISummary({
+  productionName,
+  sessionId,
+  messageId,
+  trace,
+}: {
+  productionName: string;
+  sessionId?: number | string;
+  messageId: string;
+  trace?: MessageTraceResponse;
+}) {
+  const [result, setResult] = useState<ProductionAIAskResponse | null>(null);
+  const encoded = encodeURIComponent(productionName);
+
+  const defaultQuestion = useMemo(() => {
+    const sid = sessionId ?? "?";
+    const steps = trace?.steps?.length ?? trace?.traceOverview?.stepCount ?? 0;
+    const errs = trace?.traceOverview?.errorCount ?? 0;
+    const parts = trace?.traceOverview?.participants?.join(", ") ?? "";
+    return `Summarize session #${sid} (message #${messageId}) in this production: what happened across the ${steps} step(s), which components participated${parts ? ` (${parts})` : ""}, any errors (${errs}), and the likely intent. Keep it concise.`;
+  }, [sessionId, messageId, trace]);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      apiFetch<ProductionAIAskResponse>(`/productions/${encoded}/ai/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: defaultQuestion, maxChunks: 8 }),
+      }),
+    onSuccess: (r) => setResult(r),
+  });
+
+  return (
+    <section className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="size-7 rounded-md bg-iris-brand/10 text-iris-brand flex items-center justify-center shrink-0">
+            <Sparkles className="size-3.5" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-[12px] font-semibold">AI summary</h2>
+            <p className="text-[10.5px] text-muted-foreground truncate">
+              Ask the production RAG to summarize this session.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {result ? (
+            <button
+              onClick={() => setResult(null)}
+              className="text-[11px] font-mono text-muted-foreground hover:text-foreground rounded ring-1 ring-black/10 px-2 py-1"
+            >
+              Clear
+            </button>
+          ) : null}
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md bg-iris-brand text-white px-3 py-1.5 hover:bg-iris-brand/90 disabled:opacity-50"
+          >
+            {mutation.isPending ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            {mutation.isPending ? "Generating…" : result ? "Regenerate" : "Generate AI summary"}
+          </button>
+        </div>
+      </div>
+
+      {mutation.error ? (
+        <div className="text-[11px] font-mono text-destructive mt-3">
+          {(mutation.error as Error).message}
+        </div>
+      ) : null}
+
+      {result ? (
+        <div className="mt-4 space-y-2 border-t border-black/5 pt-3">
+          {result.warnings?.length ? (
+            <div className="text-[11px] font-mono text-status-inferred">
+              {result.warnings.map((w, i) => (
+                <div key={i}>[{w.code}] {w.message}</div>
+              ))}
+            </div>
+          ) : null}
+          {result.answer ? (
+            <MarkdownContent>{result.answer}</MarkdownContent>
+          ) : (
+            <div className="text-[11px] text-muted-foreground italic">No answer returned.</div>
+          )}
+          <div className="text-[10px] font-mono text-muted-foreground pt-1">
+            {result.generated ? "AI-generated" : "Deterministic fallback"}
+            {result.model ? ` · ${result.model}` : ""}
+            {typeof result.chunkCount === "number" ? ` · ${result.chunkCount} chunks` : ""}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
