@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle, SkipBack, SkipForward, Sparkles, RefreshCw } from "lucide-react";
 
 import { apiFetch } from "@/lib/api-config";
 import type {
@@ -12,6 +12,7 @@ import type {
   MessageDetailResponse,
   MessageFacetResponse,
   MessageHeaderListResponse,
+  ProductionAIAskResponse,
   TraceStep,
 } from "@/lib/api-types";
 import { PageHeader } from "@/components/page-header";
@@ -19,6 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { JsonView } from "@/components/json-view";
 import { XmlView } from "@/components/xml-view";
+import { MarkdownContent } from "@/components/markdown-content";
+import { EvidencePopover } from "@/components/evidence-popover";
 
 
 export const Route = createFileRoute("/trace/$id")({
