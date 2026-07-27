@@ -142,9 +142,6 @@ function MessageDetailPage() {
 
 
   const m = detail.data?.message;
-  const overview = trace.data?.traceOverview;
-  const explanation = trace.data?.traceExplanation;
-  const steps = trace.data?.steps ?? [];
 
   return (
     <>
