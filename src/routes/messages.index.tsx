@@ -22,6 +22,8 @@ const searchSchema = z.object({
   messageBodyClassName: toStr,
   sessionId: toStr,
   status: toStr,
+  messageId: toStr,
+  sourceOrTarget: toStr,
   errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
   limit: z.coerce.number().optional(),
   offset: z.coerce.number().optional(),
@@ -123,6 +125,8 @@ function MessagesPage() {
           messageBodyClassName: search.messageBodyClassName,
           sessionId: search.sessionId,
           status: search.status,
+          messageId: search.messageId,
+          sourceOrTarget: search.sourceOrTarget,
           errorsOnly: search.errorsOnly,
           startDate,
           endDate,
@@ -215,6 +219,8 @@ function MessagesPage() {
     });
 
   const activeFilters = [
+    search.messageId ? ["Message ID", search.messageId] : undefined,
+    search.sourceOrTarget ? ["Source/Target", search.sourceOrTarget] : undefined,
     ["Source", search.sourceConfigName],
     ["Target", search.targetConfigName],
     ["Body", search.messageBodyClassName],
@@ -376,6 +382,27 @@ function MessagesPage() {
           />
 
           <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <Input
+                value={search.messageId ?? ""}
+                onChange={(e) =>
+                  setSearchParam({ messageId: e.target.value.replace(/\D+/g, "") || undefined })
+                }
+                inputMode="numeric"
+                placeholder="Message #"
+                className="h-9 w-32 font-mono text-sm bg-card"
+                title="Server-side search by Ens.MessageHeader ID (digits)"
+              />
+            </div>
+            <div className="relative">
+              <Input
+                value={search.sourceOrTarget ?? ""}
+                onChange={(e) => setSearchParam({ sourceOrTarget: e.target.value || undefined })}
+                placeholder="Source or target contains…"
+                className="h-9 w-56 font-mono text-sm bg-card"
+                title="Server-side search across SourceConfigName / TargetConfigName"
+              />
+            </div>
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
