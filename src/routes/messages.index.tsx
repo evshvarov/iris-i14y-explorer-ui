@@ -22,6 +22,8 @@ const searchSchema = z.object({
   messageBodyClassName: toStr,
   sessionId: toStr,
   status: toStr,
+  messageId: toStr,
+  sourceOrTarget: toStr,
   errorsOnly: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
   limit: z.coerce.number().optional(),
   offset: z.coerce.number().optional(),
