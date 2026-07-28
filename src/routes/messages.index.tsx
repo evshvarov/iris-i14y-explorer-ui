@@ -219,6 +219,8 @@ function MessagesPage() {
     });
 
   const activeFilters = [
+    search.messageId ? ["Message ID", search.messageId] : undefined,
+    search.sourceOrTarget ? ["Source/Target", search.sourceOrTarget] : undefined,
     ["Source", search.sourceConfigName],
     ["Target", search.targetConfigName],
     ["Body", search.messageBodyClassName],
