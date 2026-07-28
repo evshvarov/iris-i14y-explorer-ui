@@ -125,6 +125,8 @@ function MessagesPage() {
           messageBodyClassName: search.messageBodyClassName,
           sessionId: search.sessionId,
           status: search.status,
+          messageId: search.messageId,
+          sourceOrTarget: search.sourceOrTarget,
           errorsOnly: search.errorsOnly,
           startDate,
           endDate,
