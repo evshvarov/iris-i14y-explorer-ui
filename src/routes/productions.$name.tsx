@@ -291,11 +291,19 @@ function ProductionDetailContent() {
               Apply changes
             </button>
             <button
-              onClick={() => invalidateRuntime()}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
+              onClick={() => {
+                invalidateRuntime();
+                toast.success("Refreshing production data…");
+              }}
+              disabled={busyCount > 0}
+              title="Refresh production data"
+              aria-label="Refresh production data"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors disabled:opacity-60"
             >
-              <RefreshCw className="size-3.5" />
+              <RefreshCw className={`size-3.5 ${busyCount > 0 ? "animate-spin" : ""}`} />
+              Refresh
             </button>
+
             <Link
               to="/productions"
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
