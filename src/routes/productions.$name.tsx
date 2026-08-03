@@ -194,6 +194,12 @@ function ProductionDetailContent() {
   const runtimeState =
     status.data?.runtimeState ?? runtime?.stateLabel ?? meta.data?.runtimeState ?? "unknown";
 
+  const busyCount = useIsFetching({
+    predicate: (q) => {
+      const k = q.queryKey as unknown[];
+      return k[0] === "productions" || k[0] === "production";
+    },
+  });
   const invalidateRuntime = () => {
     // Refetch every query that belongs to this production view (status, detail,
     // analysis, messages/logs panels, KPIs) plus the productions list.
