@@ -195,10 +195,21 @@ function ProductionDetailContent() {
     status.data?.runtimeState ?? runtime?.stateLabel ?? meta.data?.runtimeState ?? "unknown";
 
   const invalidateRuntime = () => {
-    qc.invalidateQueries({ queryKey: ["production", name, "status"] });
-    qc.invalidateQueries({ queryKey: ["production", name] });
-    qc.invalidateQueries({ queryKey: ["productions"] });
+    // Refetch every query that belongs to this production view (status, detail,
+    // analysis, messages/logs panels, KPIs) plus the productions list.
+    void qc.invalidateQueries({
+      predicate: (q) => {
+        const k = q.queryKey as unknown[];
+        return (
+          k[0] === "productions" ||
+          k[0] === "production" ||
+          (typeof k[1] === "string" && k[1] === name)
+        );
+      },
+      refetchType: "active",
+    });
   };
+
 
   const startMut = useMutation({
     mutationFn: () =>
