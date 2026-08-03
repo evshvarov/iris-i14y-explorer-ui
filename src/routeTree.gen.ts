@@ -22,6 +22,7 @@ import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TraceIdRouteImport } from './routes/trace.$id'
 import { Route as ProductionsNameRouteImport } from './routes/productions.$name'
 import { Route as MessagesIdRouteImport } from './routes/messages.$id'
+import { Route as ProductionsNameMessagesRouteImport } from './routes/productions.$name.messages'
 import { Route as ProductionsNameComponentsComponentNameRouteImport } from './routes/productions.$name.components.$componentName'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -89,6 +90,11 @@ const MessagesIdRoute = MessagesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => MessagesRoute,
 } as any)
+const ProductionsNameMessagesRoute = ProductionsNameMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => ProductionsNameRoute,
+} as any)
 const ProductionsNameComponentsComponentNameRoute =
   ProductionsNameComponentsComponentNameRouteImport.update({
     id: '/components/$componentName',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/trace/$id': typeof TraceIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/productions/': typeof ProductionsIndexRoute
+  '/productions/$name/messages': typeof ProductionsNameMessagesRoute
   '/productions/$name/components/$componentName': typeof ProductionsNameComponentsComponentNameRoute
 }
 export interface FileRoutesByTo {
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/trace/$id': typeof TraceIdRoute
   '/messages': typeof MessagesIndexRoute
   '/productions': typeof ProductionsIndexRoute
+  '/productions/$name/messages': typeof ProductionsNameMessagesRoute
   '/productions/$name/components/$componentName': typeof ProductionsNameComponentsComponentNameRoute
 }
 export interface FileRoutesById {
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/trace/$id': typeof TraceIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/productions/': typeof ProductionsIndexRoute
+  '/productions/$name/messages': typeof ProductionsNameMessagesRoute
   '/productions/$name/components/$componentName': typeof ProductionsNameComponentsComponentNameRoute
 }
 export interface FileRouteTypes {
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/trace/$id'
     | '/messages/'
     | '/productions/'
+    | '/productions/$name/messages'
     | '/productions/$name/components/$componentName'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/trace/$id'
     | '/messages'
     | '/productions'
+    | '/productions/$name/messages'
     | '/productions/$name/components/$componentName'
   id:
     | '__root__'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/trace/$id'
     | '/messages/'
     | '/productions/'
+    | '/productions/$name/messages'
     | '/productions/$name/components/$componentName'
   fileRoutesById: FileRoutesById
 }
@@ -297,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesIdRouteImport
       parentRoute: typeof MessagesRoute
     }
+    '/productions/$name/messages': {
+      id: '/productions/$name/messages'
+      path: '/messages'
+      fullPath: '/productions/$name/messages'
+      preLoaderRoute: typeof ProductionsNameMessagesRouteImport
+      parentRoute: typeof ProductionsNameRoute
+    }
     '/productions/$name/components/$componentName': {
       id: '/productions/$name/components/$componentName'
       path: '/components/$componentName'
@@ -322,10 +341,12 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 )
 
 interface ProductionsNameRouteChildren {
+  ProductionsNameMessagesRoute: typeof ProductionsNameMessagesRoute
   ProductionsNameComponentsComponentNameRoute: typeof ProductionsNameComponentsComponentNameRoute
 }
 
 const ProductionsNameRouteChildren: ProductionsNameRouteChildren = {
+  ProductionsNameMessagesRoute: ProductionsNameMessagesRoute,
   ProductionsNameComponentsComponentNameRoute:
     ProductionsNameComponentsComponentNameRoute,
 }
