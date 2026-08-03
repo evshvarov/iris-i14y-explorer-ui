@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useIsFetching } from "@tanstack/react-query";
 import { ArrowLeft, Play, Square, RefreshCw, MessageSquareText, Sparkles, Send, Eye, Database, Search, Hammer, GitPullRequestArrow, LayoutDashboard, FileText, Workflow, Share2, ClipboardList, GitBranch, Lightbulb, ScrollText, Bot, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -194,11 +194,28 @@ function ProductionDetailContent() {
   const runtimeState =
     status.data?.runtimeState ?? runtime?.stateLabel ?? meta.data?.runtimeState ?? "unknown";
 
+  const busyCount = useIsFetching({
+    predicate: (q) => {
+      const k = q.queryKey as unknown[];
+      return k[0] === "productions" || k[0] === "production";
+    },
+  });
   const invalidateRuntime = () => {
-    qc.invalidateQueries({ queryKey: ["production", name, "status"] });
-    qc.invalidateQueries({ queryKey: ["production", name] });
-    qc.invalidateQueries({ queryKey: ["productions"] });
+    // Refetch every query that belongs to this production view (status, detail,
+    // analysis, messages/logs panels, KPIs) plus the productions list.
+    void qc.invalidateQueries({
+      predicate: (q) => {
+        const k = q.queryKey as unknown[];
+        return (
+          k[0] === "productions" ||
+          k[0] === "production" ||
+          (typeof k[1] === "string" && k[1] === name)
+        );
+      },
+      refetchType: "active",
+    });
   };
+
 
   const startMut = useMutation({
     mutationFn: () =>
@@ -280,11 +297,19 @@ function ProductionDetailContent() {
               Apply changes
             </button>
             <button
-              onClick={() => invalidateRuntime()}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
+              onClick={() => {
+                invalidateRuntime();
+                toast.success("Refreshing production data…");
+              }}
+              disabled={busyCount > 0}
+              title="Refresh production data"
+              aria-label="Refresh production data"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors disabled:opacity-60"
             >
-              <RefreshCw className="size-3.5" />
+              <RefreshCw className={`size-3.5 ${busyCount > 0 ? "animate-spin" : ""}`} />
+              Refresh
             </button>
+
             <Link
               to="/productions"
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md ring-1 ring-black/5 bg-card hover:bg-muted transition-colors"
